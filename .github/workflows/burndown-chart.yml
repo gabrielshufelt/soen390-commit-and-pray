@@ -1,0 +1,71 @@
+name: Generate Burndown Chart
+
+on:
+  workflow_dispatch:
+  # Optional: Run on schedule (uncomment to enable)
+  # schedule:
+  #   - cron: '0 9 * * *'  # Every day at 9 AM UTC
+
+jobs:
+  generate-burndown:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Clone burndown-chart tool
+        uses: actions/checkout@v4
+        with:
+          repository: gabrielshufelt/github-projects-burndown-chart
+          path: burndown-tool
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          cd burndown-tool
+          pip install -r requirements.txt
+
+      - name: Create config.json
+        run: |
+          cat > burndown-tool/src/github_projects_burndown_chart/config/config.json << 'EOF'
+          {
+            "repository": {
+              "soen390-commit-and-pray": {
+                "query_variables": {
+                  "repo_owner": "gabrielshufelt",
+                  "repo_name": "soen390-commit-and-pray",
+                  "project_number": 3,
+                  "column_count": 4,
+                  "max_cards_per_column_count": 50,
+                  "labels_per_issue_count": 5
+                },
+                "settings": {
+                  "version": 2,
+                  "sprint_start_date": "${{ vars.SPRINT_START_DATE }}",
+                  "sprint_end_date": "${{ vars.SPRINT_END_DATE }}",
+                  "points_label": null
+                }
+              }
+            },
+            "organization": {}
+          }
+          EOF
+
+      - name: Create secrets.json
+        run: |
+          cat > burndown-tool/src/github_projects_burndown_chart/config/secrets.json << EOF
+          {
+            "github_token": "${{ secrets.BURNDOWN_GITHUB_TOKEN }}",
+            "discord_webhook": "${{ secrets.DISCORD_WEBHOOK }}"
+          }
+          EOF
+
+      - name: Create tmp directory
+        run: mkdir -p burndown-tool/src/github_projects_burndown_chart/tmp
+
+      - name: Generate and post burndown chart
+        run: |
+          cd burndown-tool/src/github_projects_burndown_chart
+          python main.py repository soen390-commit-and-pray --discord
