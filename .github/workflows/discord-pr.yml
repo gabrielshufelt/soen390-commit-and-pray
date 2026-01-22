@@ -9,13 +9,51 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Build reviewer mentions
+        id: reviewers
+        env:
+          REVIEWERS_JSON: ${{ toJson(github.event.pull_request.requested_reviewers) }}
+          REQUESTED_REVIEWER: ${{ github.event.requested_reviewer.login }}
+          DISCORD_MAP: ${{ toJson(vars) }}
+        run: |
+          # For review_requested event, mention the specific reviewer
+          # For other events, mention all requested reviewers
+          MENTIONS=""
+
+          if [ "${{ github.event.action }}" == "review_requested" ] && [ -n "$REQUESTED_REVIEWER" ]; then
+            # Get Discord ID for the specific requested reviewer
+            DISCORD_ID=$(echo "$DISCORD_MAP" | jq -r ".DISCORD_${REQUESTED_REVIEWER} // empty")
+            if [ -n "$DISCORD_ID" ]; then
+              MENTIONS="<@${DISCORD_ID}>"
+            else
+              MENTIONS="@${REQUESTED_REVIEWER}"
+            fi
+          else
+            # Get Discord IDs for all requested reviewers
+            for username in $(echo "$REVIEWERS_JSON" | jq -r '.[].login'); do
+              DISCORD_ID=$(echo "$DISCORD_MAP" | jq -r ".DISCORD_${username} // empty")
+              if [ -n "$DISCORD_ID" ]; then
+                MENTIONS="${MENTIONS}<@${DISCORD_ID}> "
+              else
+                MENTIONS="${MENTIONS}@${username} "
+              fi
+            done
+          fi
+
+          echo "mentions=${MENTIONS}" >> $GITHUB_OUTPUT
+
       - name: Send PR notification to Discord
         env:
-          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_PR_WEBHOOK_URL }}
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_PR_WEBHOOK }}
+          REVIEWER_MENTIONS: ${{ steps.reviewers.outputs.mentions }}
         run: |
+          if [ "${{ github.event.action }}" == "review_requested" ]; then
+            MESSAGE="👀 **Review Requested!**\n\n**Title:** ${{ github.event.pull_request.title }}\n**Author:** ${{ github.event.pull_request.user.login }}\n**Reviewer:** ${REVIEWER_MENTIONS}\n🔗 ${{ github.event.pull_request.html_url }}"
+          else
+            MESSAGE="🚀 **New Pull Request Opened!**\n\n**Title:** ${{ github.event.pull_request.title }}\n**Author:** ${{ github.event.pull_request.user.login }}\n**Reviewers:** ${REVIEWER_MENTIONS}\n🔗 ${{ github.event.pull_request.html_url }}"
+          fi
+
           curl -X POST \
           -H "Content-Type: application/json" \
-          -d '{
-            "content": "🚀 **New Pull Request Opened!**\n\n**Title:** ${{ github.event.pull_request.title }}\n**Author:** ${{ github.event.pull_request.user.login }}\n🔗 ${{ github.event.pull_request.html_url }}"
-          }' \
+          -d "{\"content\": \"${MESSAGE}\"}" \
           $DISCORD_WEBHOOK_URL
