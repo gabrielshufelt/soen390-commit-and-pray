@@ -9,6 +9,15 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Debug - Check if secret is set
+        run: |
+          if [ -n "${{ secrets.DISCORD_PR_WEBHOOK }}" ]; then
+            echo "✅ DISCORD_PR_WEBHOOK secret is set"
+          else
+            echo "❌ DISCORD_PR_WEBHOOK secret is NOT set or empty"
+            exit 1
+          fi
+
       - name: Build reviewer mentions
         id: reviewers
         env:
