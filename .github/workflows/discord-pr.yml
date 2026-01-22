@@ -9,15 +9,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Debug - Check if secret is set
-        run: |
-          if [ -n "${{ secrets.DISCORD_PR_WEBHOOK }}" ]; then
-            echo "✅ DISCORD_PR_WEBHOOK secret is set"
-          else
-            echo "❌ DISCORD_PR_WEBHOOK secret is NOT set or empty"
-            exit 1
-          fi
-
       - name: Build reviewer mentions
         id: reviewers
         env:
@@ -33,7 +24,7 @@ jobs:
             # Get Discord ID for the specific requested reviewer
             DISCORD_ID=$(echo "$DISCORD_MAP" | jq -r ".DISCORD_${REQUESTED_REVIEWER} // empty")
             if [ -n "$DISCORD_ID" ]; then
-              MENTIONS="<@${DISCORD_ID}>"
+              MENTIONS='<@'"${DISCORD_ID}"'>'
             else
               MENTIONS="@${REQUESTED_REVIEWER}"
             fi
@@ -42,7 +33,7 @@ jobs:
             for username in $(echo "$REVIEWERS_JSON" | jq -r '.[].login'); do
               DISCORD_ID=$(echo "$DISCORD_MAP" | jq -r ".DISCORD_${username} // empty")
               if [ -n "$DISCORD_ID" ]; then
-                MENTIONS="${MENTIONS}<@${DISCORD_ID}> "
+                MENTIONS="${MENTIONS}"'<@'"${DISCORD_ID}"'> '
               else
                 MENTIONS="${MENTIONS}@${username} "
               fi
@@ -55,14 +46,19 @@ jobs:
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_PR_WEBHOOK }}
           REVIEWER_MENTIONS: ${{ steps.reviewers.outputs.mentions }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          PR_ACTION: ${{ github.event.action }}
         run: |
-          if [ "${{ github.event.action }}" == "review_requested" ]; then
-            MESSAGE="👀 **Review Requested!**\n\n**Title:** ${{ github.event.pull_request.title }}\n**Author:** ${{ github.event.pull_request.user.login }}\n**Reviewer:** ${REVIEWER_MENTIONS}\n🔗 ${{ github.event.pull_request.html_url }}"
+          if [ "$PR_ACTION" == "review_requested" ]; then
+            MESSAGE=$(printf '👀 **Review Requested!**\n\n**Title:** %s\n**Author:** %s\n**Reviewer:** %s\n🔗 %s' "$PR_TITLE" "$PR_AUTHOR" "$REVIEWER_MENTIONS" "$PR_URL")
           else
-            MESSAGE="🚀 **New Pull Request Opened!**\n\n**Title:** ${{ github.event.pull_request.title }}\n**Author:** ${{ github.event.pull_request.user.login }}\n**Reviewers:** ${REVIEWER_MENTIONS}\n🔗 ${{ github.event.pull_request.html_url }}"
+            MESSAGE=$(printf '🚀 **New Pull Request Opened!**\n\n**Title:** %s\n**Author:** %s\n**Reviewers:** %s\n🔗 %s' "$PR_TITLE" "$PR_AUTHOR" "$REVIEWER_MENTIONS" "$PR_URL")
           fi
 
+          jq -n --arg content "$MESSAGE" '{"content": $content, "allowed_mentions": {"parse": ["users"]}}' | \
           curl -X POST \
           -H "Content-Type: application/json" \
-          -d "{\"content\": \"${MESSAGE}\"}" \
+          -d @- \
           $DISCORD_WEBHOOK_URL
