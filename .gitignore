@@ -9,6 +9,7 @@ build/
 
 # Backend (Python/FastAPI)
 backend/.venv
+backend/__pycache__/
 
 # Mobile (react native)
 mobile/node_modules/
