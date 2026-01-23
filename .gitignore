@@ -7,10 +7,8 @@ node_modules/
 dist/
 build/
 
-# Backend (nodejs)
-backend/node_modules/
-backend/dist/
-backend/.env
+# Backend (Python/FastAPI)
+backend/.venv
 
 # Mobile (react native)
 mobile/node_modules/
