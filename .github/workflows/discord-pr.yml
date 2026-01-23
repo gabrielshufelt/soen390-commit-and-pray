@@ -38,6 +38,11 @@ jobs:
                 MENTIONS="${MENTIONS}@${username} "
               fi
             done
+
+            # If no reviewers are assigned, ping @here
+            if [ -z "$MENTIONS" ]; then
+              MENTIONS="@here"
+            fi
           fi
 
           echo "mentions=${MENTIONS}" >> $GITHUB_OUTPUT
@@ -51,10 +56,29 @@ jobs:
           PR_URL: ${{ github.event.pull_request.html_url }}
           PR_ACTION: ${{ github.event.action }}
         run: |
+          # Build message based on PR action
+          case "$PR_ACTION" in
+            "review_requested")
+              HEADER='👀 **Review Requested!**'
+              ;;
+            "opened")
+              HEADER='🚀 **PR Opened!**'
+              ;;
+            "reopened")
+              HEADER='🔄 **PR Reopened!**'
+              ;;
+            "ready_for_review")
+              HEADER='✅ **PR Ready for Review!**'
+              ;;
+            *)
+              HEADER='📢 **PR Update!**'
+              ;;
+          esac
+
           if [ "$PR_ACTION" == "review_requested" ]; then
-            MESSAGE=$(printf '👀 **Review Requested!**\n\n**Title:** %s\n**Author:** %s\n**Reviewer:** %s\n🔗 %s' "$PR_TITLE" "$PR_AUTHOR" "$REVIEWER_MENTIONS" "$PR_URL")
+            MESSAGE=$(printf '%s\n\n**Title:** %s\n**Author:** %s\n**Reviewer:** %s\n🔗 %s' "$HEADER" "$PR_TITLE" "$PR_AUTHOR" "$REVIEWER_MENTIONS" "$PR_URL")
           else
-            MESSAGE=$(printf '🚀 **New Pull Request Opened!**\n\n**Title:** %s\n**Author:** %s\n**Reviewers:** %s\n🔗 %s' "$PR_TITLE" "$PR_AUTHOR" "$REVIEWER_MENTIONS" "$PR_URL")
+            MESSAGE=$(printf '%s\n\n**Title:** %s\n**Author:** %s\n**Reviewers:** %s\n🔗 %s' "$HEADER" "$PR_TITLE" "$PR_AUTHOR" "$REVIEWER_MENTIONS" "$PR_URL")
           fi
 
           jq -n --arg content "$MESSAGE" '{"content": $content, "allowed_mentions": {"parse": ["users"]}}' | \
