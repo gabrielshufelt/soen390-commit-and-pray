@@ -2,9 +2,8 @@ name: Generate Burndown Chart
 
 on:
   workflow_dispatch:
-  # Optional: Run on schedule (uncomment to enable)
-  # schedule:
-  #   - cron: '0 9 * * *'  # Every day at 9 AM UTC
+  schedule:
+    - cron: "0 15 * * *" # 15:00 UTC = 10:00 AM EST / 11:00 AM EDT
 
 jobs:
   generate-burndown:
