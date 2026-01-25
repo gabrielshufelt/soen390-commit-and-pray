@@ -1,0 +1,88 @@
+name: Discord PR Notification
+
+on:
+  pull_request:
+    types: [opened, reopened, ready_for_review, review_requested]
+
+jobs:
+  notify-discord:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Build reviewer mentions
+        id: reviewers
+        env:
+          REVIEWERS_JSON: ${{ toJson(github.event.pull_request.requested_reviewers) }}
+          REQUESTED_REVIEWER: ${{ github.event.requested_reviewer.login }}
+          DISCORD_MAP: ${{ toJson(vars) }}
+        run: |
+          # For review_requested event, mention the specific reviewer
+          # For other events, mention all requested reviewers
+          MENTIONS=""
+
+          if [ "${{ github.event.action }}" == "review_requested" ] && [ -n "$REQUESTED_REVIEWER" ]; then
+            # Get Discord ID for the specific requested reviewer
+            DISCORD_ID=$(echo "$DISCORD_MAP" | jq -r ".DISCORD_${REQUESTED_REVIEWER} // empty")
+            if [ -n "$DISCORD_ID" ]; then
+              MENTIONS='<@'"${DISCORD_ID}"'>'
+            else
+              MENTIONS="@${REQUESTED_REVIEWER}"
+            fi
+          else
+            # Get Discord IDs for all requested reviewers
+            for username in $(echo "$REVIEWERS_JSON" | jq -r '.[].login'); do
+              DISCORD_ID=$(echo "$DISCORD_MAP" | jq -r ".DISCORD_${username} // empty")
+              if [ -n "$DISCORD_ID" ]; then
+                MENTIONS="${MENTIONS}"'<@'"${DISCORD_ID}"'> '
+              else
+                MENTIONS="${MENTIONS}@${username} "
+              fi
+            done
+
+            # If no reviewers are assigned, ping @here
+            if [ -z "$MENTIONS" ]; then
+              MENTIONS="@here"
+            fi
+          fi
+
+          echo "mentions=${MENTIONS}" >> $GITHUB_OUTPUT
+
+      - name: Send PR notification to Discord
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_PR_WEBHOOK }}
+          REVIEWER_MENTIONS: ${{ steps.reviewers.outputs.mentions }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          PR_ACTION: ${{ github.event.action }}
+        run: |
+          # Build message based on PR action
+          case "$PR_ACTION" in
+            "review_requested")
+              HEADER='👀 **Review Requested!**'
+              ;;
+            "opened")
+              HEADER='🚀 **PR Opened!**'
+              ;;
+            "reopened")
+              HEADER='🔄 **PR Reopened!**'
+              ;;
+            "ready_for_review")
+              HEADER='✅ **PR Ready for Review!**'
+              ;;
+            *)
+              HEADER='📢 **PR Update!**'
+              ;;
+          esac
+
+          if [ "$PR_ACTION" == "review_requested" ]; then
+            MESSAGE=$(printf '%s\n\n**Title:** %s\n**Author:** %s\n**Reviewer:** %s\n🔗 %s' "$HEADER" "$PR_TITLE" "$PR_AUTHOR" "$REVIEWER_MENTIONS" "$PR_URL")
+          else
+            MESSAGE=$(printf '%s\n\n**Title:** %s\n**Author:** %s\n**Reviewers:** %s\n🔗 %s' "$HEADER" "$PR_TITLE" "$PR_AUTHOR" "$REVIEWER_MENTIONS" "$PR_URL")
+          fi
+
+          jq -n --arg content "$MESSAGE" '{"content": $content, "allowed_mentions": {"parse": ["users"]}}' | \
+          curl -X POST \
+          -H "Content-Type: application/json" \
+          -d @- \
+          $DISCORD_WEBHOOK_URL
