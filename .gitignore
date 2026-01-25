@@ -1,6 +1,8 @@
 # General stuff
 node_modules/
 .env
+*.env
+.env*
 *.log
 .DS_Store
 dist/
@@ -10,6 +12,7 @@ build/
 backend/.venv
 backend/__pycache__/
 backend/.pytest_cache/
+backend/.coverage
 
 # Mobile (react native)
 mobile/node_modules/
