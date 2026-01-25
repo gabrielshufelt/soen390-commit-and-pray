@@ -43,9 +43,7 @@ jobs:
                 },
                 "settings": {
                   "version": 2,
-                  "sprint_start_date": "${{ vars.SPRINT_START_DATE }}",
-                  "sprint_end_date": "${{ vars.SPRINT_END_DATE }}",
-                  "points_label": null
+                  "points_label": "Points "
                 }
               }
             },
