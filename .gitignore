@@ -36,3 +36,6 @@ coverage/
 mobile/coverage/
 backend/coverage/
 .jest/
+
+# VS Code Extensions
+.vscode/.react
