@@ -7,6 +7,8 @@ node_modules/
 .DS_Store
 dist/
 build/
+.expo/
+web-build/
 
 # Backend (Python/FastAPI)
 backend/.venv
@@ -36,3 +38,17 @@ coverage/
 mobile/coverage/
 backend/coverage/
 .jest/
+
+# VS Code Extensions
+.vscode/.react
+
+# Native
+.kotlin/
+*.orig.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+/ios
+/android
