@@ -1,6 +1,10 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useColorScheme as useDeviceColorScheme } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as SplashScreen from 'expo-splash-screen';
+
+// Prevent the splash screen from auto-hiding
+SplashScreen.preventAutoHideAsync();
 
 type ThemePreference = 'light' | 'dark' | 'system';
 type ColorScheme = 'light' | 'dark';
@@ -22,13 +26,20 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   // Load saved theme preference on mount
   useEffect(() => {
-    AsyncStorage.getItem(THEME_STORAGE_KEY).then((savedTheme) => {
+    AsyncStorage.getItem(THEME_STORAGE_KEY).then((savedTheme: string | null) => {
       if (savedTheme === 'light' || savedTheme === 'dark' || savedTheme === 'system') {
         setThemeState(savedTheme);
       }
       setIsLoaded(true);
     });
   }, []);
+
+  // Hide splash screen once theme is loaded
+  useEffect(() => {
+    if (isLoaded) {
+      SplashScreen.hideAsync();
+    }
+  }, [isLoaded]);
 
   // Save theme preference when it changes
   const setTheme = (newTheme: ThemePreference) => {
@@ -40,7 +51,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const colorScheme: ColorScheme =
     theme === 'system' ? (deviceColorScheme ?? 'light') : theme;
 
-  // Don't render until we've loaded the saved preference
+  // Keep splash screen visible until theme is loaded
+  // (splash hiding is handled by the useEffect above)
   if (!isLoaded) {
     return null;
   }
