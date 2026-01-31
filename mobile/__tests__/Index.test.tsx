@@ -1,11 +1,16 @@
 import React from 'react';
-import { render } from '@testing-library/react-native';
+import { render, waitFor } from '@testing-library/react-native';
 import Index from '../app/(tabs)/index';
 import { ThemeProvider } from '../context/ThemeContext';
 
 jest.mock('@react-native-async-storage/async-storage', () => ({
   getItem: jest.fn(() => Promise.resolve(null)),
   setItem: jest.fn(() => Promise.resolve()),
+}));
+
+jest.mock('expo-splash-screen', () => ({
+  preventAutoHideAsync: jest.fn(),
+  hideAsync: jest.fn(),
 }));
 
 jest.mock('react-native-maps', () => {
@@ -22,10 +27,15 @@ jest.mock('react-native-maps', () => {
     <View testID={`marker-${props.title}`} {...props} />
   );
 
+  const MockPolygon = (props: any) => (
+    <View testID="polygon" {...props} />
+  );
+
   return {
     __esModule: true,
     default: MockMapView,
     Marker: MockMarker,
+    Polygon: MockPolygon,
   };
 });
 
@@ -39,23 +49,29 @@ describe('<Index />', () => {
   });
 
   it('renders MapView component', async () => {
-    const { findByTestId } = renderWithTheme(<Index />);
+    const { getByTestId } = renderWithTheme(<Index />);
 
-    const mapView = await findByTestId('map-view');
-    expect(mapView).toBeTruthy();
+    await waitFor(() => {
+      const mapView = getByTestId('map-view');
+      expect(mapView).toBeTruthy();
+    });
   });
 
   it('renders SGW Campus marker', async () => {
-    const { findByTestId } = renderWithTheme(<Index />);
+    const { getByTestId } = renderWithTheme(<Index />);
 
-    const marker = await findByTestId('marker-SGW Campus');
-    expect(marker).toBeTruthy();
+    await waitFor(() => {
+      const marker = getByTestId('marker-SGW Campus');
+      expect(marker).toBeTruthy();
+    });
   });
 
   it('renders Loyola Campus marker', async () => {
-    const { findByTestId } = renderWithTheme(<Index />);
+    const { getByTestId } = renderWithTheme(<Index />);
 
-    const marker = await findByTestId('marker-Loyola Campus');
-    expect(marker).toBeTruthy();
+    await waitFor(() => {
+      const marker = getByTestId('marker-Loyola Campus');
+      expect(marker).toBeTruthy();
+    });
   });
 });
