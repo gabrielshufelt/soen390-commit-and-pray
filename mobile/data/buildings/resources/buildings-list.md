@@ -78,7 +78,7 @@ Amenities:
 
 Accessibility:
 - Accessible Entrance
-- Accessible Building Elevator
+- Accessible Elevator
 - Accessibility Ramp
 - Wheelchair Lift
 
