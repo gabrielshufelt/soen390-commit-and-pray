@@ -74,6 +74,7 @@ Amenities:
 - ATM
 - Bike Parking
 - Car Parking
+- Internet
 
 Accessibility:
 - Accessible Entrance
