@@ -77,13 +77,23 @@
         "building:levels:underground": "2",
         "education": "university",
         "height": "51.2064",
-        "internet_access": true,
         "learning": "university",
         "name": "H - Henry F. Hall Building",
         "ref": "H",
         "wikidata": "Q20006830",
         "wikipedia": "en:Henry F. Hall Building",
-        "code": "H"
+        "code": "H",
+
+        "amenities": {
+          "info": true,
+          "atm": true,
+          "bike_parking": true,
+          "internet": true
+        },
+        "accessibility:": {
+          "accessible_entrance": true,
+          "accessible_elevator:": true
+        }
       }
     },
     {
@@ -224,11 +234,22 @@
         "building": "university",
         "building:levels": "10",
         "education": "university",
-        "internet_access": true,
         "learning": "university",
         "name": "LB - J. W. McConnell Building (Library Building)",
         "ref": "LB",
-        "code": "LB"
+        "code": "LB",
+
+        "amenities": {
+          "info": true,
+          "atm": true,
+          "bike_parking": true,
+          "car_parking": true,
+          "internet": true
+        },
+        "accessibility:": {
+          "accessible_entrance": true,
+          "accessible_elevator:": true
+        }
       }
     },
     {
@@ -326,10 +347,17 @@
         "building": "university",
         "building:levels": "15",
         "education": "university",
-        "internet_access": true,
         "name": "MB - John Molson School of Business",
         "ref": "MB",
-        "code": "MB"
+        "code": "MB",
+
+        "amenities": {
+          "internet": true
+        },
+        "accessibility:": {
+          "accessible_entrance": true,
+          "accessible_elevator:": true
+        }
       }
     },
     {
@@ -399,10 +427,19 @@
         "building": "university",
         "building:levels": "11",
         "education": "university",
-        "internet_access": true,
         "name": "GM - Guy Metro Building",
         "ref": "GM",
-        "code": "GM"
+        "code": "GM",
+
+        "amenities": {
+          "info": true,
+          "bike_parking": true,
+          "internet": true
+        },
+        "accessibility:": {
+          "accessible_entrance": true,
+          "accessible_elevator:": true
+        }
       }
     },
     {
@@ -468,10 +505,17 @@
         "building": "university",
         "building:levels": "4",
         "education": "university",
-        "internet_access": true,
         "name": "TD - TD Bank Building",
         "ref": "TD",
-        "code": "TD"
+        "code": "TD",
+
+        "amenities": {
+          "atm": true,
+          "internet": true
+        },
+        "accessibility:": {
+
+        }
       }
     },
     {
@@ -541,11 +585,22 @@
         "building": "university",
         "building:levels": "3",
         "education": "university",
-        "internet_access": true,
         "name": "FG - Le Faubourg",
         "ref": "FG",
         "roof:levels": "0",
-        "code": "FG"
+        "code": "FG",
+
+        "amenities": {
+          "info": true,
+          "atm": true,
+          "internet": true
+        },
+        "accessibility:": {
+          "wheelchair_lift": true,
+          "accessibility_ramp": true,
+          "accessible_entrance": true,
+          "accessible_elevator:": true
+        }
       }
     },
     {
@@ -655,10 +710,19 @@
         "building": "university",
         "building:levels": "12",
         "education": "university",
-        "internet_access": true,
         "name": "FB - Faubourg Tower",
         "ref": "FB",
-        "code": "FB"
+        "code": "FB",
+
+        "amenities": {
+          "car_parking": true,
+          "internet": true
+        },
+        "accessibility:": {
+          "wheelchair_lift": true,
+          "accessible_entrance": true,
+          "accessible_elevator:": true
+        }
       }
     },
     {
@@ -780,11 +844,20 @@
         "building": "university",
         "building:levels": "19",
         "education": "university",
-        "internet_access": true,
         "material": "concrete",
         "name": "EV - Engineering, Computer Science and Visual Arts Integrated Complex",
         "ref": "EV",
-        "code": "EV"
+        "code": "EV",
+
+        "amenities": {
+          "info": true,
+          "atm": true,
+          "internet": true
+        },
+        "accessibility:": {
+          "accessible_entrance": true,
+          "accessible_elevator:": true
+        }
       }
     },
     {
@@ -845,11 +918,20 @@
         "@id": "way/103521746",
         "building": "university",
         "education": "university",
-        "internet_access": true,
         "name": "VA - Visual Arts Building",
         "ref": "VA",
         "source": "Bing",
-        "code": "VA"
+        "code": "VA",
+
+        "amenities": {
+          "info": true,
+          "bike_parking": true,
+          "internet": true
+        },
+        "accessibility:": {
+          "accessible_entrance": true,
+          "accessible_elevator:": true
+        }
       }
     },
     {
@@ -899,11 +981,18 @@
         "building": "university",
         "building:levels": "11",
         "education": "university",
-        "internet_access": true,
         "name": "LS - Concordia Learning Square",
         "ref": "LS",
         "roof:shape": "flat",
-        "code": "LS"
+        "code": "LS",
+
+        "amenities": {
+          "internet": true
+        },
+        "accessibility:": {
+          "accessibility_ramp": true,
+          "accessible_entrance": true
+        }
       }
     },
     {
@@ -1537,13 +1626,21 @@
         "building": "university",
         "denomination": "roman_catholic",
         "education": "university",
-        "internet_access": true,
         "layer": "1",
         "name": "Maison-M\u00e8re des S\u0153urs grises",
         "ref": "GN",
         "source": "CanVec_Import_2009",
         "wikidata": "Q3001745",
-        "code": "GN"
+        "code": "GN",
+
+        "amenities": {
+          "internet": true
+        },
+        "accessibility:": {
+          "accessibility_ramp": true,
+          "accessible_entrance": true,
+          "accessible_elevator:": true
+        }
       }
     }
   ]
