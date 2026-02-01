@@ -225,7 +225,16 @@
         "canvec:CODE": "2010252",
         "name": "Richard J Renaud Science Complex (SP)",
         "source": "CanVec_Import_2009",
-        "code": "SP"
+        "code": "SP",
+
+        "amenities": {
+          "info": true
+        },
+        "accessibility:": {
+          "accessibility_ramp": true,
+          "accessible_entrance": true,
+          "accessible_elevator:": true
+        }
       }
     },
     {
@@ -370,7 +379,15 @@
         "name": "F.C. Smith Building (FC)",
         "source": "CanVec_Import_2009",
         "website": "http://www.concordia.ca/arts/venues/fc-smith-auditorium.html",
-        "code": "FC"
+        "code": "FC",
+
+        "amenities": {
+
+        },
+        "accessibility:": {
+          "accessibility_ramp": true,
+          "accessible_entrance": true
+        }
       }
     },
     {
@@ -465,7 +482,16 @@
         "name_1": "Ed Meagher Arena",
         "sport": "multi",
         "website": "http://www.concordia.ca/campus-life/recreation/facilities/athletic-complex.html",
-        "code": "RA"
+        "code": "RA",
+
+        "amenities": {
+          "car_parking": true
+        },
+        "accessibility:": {
+          "wheelchair_lift": true,
+          "accessibility_ramp": true,
+          "accessible_entrance": true
+        }
       }
     },
     {
@@ -537,7 +563,14 @@
         "canvec:CODE": "2010252",
         "name": "Physical Services (PS)",
         "source": "CanVec_Import_2009",
-        "code": "PS"
+        "code": "PS",
+
+        "amenities": {
+
+        },
+        "accessibility:": {
+          
+        }
       }
     },
     {
@@ -701,7 +734,17 @@
         "name": "Communication Studies and Journalism Building (CJ)",
         "source": "CanVec_Import_2009",
         "website": "http://www.concordia.ca/artsci/coms.html",
-        "code": "CJ"
+        "code": "CJ",
+
+        "amenities": {
+
+        },
+        "accessibility:": {
+          "wheelchair_lift": true,
+          "accessibility_ramp": true,
+          "accessible_entrance": true,
+          "accessible_elevator:": true
+        }
       }
     },
     {
@@ -781,7 +824,15 @@
         "canvec:CODE": "2010252",
         "name": "Student Centre (SC)",
         "source": "CanVec_Import_2009",
-        "code": "SC"
+        "code": "SC",
+
+        "amenities": {
+
+        },
+        "accessibility:": {
+          "accessibility_ramp": true,
+          "accessible_entrance": true
+        }
       }
     },
     {
@@ -867,7 +918,16 @@
         "building": "university",
         "name": "Jesuit Residence (JR)",
         "website": "http://www.concordia.ca/students/housing/residences/jesuit-residence.html",
-        "code": "JR"
+        "code": "JR",
+
+        "amenities": {
+          "car_parking": true
+        },
+        "accessibility:": {
+          "accessibility_ramp": true,
+          "accessible_entrance": true,
+          "accessible_elevator:": true
+        }
       }
     },
     {
@@ -905,7 +965,14 @@
         "building": "university",
         "building:levels": "1",
         "name": "Solar House (SH)",
-        "code": "SH"
+        "code": "SH",
+
+        "amenities": {
+
+        },
+        "accessibility:": {
+          "accessible_entrance": true
+        }
       }
     },
     {
@@ -945,7 +1012,14 @@
         "addr:street": "Rue de Terrebonne",
         "building": "university",
         "name": "Concordia Terrebonne Building (TA)",
-        "code": "TA"
+        "code": "TA",
+
+        "amenities": {
+          "car_parking": true
+        },
+        "accessibility:": {
+          
+        }
       }
     },
     {
@@ -1011,7 +1085,15 @@
         "building": "university",
         "name": "Centre for Structural and Functional Genomics (GE)",
         "website": "http://www.concordia.ca/research/genomics.html",
-        "code": "GE"
+        "code": "GE",
+
+        "amenities": {
+
+        },
+        "accessibility:": {
+          "accessible_entrance": true,
+          "accessible_elevator:": true
+        }
       }
     },
     {
@@ -1057,7 +1139,17 @@
         "building": "university",
         "name": "PERFORM Centre (PC)",
         "website": "http://www.concordia.ca/research/perform.html",
-        "code": "PC"
+        "code": "PC",
+
+        "amenities": {
+          "info": true,
+          "car_parking": true
+        },
+        "accessibility:": {
+          "accessibility_ramp": true,
+          "accessible_entrance": true,
+          "accessible_elevator:": true
+        }
       }
     },
     {
@@ -1118,7 +1210,14 @@
         "@id": "way/604324438",
         "building": "university",
         "name": "Hingston Hall (HC)",
-        "code": "HC"
+        "code": "HC",
+
+        "amenities": {
+          "car_parking": true
+        },
+        "accessibility:": {
+          "accessible_entrance": true
+        }
       }
     },
     {
@@ -1161,7 +1260,14 @@
         "building": "university",
         "name": "Concordia BB Annex (BB)",
         "website": "https://lesptitsprofs.wordpress.com/",
-        "code": "BB"
+        "code": "BB",
+
+        "amenities": {
+
+        },
+        "accessibility:": {
+          
+        }
       }
     },
     {
@@ -1204,7 +1310,14 @@
         "building": "university",
         "name": "Concordia BH Annex (BH)",
         "website": "https://lesptitsprofs.wordpress.com/",
-        "code": "BH"
+        "code": "BH",
+
+        "amenities": {
+
+        },
+        "accessibility:": {
+          
+        }
       }
     },
     {
@@ -1259,8 +1372,14 @@
         "building": "university",
         "name": "Oscar Peterson Concert Hall (PT)",
         "website": "http://www.concordia.ca/arts/venues/oscar-peterson.html",
-        "wheelchair": "limited",
-        "code": "PT"
+        "code": "PT",
+
+        "amenities": {
+
+        },
+        "accessibility:": {
+          "accessible_entrance": true
+        }
       }
     },
     {
@@ -1358,7 +1477,15 @@
         "building": "university",
         "name": "Loyola Jesuit Hall and Conference Center (RF)",
         "website": "http://www.concordia.ca/hospitality/hospitality-venues/loyola-jesuit-hall-conference-centre.html",
-        "code": "RF"
+        "code": "RF",
+
+        "amenities": {
+          "wheelchair_lift": true,
+          "accessible_entrance": true
+        },
+        "accessibility:": {
+          
+        }
       }
     },
     {
@@ -1476,7 +1603,17 @@
         "building": "university",
         "name": "Central Building (CC)",
         "website": "csu.concordia.ca",
-        "code": "CC"
+        "code": "CC",
+
+        "amenities": {
+          "info": true,
+          "bike_parking": true
+        },
+        "accessibility:": {
+          "wheelchair_lift": true,
+          "accessible_entrance": true,
+          "accessible_elevator:": true
+        }
       }
     },
     {
@@ -1719,7 +1856,18 @@
         "building": "university",
         "name": "Administration Building (AD)",
         "website": "http://www.concordia.ca/artsci.html",
-        "code": "AD"
+        "code": "AD",
+
+        "amenities": {
+          "info": true,
+          "bike_parking": true,
+          "car_parking": true
+        },
+        "accessibility:": {
+          "accessibility_ramp": true,
+          "accessible_entrance": true,
+          "accessible_elevator:": true
+        }
       }
     },
     {
@@ -1792,7 +1940,15 @@
         "@id": "way/795012497",
         "building": "university",
         "name": "Applied Science Hub (HU)",
-        "code": "HU"
+        "code": "HU",
+
+        "amenities": {
+
+        },
+        "accessibility:": {
+          "accessible_entrance": true,
+          "accessible_elevator:": true
+        }
       }
     },
     {
@@ -1832,7 +1988,17 @@
       "properties": {
         "@id": "way/1362712744",
         "building": "university",
-        "name": "Concordia Loyola Campus Central Building"
+        "name": "Concordia Loyola Campus Central Building",
+
+        "amenities": {
+          "info": true,
+          "bike_parking": true
+        },
+        "accessibility:": {
+          "wheelchair_lift": true,
+          "accessible_entrance": true,
+          "accessible_elevator:": true
+        }
       }
     },
     {
@@ -1944,7 +2110,15 @@
       "properties": {
         "@id": "way/1362724471",
         "building": "university",
-        "name": "Concordia Vanier Library"
+        "name": "Concordia Vanier Library",
+
+        "amenities": {
+          "info": true
+        },
+        "accessibility:": {
+          "accessible_entrance": true,
+          "accessible_elevator:": true
+        }
       }
     }
   ]
