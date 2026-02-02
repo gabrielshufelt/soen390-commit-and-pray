@@ -16,12 +16,12 @@ The following tools and dependencies are required to run this project:
 ## FASTAPI INSTALLATION (UNIX)
 If FastAPI is not installed, you can set it up on Unix-based systems with:
 
-sudo apt install -y python3 python3-venv python3-pip
+`sudo apt install -y python3 python3-venv python3-pip
 cd backend
 python3 -m venv .venv
 source .venv/bin/activate
 pip install "fastapi[standard]"
-cd ..
+cd ..`
   
 ## INSTALLATION (to improve: must add backend and frontend dependencies)
 1. Clone the repository:
