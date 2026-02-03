@@ -13,6 +13,8 @@ jest.mock('expo-splash-screen', () => ({
   hideAsync: jest.fn(),
 }));
 
+let mockPolygonRenderCount = 0;
+
 jest.mock('react-native-maps', () => {
   const React = require('react');
   const { View } = require('react-native');
@@ -27,9 +29,10 @@ jest.mock('react-native-maps', () => {
     <View testID={`marker-${props.title}`} {...props} />
   );
 
-  const MockPolygon = (props: any) => (
-    <View testID="polygon" {...props} />
-  );
+  const MockPolygon = (props: any) => {
+    mockPolygonRenderCount++;
+    return <View testID="polygon" {...props} />;
+  };
 
   return {
     __esModule: true,
@@ -46,6 +49,7 @@ function renderWithTheme(component: React.ReactElement) {
 describe('<Index />', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockPolygonRenderCount = 0;
   });
 
   it('renders MapView component', async () => {
@@ -72,6 +76,22 @@ describe('<Index />', () => {
     await waitFor(() => {
       const marker = getByTestId('marker-Loyola Campus');
       expect(marker).toBeTruthy();
+    });
+  });
+
+  it('does not re-render building polygons on component re-render', async () => {
+    const { rerender } = renderWithTheme(<Index />);
+
+    await waitFor(() => {
+      expect(mockPolygonRenderCount).toBeGreaterThan(0);
+    });
+
+    const initialRenderCount = mockPolygonRenderCount;
+
+    rerender(<ThemeProvider><Index /></ThemeProvider>);
+
+    await waitFor(() => {
+      expect(mockPolygonRenderCount).toBe(initialRenderCount);
     });
   });
 });

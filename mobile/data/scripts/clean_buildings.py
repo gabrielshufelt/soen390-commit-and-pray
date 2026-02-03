@@ -42,8 +42,8 @@ def extract_sgw_building_codes():
     with open("../buildings/sgw.json", 'w') as f:
         json.dump(gj, f, indent=2)
 
-def get_gj(dir):
-    with open(dir) as f:
+def get_gj(file_path):
+    with open(file_path) as f:
         gj = geojson.load(f)
 
     return gj
