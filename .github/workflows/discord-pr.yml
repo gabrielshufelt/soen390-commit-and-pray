@@ -22,7 +22,7 @@ jobs:
 
           if [ "${{ github.event.action }}" == "review_requested" ] && [ -n "$REQUESTED_REVIEWER" ]; then
             # Get Discord ID for the specific requested reviewer
-            DISCORD_ID=$(echo "$DISCORD_MAP" | jq -r ".DISCORD_${REQUESTED_REVIEWER} // empty")
+            DISCORD_ID=$(echo "$DISCORD_MAP" | jq -r --arg u "$username" '.["DISCORD_" + $u] // empty')
             if [ -n "$DISCORD_ID" ]; then
               MENTIONS='<@'"${DISCORD_ID}"'>'
             else
@@ -31,7 +31,7 @@ jobs:
           else
             # Get Discord IDs for all requested reviewers
             for username in $(echo "$REVIEWERS_JSON" | jq -r '.[].login'); do
-              DISCORD_ID=$(echo "$DISCORD_MAP" | jq -r ".DISCORD_${username} // empty")
+              DISCORD_ID=$(echo "$DISCORD_MAP" | jq -r --arg u "$REQUESTED_REVIEWER" '.["DISCORD_" + $u] // empty')
               if [ -n "$DISCORD_ID" ]; then
                 MENTIONS="${MENTIONS}"'<@'"${DISCORD_ID}"'> '
               else
