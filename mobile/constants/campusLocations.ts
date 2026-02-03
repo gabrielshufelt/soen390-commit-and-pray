@@ -43,3 +43,25 @@ export const CAMPUSES: Record<string, CampusLocation> = {
 
 // Default campus for initial app load
 export const DEFAULT_CAMPUS = 'SGW';
+
+
+export function findCampusForCoordinate(
+  latitude: number,
+  longitude: number
+): { key: string; campus: CampusLocation } | undefined {
+  for (const [key, campus] of Object.entries(CAMPUSES)) {
+    const { latitude: centerLat, longitude: centerLng, latitudeDelta, longitudeDelta } = campus.initialRegion;
+    
+    // Calculate boundaries
+    const minLat = centerLat - latitudeDelta / 2;
+    const maxLat = centerLat + latitudeDelta / 2;
+    const minLng = centerLng - longitudeDelta / 2;
+    const maxLng = centerLng + longitudeDelta / 2;
+    
+    // Check if point is within boundaries
+    if (latitude >= minLat && latitude <= maxLat && longitude >= minLng && longitude <= maxLng) {
+      return { key, campus };
+    }
+  }
+  return undefined;
+}
