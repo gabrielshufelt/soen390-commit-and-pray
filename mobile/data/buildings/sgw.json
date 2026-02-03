@@ -83,17 +83,16 @@
         "wikidata": "Q20006830",
         "wikipedia": "en:Henry F. Hall Building",
         "code": "H",
-
-        "amenities": {
-          "info": true,
-          "atm": true,
-          "bike_parking": true,
-          "internet": true
-        },
-        "accessibility:": {
-          "accessible_entrance": true,
-          "accessible_elevator:": true
-        }
+        "amenities": [
+          "info",
+          "atm",
+          "bike_parking",
+          "internet"
+        ],
+        "accessibility": [
+          "accessible_entrance",
+          "accessible_elevator"
+        ]
       }
     },
     {
@@ -238,18 +237,17 @@
         "name": "LB - J. W. McConnell Building (Library Building)",
         "ref": "LB",
         "code": "LB",
-
-        "amenities": {
-          "info": true,
-          "atm": true,
-          "bike_parking": true,
-          "car_parking": true,
-          "internet": true
-        },
-        "accessibility:": {
-          "accessible_entrance": true,
-          "accessible_elevator:": true
-        }
+        "amenities": [
+          "info",
+          "atm",
+          "bike_parking",
+          "car_parking",
+          "internet"
+        ],
+        "accessibility": [
+          "accessible_entrance",
+          "accessible_elevator"
+        ]
       }
     },
     {
@@ -350,14 +348,13 @@
         "name": "MB - John Molson School of Business",
         "ref": "MB",
         "code": "MB",
-
-        "amenities": {
-          "internet": true
-        },
-        "accessibility:": {
-          "accessible_entrance": true,
-          "accessible_elevator:": true
-        }
+        "amenities": [
+          "internet"
+        ],
+        "accessibility": [
+          "accessible_entrance",
+          "accessible_elevator"
+        ]
       }
     },
     {
@@ -430,16 +427,15 @@
         "name": "GM - Guy Metro Building",
         "ref": "GM",
         "code": "GM",
-
-        "amenities": {
-          "info": true,
-          "bike_parking": true,
-          "internet": true
-        },
-        "accessibility:": {
-          "accessible_entrance": true,
-          "accessible_elevator:": true
-        }
+        "amenities": [
+          "info",
+          "bike_parking",
+          "internet"
+        ],
+        "accessibility": [
+          "accessible_entrance",
+          "accessible_elevator"
+        ]
       }
     },
     {
@@ -508,14 +504,11 @@
         "name": "TD - TD Bank Building",
         "ref": "TD",
         "code": "TD",
-
-        "amenities": {
-          "atm": true,
-          "internet": true
-        },
-        "accessibility:": {
-
-        }
+        "amenities": [
+          "atm",
+          "internet"
+        ],
+        "accessibility": []
       }
     },
     {
@@ -589,18 +582,17 @@
         "ref": "FG",
         "roof:levels": "0",
         "code": "FG",
-
-        "amenities": {
-          "info": true,
-          "atm": true,
-          "internet": true
-        },
-        "accessibility:": {
-          "wheelchair_lift": true,
-          "accessibility_ramp": true,
-          "accessible_entrance": true,
-          "accessible_elevator:": true
-        }
+        "amenities": [
+          "info",
+          "atm",
+          "internet"
+        ],
+        "accessibility": [
+          "wheelchair_lift",
+          "accessibility_ramp",
+          "accessible_entrance",
+          "accessible_elevator"
+        ]
       }
     },
     {
@@ -713,16 +705,15 @@
         "name": "FB - Faubourg Tower",
         "ref": "FB",
         "code": "FB",
-
-        "amenities": {
-          "car_parking": true,
-          "internet": true
-        },
-        "accessibility:": {
-          "wheelchair_lift": true,
-          "accessible_entrance": true,
-          "accessible_elevator:": true
-        }
+        "amenities": [
+          "car_parking",
+          "internet"
+        ],
+        "accessibility": [
+          "wheelchair_lift",
+          "accessible_entrance",
+          "accessible_elevator"
+        ]
       }
     },
     {
@@ -848,16 +839,15 @@
         "name": "EV - Engineering, Computer Science and Visual Arts Integrated Complex",
         "ref": "EV",
         "code": "EV",
-
-        "amenities": {
-          "info": true,
-          "atm": true,
-          "internet": true
-        },
-        "accessibility:": {
-          "accessible_entrance": true,
-          "accessible_elevator:": true
-        }
+        "amenities": [
+          "info",
+          "atm",
+          "internet"
+        ],
+        "accessibility": [
+          "accessible_entrance",
+          "accessible_elevator"
+        ]
       }
     },
     {
@@ -922,16 +912,15 @@
         "ref": "VA",
         "source": "Bing",
         "code": "VA",
-
-        "amenities": {
-          "info": true,
-          "bike_parking": true,
-          "internet": true
-        },
-        "accessibility:": {
-          "accessible_entrance": true,
-          "accessible_elevator:": true
-        }
+        "amenities": [
+          "info",
+          "bike_parking",
+          "internet"
+        ],
+        "accessibility": [
+          "accessible_entrance",
+          "accessible_elevator"
+        ]
       }
     },
     {
@@ -985,14 +974,13 @@
         "ref": "LS",
         "roof:shape": "flat",
         "code": "LS",
-
-        "amenities": {
-          "internet": true
-        },
-        "accessibility:": {
-          "accessibility_ramp": true,
-          "accessible_entrance": true
-        }
+        "amenities": [
+          "internet"
+        ],
+        "accessibility": [
+          "accessibility_ramp",
+          "accessible_entrance"
+        ]
       }
     },
     {
@@ -1632,15 +1620,14 @@
         "source": "CanVec_Import_2009",
         "wikidata": "Q3001745",
         "code": "GN",
-
-        "amenities": {
-          "internet": true
-        },
-        "accessibility:": {
-          "accessibility_ramp": true,
-          "accessible_entrance": true,
-          "accessible_elevator:": true
-        }
+        "amenities": [
+          "internet"
+        ],
+        "accessibility": [
+          "accessibility_ramp",
+          "accessible_entrance",
+          "accessible_elevator"
+        ]
       }
     }
   ]

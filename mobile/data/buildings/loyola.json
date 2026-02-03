@@ -226,15 +226,14 @@
         "name": "Richard J Renaud Science Complex (SP)",
         "source": "CanVec_Import_2009",
         "code": "SP",
-
-        "amenities": {
-          "info": true
-        },
-        "accessibility:": {
-          "accessibility_ramp": true,
-          "accessible_entrance": true,
-          "accessible_elevator:": true
-        }
+        "amenities": [
+          "info"
+        ],
+        "accessibility": [
+          "accessibility_ramp",
+          "accessible_entrance",
+          "accessible_elevator"
+        ]
       }
     },
     {
@@ -380,14 +379,11 @@
         "source": "CanVec_Import_2009",
         "website": "http://www.concordia.ca/arts/venues/fc-smith-auditorium.html",
         "code": "FC",
-
-        "amenities": {
-
-        },
-        "accessibility:": {
-          "accessibility_ramp": true,
-          "accessible_entrance": true
-        }
+        "amenities": [],
+        "accessibility": [
+          "accessibility_ramp",
+          "accessible_entrance"
+        ]
       }
     },
     {
@@ -483,15 +479,14 @@
         "sport": "multi",
         "website": "http://www.concordia.ca/campus-life/recreation/facilities/athletic-complex.html",
         "code": "RA",
-
-        "amenities": {
-          "car_parking": true
-        },
-        "accessibility:": {
-          "wheelchair_lift": true,
-          "accessibility_ramp": true,
-          "accessible_entrance": true
-        }
+        "amenities": [
+          "car_parking"
+        ],
+        "accessibility": [
+          "wheelchair_lift",
+          "accessibility_ramp",
+          "accessible_entrance"
+        ]
       }
     },
     {
@@ -564,13 +559,8 @@
         "name": "Physical Services (PS)",
         "source": "CanVec_Import_2009",
         "code": "PS",
-
-        "amenities": {
-
-        },
-        "accessibility:": {
-          
-        }
+        "amenities": [],
+        "accessibility": []
       }
     },
     {
@@ -735,16 +725,13 @@
         "source": "CanVec_Import_2009",
         "website": "http://www.concordia.ca/artsci/coms.html",
         "code": "CJ",
-
-        "amenities": {
-
-        },
-        "accessibility:": {
-          "wheelchair_lift": true,
-          "accessibility_ramp": true,
-          "accessible_entrance": true,
-          "accessible_elevator:": true
-        }
+        "amenities": [],
+        "accessibility": [
+          "wheelchair_lift",
+          "accessibility_ramp",
+          "accessible_entrance",
+          "accessible_elevator"
+        ]
       }
     },
     {
@@ -825,14 +812,11 @@
         "name": "Student Centre (SC)",
         "source": "CanVec_Import_2009",
         "code": "SC",
-
-        "amenities": {
-
-        },
-        "accessibility:": {
-          "accessibility_ramp": true,
-          "accessible_entrance": true
-        }
+        "amenities": [],
+        "accessibility": [
+          "accessibility_ramp",
+          "accessible_entrance"
+        ]
       }
     },
     {
@@ -919,15 +903,14 @@
         "name": "Jesuit Residence (JR)",
         "website": "http://www.concordia.ca/students/housing/residences/jesuit-residence.html",
         "code": "JR",
-
-        "amenities": {
-          "car_parking": true
-        },
-        "accessibility:": {
-          "accessibility_ramp": true,
-          "accessible_entrance": true,
-          "accessible_elevator:": true
-        }
+        "amenities": [
+          "car_parking"
+        ],
+        "accessibility": [
+          "accessibility_ramp",
+          "accessible_entrance",
+          "accessible_elevator"
+        ]
       }
     },
     {
@@ -966,13 +949,10 @@
         "building:levels": "1",
         "name": "Solar House (SH)",
         "code": "SH",
-
-        "amenities": {
-
-        },
-        "accessibility:": {
-          "accessible_entrance": true
-        }
+        "amenities": [],
+        "accessibility": [
+          "accessible_entrance"
+        ]
       }
     },
     {
@@ -1013,13 +993,10 @@
         "building": "university",
         "name": "Concordia Terrebonne Building (TA)",
         "code": "TA",
-
-        "amenities": {
-          "car_parking": true
-        },
-        "accessibility:": {
-          
-        }
+        "amenities": [
+          "car_parking"
+        ],
+        "accessibility": []
       }
     },
     {
@@ -1086,14 +1063,11 @@
         "name": "Centre for Structural and Functional Genomics (GE)",
         "website": "http://www.concordia.ca/research/genomics.html",
         "code": "GE",
-
-        "amenities": {
-
-        },
-        "accessibility:": {
-          "accessible_entrance": true,
-          "accessible_elevator:": true
-        }
+        "amenities": [],
+        "accessibility": [
+          "accessible_entrance",
+          "accessible_elevator"
+        ]
       }
     },
     {
@@ -1140,16 +1114,15 @@
         "name": "PERFORM Centre (PC)",
         "website": "http://www.concordia.ca/research/perform.html",
         "code": "PC",
-
-        "amenities": {
-          "info": true,
-          "car_parking": true
-        },
-        "accessibility:": {
-          "accessibility_ramp": true,
-          "accessible_entrance": true,
-          "accessible_elevator:": true
-        }
+        "amenities": [
+          "info",
+          "car_parking"
+        ],
+        "accessibility": [
+          "accessibility_ramp",
+          "accessible_entrance",
+          "accessible_elevator"
+        ]
       }
     },
     {
@@ -1211,13 +1184,12 @@
         "building": "university",
         "name": "Hingston Hall (HC)",
         "code": "HC",
-
-        "amenities": {
-          "car_parking": true
-        },
-        "accessibility:": {
-          "accessible_entrance": true
-        }
+        "amenities": [
+          "car_parking"
+        ],
+        "accessibility": [
+          "accessible_entrance"
+        ]
       }
     },
     {
@@ -1261,13 +1233,8 @@
         "name": "Concordia BB Annex (BB)",
         "website": "https://lesptitsprofs.wordpress.com/",
         "code": "BB",
-
-        "amenities": {
-
-        },
-        "accessibility:": {
-          
-        }
+        "amenities": [],
+        "accessibility": []
       }
     },
     {
@@ -1311,13 +1278,8 @@
         "name": "Concordia BH Annex (BH)",
         "website": "https://lesptitsprofs.wordpress.com/",
         "code": "BH",
-
-        "amenities": {
-
-        },
-        "accessibility:": {
-          
-        }
+        "amenities": [],
+        "accessibility": []
       }
     },
     {
@@ -1373,13 +1335,10 @@
         "name": "Oscar Peterson Concert Hall (PT)",
         "website": "http://www.concordia.ca/arts/venues/oscar-peterson.html",
         "code": "PT",
-
-        "amenities": {
-
-        },
-        "accessibility:": {
-          "accessible_entrance": true
-        }
+        "amenities": [],
+        "accessibility": [
+          "accessible_entrance"
+        ]
       }
     },
     {
@@ -1478,14 +1437,11 @@
         "name": "Loyola Jesuit Hall and Conference Center (RF)",
         "website": "http://www.concordia.ca/hospitality/hospitality-venues/loyola-jesuit-hall-conference-centre.html",
         "code": "RF",
-
-        "amenities": {
-          "wheelchair_lift": true,
-          "accessible_entrance": true
-        },
-        "accessibility:": {
-          
-        }
+        "amenities": [],
+        "accessibility": [
+          "wheelchair_lift",
+          "accessible_entrance"
+        ]
       }
     },
     {
@@ -1604,16 +1560,15 @@
         "name": "Central Building (CC)",
         "website": "csu.concordia.ca",
         "code": "CC",
-
-        "amenities": {
-          "info": true,
-          "bike_parking": true
-        },
-        "accessibility:": {
-          "wheelchair_lift": true,
-          "accessible_entrance": true,
-          "accessible_elevator:": true
-        }
+        "amenities": [
+          "info",
+          "bike_parking"
+        ],
+        "accessibility": [
+          "wheelchair_lift",
+          "accessible_entrance",
+          "accessible_elevator"
+        ]
       }
     },
     {
@@ -1857,17 +1812,16 @@
         "name": "Administration Building (AD)",
         "website": "http://www.concordia.ca/artsci.html",
         "code": "AD",
-
-        "amenities": {
-          "info": true,
-          "bike_parking": true,
-          "car_parking": true
-        },
-        "accessibility:": {
-          "accessibility_ramp": true,
-          "accessible_entrance": true,
-          "accessible_elevator:": true
-        }
+        "amenities": [
+          "info",
+          "bike_parking",
+          "car_parking"
+        ],
+        "accessibility": [
+          "accessibility_ramp",
+          "accessible_entrance",
+          "accessible_elevator"
+        ]
       }
     },
     {
@@ -1941,14 +1895,11 @@
         "building": "university",
         "name": "Applied Science Hub (HU)",
         "code": "HU",
-
-        "amenities": {
-
-        },
-        "accessibility:": {
-          "accessible_entrance": true,
-          "accessible_elevator:": true
-        }
+        "amenities": [],
+        "accessibility": [
+          "accessible_entrance",
+          "accessible_elevator"
+        ]
       }
     },
     {
@@ -1989,16 +1940,15 @@
         "@id": "way/1362712744",
         "building": "university",
         "name": "Concordia Loyola Campus Central Building",
-
-        "amenities": {
-          "info": true,
-          "bike_parking": true
-        },
-        "accessibility:": {
-          "wheelchair_lift": true,
-          "accessible_entrance": true,
-          "accessible_elevator:": true
-        }
+        "amenities": [
+          "info",
+          "bike_parking"
+        ],
+        "accessibility": [
+          "wheelchair_lift",
+          "accessible_entrance",
+          "accessible_elevator"
+        ]
       }
     },
     {
@@ -2111,14 +2061,13 @@
         "@id": "way/1362724471",
         "building": "university",
         "name": "Concordia Vanier Library",
-
-        "amenities": {
-          "info": true
-        },
-        "accessibility:": {
-          "accessible_entrance": true,
-          "accessible_elevator:": true
-        }
+        "amenities": [
+          "info"
+        ],
+        "accessibility": [
+          "accessible_entrance",
+          "accessible_elevator"
+        ]
       }
     }
   ]
