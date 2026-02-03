@@ -32,7 +32,6 @@ The following tools and dependencies are required to run this project:
 
 ## FASTAPI INSTALLATION (UNIX)
 If FastAPI is not installed, you can set it up on Unix-based systems with:
-
 ```
 sudo apt install -y python3 python3-venv python3-pip
 cd backend
@@ -42,7 +41,7 @@ pip install "fastapi[standard]"
 cd ..
 ```
   
-## INSTALLATION (to improve: must add backend and frontend dependencies)
+## INSTALLATION
 1. Clone the repository:
    `git clone https://github.com/gabrielshufelt/soen390-commit-and-pray.git`
 
@@ -50,15 +49,19 @@ cd ..
    `cd soen390-commit-and-pray`
 
 3. Install frontend (mobile app) dependencies:
-   `cd mobile
+   ```
+   cd mobile
    npm install
    npm install expo
-   cd ..`
+   cd ..
+   ```
 
 4. Install backend dependencies:
-   `cd backend
+   ```
+   cd backend
    pip install -r requirements.txt
-   cd ..`
+   cd ..
+   ```
    
 ## RUNNING THE APPLICATION
 ### FRONTEND (MOBILE APP)
