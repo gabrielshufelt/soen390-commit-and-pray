@@ -1,5 +1,5 @@
-import React, { useMemo } from "react";
-import MapView, { Marker, Polygon } from 'react-native-maps';
+import React, { useMemo, useState } from "react";
+import MapView, { Marker, Polygon, Region } from 'react-native-maps';
 import { StyleSheet, View, Text } from "react-native";
 import { useTheme } from '../../context/ThemeContext';
 import { CAMPUSES, DEFAULT_CAMPUS } from '../../constants/campusLocations';
@@ -24,6 +24,9 @@ const getPolygonCentroid = (coordinates: [number, number][]) => {
   };
 };
 
+// Zoom threshold for showing labels (smaller = more zoomed in)
+const LABEL_ZOOM_THRESHOLD = 0.015;
+
 export default function Index() {
   const { colorScheme } = useTheme();
   const isDark = colorScheme === 'dark';
@@ -32,6 +35,13 @@ export default function Index() {
   ];
 
   const defaultCampus = CAMPUSES[DEFAULT_CAMPUS];
+  const [showLabels, setShowLabels] = useState(
+    defaultCampus.initialRegion.latitudeDelta <= LABEL_ZOOM_THRESHOLD
+  );
+
+  const handleRegionChange = (region: Region) => {
+    setShowLabels(region.latitudeDelta <= LABEL_ZOOM_THRESHOLD);
+  };
 
   const buildingPolygons = useMemo(
     () =>
@@ -54,19 +64,24 @@ export default function Index() {
 
   const buildingLabels = useMemo(
     () =>
-      campusBuildingsData.map((building) => {
-        const centroid = getPolygonCentroid(building.geometry.coordinates[0]);
-        return (
-          <Marker
-            key={`label-${building.id}`}
-            coordinate={centroid}
-            anchor={{ x: 0.5, y: 0.5 }}
-            tracksViewChanges={false}
-          >
-            <Text style={styles.buildingLabel}>{building.properties.code}</Text>
-          </Marker>
-        );
-      }),
+      campusBuildingsData
+        .filter((building) => (building.properties as { code?: string }).code)
+        .map((building) => {
+          const centroid = getPolygonCentroid(building.geometry.coordinates[0]);
+          const code = (building.properties as { code: string }).code;
+          return (
+            <Marker
+              key={`label-${building.id}`}
+              coordinate={centroid}
+              anchor={{ x: 0.5, y: 0.5 }}
+              tracksViewChanges={false}
+            >
+              <View style={styles.labelContainer}>
+                <Text style={styles.buildingLabel}>{code}</Text>
+              </View>
+            </Marker>
+          );
+        }),
     []
   );
 
@@ -76,9 +91,10 @@ export default function Index() {
         style={styles.map}
         initialRegion={defaultCampus.initialRegion}
         userInterfaceStyle={isDark ? 'dark' : 'light'}
+        onRegionChangeComplete={handleRegionChange}
       >
         {buildingPolygons}
-        {buildingLabels}
+        {showLabels && buildingLabels}
         {Object.entries(CAMPUSES).map(([key, campus]) => (
           <Marker
             key={key}
@@ -98,6 +114,9 @@ const styles = StyleSheet.create({
   map: {
     width: '100%',
     height: '100%',
+  },
+  labelContainer: {
+    backgroundColor: 'transparent',
   },
   buildingLabel: {
     color: 'white',
