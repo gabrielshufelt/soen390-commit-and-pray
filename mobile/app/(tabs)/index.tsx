@@ -40,6 +40,8 @@ export default function Index() {
   const [showLabels, setShowLabels] = useState(
     defaultCampus.initialRegion.latitudeDelta <= LABEL_ZOOM_THRESHOLD
   );
+
+  // Selectable building for future implementation; can remove this comment later
   const [selectedBuilding, setSelectedBuilding] = useState<string | null>(null);
 
   const handleRegionChange = (region: Region) => {
@@ -67,31 +69,31 @@ export default function Index() {
 
         return (
           <React.Fragment key={building.id}>
-          <Polygon
-            coordinates={building.geometry.coordinates[0].map(
-              ([longitude, latitude]) => ({
-                latitude,
-                longitude,
-              })
-            )}
-            fillColor={
-              selectedBuilding === building.id
-                ? 'rgba(33, 150, 243, 0.4)' // Highlight color when selected
-                : BUILDING_POLYGON_COLORS.fillColor
-            }
-            strokeColor={
-              selectedBuilding === building.id
-                ? '#2196F3'
-                : BUILDING_POLYGON_COLORS.strokeColor
-            }
-            strokeWidth={BUILDING_POLYGON_COLORS.strokeWidth}
-            tappable
-            onPress={() => setSelectedBuilding(building.id)}
-          />
-          <Marker
-            coordinate={centroid}
-            opacity={0}
-            onPress={() => setSelectedBuilding(building.id)}
+            <Polygon
+              coordinates={building.geometry.coordinates[0].map(
+                ([longitude, latitude]) => ({
+                  latitude,
+                  longitude,
+                })
+              )}
+              fillColor={
+                selectedBuilding === building.id
+                  ? 'rgba(33, 150, 243, 0.4)' // Highlight color when selected
+                  : BUILDING_POLYGON_COLORS.fillColor
+              }
+              strokeColor={
+                selectedBuilding === building.id
+                  ? '#2196F3'
+                  : BUILDING_POLYGON_COLORS.strokeColor
+              }
+              strokeWidth={BUILDING_POLYGON_COLORS.strokeWidth}
+              tappable
+              onPress={() => setSelectedBuilding(building.id)}
+            />
+            <Marker
+              coordinate={centroid}
+              opacity={0}
+              onPress={() => setSelectedBuilding(building.id)}
             >
               <Callout>
                 <View style={styles.calloutContainer}>
@@ -99,7 +101,7 @@ export default function Index() {
                   <Text style={styles.calloutDescription}>{name}</Text>
                 </View>
               </Callout>
-          </Marker>
+            </Marker>
           </React.Fragment>
         );
       }),
