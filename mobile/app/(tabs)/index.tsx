@@ -1,11 +1,28 @@
 import React, { useMemo } from "react";
 import MapView, { Marker, Polygon } from 'react-native-maps';
-import { StyleSheet, View } from "react-native";
+import { StyleSheet, View, Text } from "react-native";
 import { useTheme } from '../../context/ThemeContext';
 import { CAMPUSES, DEFAULT_CAMPUS } from '../../constants/campusLocations';
 import { BUILDING_POLYGON_COLORS } from '../../constants/mapColors';
 import sgwBuildingsData from '../../data/buildings/sgw.json';
 import loyolaBuildingsData from '../../data/buildings/loyola.json';
+
+// Calculate the center of a polygon
+const getPolygonCentroid = (coordinates: [number, number][]) => {
+  let latSum = 0;
+  let lngSum = 0;
+  const n = coordinates.length;
+
+  for (const [lng, lat] of coordinates) {
+    latSum += lat;
+    lngSum += lng;
+  }
+
+  return {
+    latitude: latSum / n,
+    longitude: lngSum / n,
+  };
+};
 
 export default function Index() {
   const { colorScheme } = useTheme();
@@ -35,6 +52,24 @@ export default function Index() {
     []
   );
 
+  const buildingLabels = useMemo(
+    () =>
+      campusBuildingsData.map((building) => {
+        const centroid = getPolygonCentroid(building.geometry.coordinates[0]);
+        return (
+          <Marker
+            key={`label-${building.id}`}
+            coordinate={centroid}
+            anchor={{ x: 0.5, y: 0.5 }}
+            tracksViewChanges={false}
+          >
+            <Text style={styles.buildingLabel}>{building.properties.code}</Text>
+          </Marker>
+        );
+      }),
+    []
+  );
+
   return (
     <View style={styles.container}>
       <MapView
@@ -43,6 +78,7 @@ export default function Index() {
         userInterfaceStyle={isDark ? 'dark' : 'light'}
       >
         {buildingPolygons}
+        {buildingLabels}
         {Object.entries(CAMPUSES).map(([key, campus]) => (
           <Marker
             key={key}
@@ -62,5 +98,13 @@ const styles = StyleSheet.create({
   map: {
     width: '100%',
     height: '100%',
-  }
+  },
+  buildingLabel: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 12,
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 2,
+  },
 });
