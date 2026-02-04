@@ -77,7 +77,7 @@
         "source": "CanVec_Import_2009",
         "code": "SP",
 
-        "accessibility:": [
+        "accessibility": [
           "accessibility_ramp",
           "accessible_entrance",
           "accessible_elevator"
@@ -135,7 +135,7 @@
         "website": "http://www.concordia.ca/arts/venues/fc-smith-auditorium.html",
         "code": "FC",
 
-        "accessibility:": [
+        "accessibility": [
           "accessibility_ramp",
           "accessible_entrance"
         ]
@@ -187,7 +187,7 @@
         "amenities": [
           "car_parking"
         ],
-        "accessibility:": [
+        "accessibility": [
           "wheelchair_lift",
           "accessibility_ramp",
           "accessible_entrance"
@@ -282,7 +282,7 @@
         "website": "http://www.concordia.ca/artsci/coms.html",
         "code": "CJ",
 
-        "accessibility:": [
+        "accessibility": [
           "wheelchair_lift",
           "accessibility_ramp",
           "accessible_entrance",
@@ -324,7 +324,7 @@
         "source": "CanVec_Import_2009",
         "code": "SC",
 
-        "accessibility:": [
+        "accessibility": [
           "accessibility_ramp",
           "accessible_entrance"
         ]
@@ -367,7 +367,7 @@
         "amenities": [
           "car_parking"
         ],
-        "accessibility:": [
+        "accessibility": [
           "accessibility_ramp",
           "accessible_entrance",
           "accessible_elevator"
@@ -396,7 +396,7 @@
         "name": "Solar House (SH)",
         "code": "SH",
 
-        "accessibility:": [
+        "accessibility": [
           "accessible_entrance"
         ]
       }
@@ -459,7 +459,7 @@
         "website": "http://www.concordia.ca/research/genomics.html",
         "code": "GE",
 
-        "accessibility:": [
+        "accessibility": [
           "accessible_entrance",
           "accessible_elevator"
         ]
@@ -496,7 +496,7 @@
           "info",
           "car_parking"
         ],
-        "accessibility:": [
+        "accessibility": [
           "accessibility_ramp",
           "accessible_entrance",
           "accessible_elevator"
@@ -533,7 +533,7 @@
         "amenities": [
           "car_parking"
         ],
-        "accessibility:": [
+        "accessibility": [
           "accessible_entrance"
         ]
       }
@@ -621,7 +621,7 @@
         "website": "http://www.concordia.ca/arts/venues/oscar-peterson.html",
         "code": "PT",
 
-        "accessibility:": [
+        "accessibility": [
           "accessible_entrance"
         ]
       }
@@ -715,7 +715,7 @@
           "info",
           "bike_parking"
         ],
-        "accessibility:": [
+        "accessibility": [
           "wheelchair_lift",
           "accessible_entrance",
           "accessible_elevator"
@@ -804,7 +804,7 @@
           "bike_parking",
           "car_parking"
         ],
-        "accessibility:": [
+        "accessibility": [
           "accessibility_ramp",
           "accessible_entrance",
           "accessible_elevator"
@@ -841,7 +841,7 @@
         "name": "Applied Science Hub (HU)",
         "code": "HU",
 
-        "accessibility:": [
+        "accessibility": [
           "accessible_entrance",
           "accessible_elevator"
         ]
@@ -872,7 +872,7 @@
           "info",
           "bike_parking"
         ],
-        "accessibility:": [
+        "accessibility": [
           "wheelchair_lift",
           "accessible_entrance",
           "accessible_elevator"
@@ -921,7 +921,7 @@
         "amenities": [
           "info"
         ],
-        "accessibility:": [
+        "accessibility": [
           "accessible_entrance",
           "accessible_elevator"
         ]
