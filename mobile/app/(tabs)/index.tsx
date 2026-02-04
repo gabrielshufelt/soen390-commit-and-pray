@@ -1,5 +1,5 @@
 import React, { useMemo, useRef, useEffect, useState } from "react";
-import MapView, { Marker, Polygon, Region } from 'react-native-maps';
+import MapView, { Marker, Polygon, Region, Callout } from 'react-native-maps';
 import { StyleSheet, View, Text } from "react-native";
 import { useTheme } from '../../context/ThemeContext';
 import { CAMPUSES, DEFAULT_CAMPUS } from '../../constants/campusLocations';
@@ -40,40 +40,70 @@ export default function Index() {
   const [showLabels, setShowLabels] = useState(
     defaultCampus.initialRegion.latitudeDelta <= LABEL_ZOOM_THRESHOLD
   );
+  const [selectedBuilding, setSelectedBuilding] = useState<string | null>(null);
 
   const handleRegionChange = (region: Region) => {
     setShowLabels(region.latitudeDelta <= LABEL_ZOOM_THRESHOLD);
   };
 
   const selectedCampus = useMemo(() => {
-      return CAMPUSES[campusKey] ?? CAMPUSES[DEFAULT_CAMPUS];
-    }, [campusKey]
+    return CAMPUSES[campusKey] ?? CAMPUSES[DEFAULT_CAMPUS];
+  }, [campusKey]
   );
 
   const mapRef = useRef<MapView>(null);
 
   useEffect(() => {
-      mapRef.current?.animateToRegion(selectedCampus.initialRegion, 600);
-    }, [selectedCampus]
+    mapRef.current?.animateToRegion(selectedCampus.initialRegion, 600);
+  }, [selectedCampus]
   );
 
   const buildingPolygons = useMemo(
     () =>
-      campusBuildingsData.map((building) => (
-        <Polygon
-          key={building.id}
-          coordinates={building.geometry.coordinates[0].map(
-            ([longitude, latitude]) => ({
-              latitude,
-              longitude,
-            })
-          )}
-          fillColor={BUILDING_POLYGON_COLORS.fillColor}
-          strokeColor={BUILDING_POLYGON_COLORS.strokeColor}
-          strokeWidth={BUILDING_POLYGON_COLORS.strokeWidth}
-        />
-      )),
-    []
+      campusBuildingsData.map((building) => {
+        const centroid = getPolygonCentroid(building.geometry.coordinates[0]);
+        const code = (building.properties as { code?: string }).code || 'Unknown';
+        const name = (building.properties as { name?: string }).name || 'Building';
+
+        return (
+          <React.Fragment key={building.id}>
+          <Polygon
+            coordinates={building.geometry.coordinates[0].map(
+              ([longitude, latitude]) => ({
+                latitude,
+                longitude,
+              })
+            )}
+            fillColor={
+              selectedBuilding === building.id
+                ? 'rgba(33, 150, 243, 0.4)' // Highlight color when selected
+                : BUILDING_POLYGON_COLORS.fillColor
+            }
+            strokeColor={
+              selectedBuilding === building.id
+                ? '#2196F3'
+                : BUILDING_POLYGON_COLORS.strokeColor
+            }
+            strokeWidth={BUILDING_POLYGON_COLORS.strokeWidth}
+            tappable
+            onPress={() => setSelectedBuilding(building.id)}
+          />
+          <Marker
+            coordinate={centroid}
+            opacity={0}
+            onPress={() => setSelectedBuilding(building.id)}
+            >
+              <Callout>
+                <View style={styles.calloutContainer}>
+                  <Text style={styles.calloutTitle}>{code}</Text>
+                  <Text style={styles.calloutDescription}>{name}</Text>
+                </View>
+              </Callout>
+          </Marker>
+          </React.Fragment>
+        );
+      }),
+    [selectedBuilding]
   );
 
   const buildingLabels = useMemo(
@@ -119,8 +149,8 @@ export default function Index() {
         ))}
       </MapView>
       <CampusToggle
-         selectedCampus={campusKey}
-         onCampusChange={setCampusKey}
+        selectedCampus={campusKey}
+        onCampusChange={setCampusKey}
       />
 
     </View>
@@ -131,9 +161,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1
   },
-   mapContainer: {
-       flex: 1
-   },
+  mapContainer: {
+    flex: 1
+  },
   map: {
     width: '100%',
     height: '100%',
@@ -148,5 +178,18 @@ const styles = StyleSheet.create({
     textShadowColor: 'rgba(0, 0, 0, 0.75)',
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 2,
+  },
+  calloutContainer: {
+    minWidth: 150,
+    padding: 10,
+  },
+  calloutTitle: {
+    fontWeight: 'bold',
+    fontSize: 16,
+    marginBottom: 4,
+  },
+  calloutDescription: {
+    fontSize: 14,
+    color: '#666',
   },
 });
