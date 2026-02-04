@@ -1,4 +1,4 @@
-export interface CampusLocation {
+ export interface CampusLocation {
   name: string;
   coordinate: {
     latitude: number;

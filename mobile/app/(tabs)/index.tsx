@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useRef, useEffect, useState } from "react";
 import MapView, { Marker, Polygon, Region } from 'react-native-maps';
 import { StyleSheet, View, Text } from "react-native";
 import { useTheme } from '../../context/ThemeContext';
@@ -6,6 +6,7 @@ import { CAMPUSES, DEFAULT_CAMPUS } from '../../constants/campusLocations';
 import { BUILDING_POLYGON_COLORS } from '../../constants/mapColors';
 import sgwBuildingsData from '../../data/buildings/sgw.json';
 import loyolaBuildingsData from '../../data/buildings/loyola.json';
+import CampusToggle from '../../components/campusToggle';
 
 // Calculate the center of a polygon
 const getPolygonCentroid = (coordinates: [number, number][]) => {
@@ -35,6 +36,7 @@ export default function Index() {
   ];
 
   const defaultCampus = CAMPUSES[DEFAULT_CAMPUS];
+  const [campusKey, setCampusKey] = useState(DEFAULT_CAMPUS);
   const [showLabels, setShowLabels] = useState(
     defaultCampus.initialRegion.latitudeDelta <= LABEL_ZOOM_THRESHOLD
   );
@@ -42,6 +44,18 @@ export default function Index() {
   const handleRegionChange = (region: Region) => {
     setShowLabels(region.latitudeDelta <= LABEL_ZOOM_THRESHOLD);
   };
+
+  const selectedCampus = useMemo(() => {
+      return CAMPUSES[campusKey] ?? CAMPUSES[DEFAULT_CAMPUS];
+    }, [campusKey]
+  );
+
+  const mapRef = useRef<MapView>(null);
+
+  useEffect(() => {
+      mapRef.current?.animateToRegion(selectedCampus.initialRegion, 600);
+    }, [selectedCampus]
+  );
 
   const buildingPolygons = useMemo(
     () =>
@@ -88,8 +102,9 @@ export default function Index() {
   return (
     <View style={styles.container}>
       <MapView
+        ref={mapRef}
         style={styles.map}
-        initialRegion={defaultCampus.initialRegion}
+        initialRegion={selectedCampus.initialRegion}
         userInterfaceStyle={isDark ? 'dark' : 'light'}
         onRegionChangeComplete={handleRegionChange}
       >
@@ -103,6 +118,11 @@ export default function Index() {
           />
         ))}
       </MapView>
+      <CampusToggle
+         selectedCampus={campusKey}
+         onCampusChange={setCampusKey}
+      />
+
     </View>
   );
 }
@@ -111,6 +131,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1
   },
+   mapContainer: {
+       flex: 1
+   },
   map: {
     width: '100%',
     height: '100%',
