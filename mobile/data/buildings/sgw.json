@@ -51,7 +51,7 @@
           "bike_parking",
           "internet"
         ],
-        "accessibility:": [
+        "accessibility": [
           "accessible_entrance",
           "accessible_elevator"
         ]
@@ -117,7 +117,7 @@
           "car_parking",
           "internet"
         ],
-        "accessibility:": [
+        "accessibility": [
           "accessible_entrance",
           "accessible_elevator"
         ]
@@ -165,7 +165,7 @@
         "amenities": [
           "internet"
         ],
-        "accessibility:": [
+        "accessibility": [
           "accessible_entrance",
           "accessible_elevator"
         ]
@@ -211,7 +211,7 @@
           "bike_parking",
           "internet"
         ],
-        "accessibility:": [
+        "accessibility": [
           "accessible_entrance",
           "accessible_elevator"
         ]
@@ -292,7 +292,7 @@
           "atm",
           "internet"
         ],
-        "accessibility:": [
+        "accessibility": [
           "wheelchair_lift",
           "accessibility_ramp",
           "accessible_entrance",
@@ -346,7 +346,7 @@
           "car_parking",
           "internet"
         ],
-        "accessibility:": [
+        "accessibility": [
           "wheelchair_lift",
           "accessible_entrance",
           "accessible_elevator"
@@ -404,7 +404,7 @@
           "atm",
           "internet"
         ],
-        "accessibility:": [
+        "accessibility": [
           "accessible_entrance",
           "accessible_elevator"
         ]
@@ -445,7 +445,7 @@
           "bike_parking",
           "internet"
         ],
-        "accessibility:": [
+        "accessibility": [
           "accessible_entrance",
           "accessible_elevator"
         ]
@@ -485,7 +485,7 @@
         "amenities": [
           "internet"
         ],
-        "accessibility:": [
+        "accessibility": [
           "accessibility_ramp",
           "accessible_entrance"
         ]
@@ -673,7 +673,7 @@
         "amenities": [
           "internet"
         ],
-        "accessibility:": [
+        "accessibility": [
           "accessibility_ramp",
           "accessible_entrance",
           "accessible_elevator"
