@@ -663,7 +663,7 @@
         "website": "http://www.concordia.ca/hospitality/hospitality-venues/loyola-jesuit-hall-conference-centre.html",
         "code": "RF",
 
-        "amenities": [
+        "accessibility": [
           "wheelchair_lift",
           "accessible_entrance"
         ]
