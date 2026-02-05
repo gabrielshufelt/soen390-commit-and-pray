@@ -7,6 +7,7 @@ import { BUILDING_POLYGON_COLORS } from '../../constants/mapColors';
 import sgwBuildingsData from '../../data/buildings/sgw.json';
 import loyolaBuildingsData from '../../data/buildings/loyola.json';
 import CampusToggle from '../../components/campusToggle';
+import BuildingModal from '../../components/buildingModal';
 
 // Calculate the center of a polygon
 const getPolygonCentroid = (coordinates: [number, number][]) => {
@@ -43,9 +44,20 @@ export default function Index() {
 
   // Selectable building for future implementation; can remove this comment later
   const [selectedBuilding, setSelectedBuilding] = useState<string | null>(null);
+  const [selectedBuildingData, setSelectedBuildingData] = useState<any>(null);
 
   const handleRegionChange = (region: Region) => {
     setShowLabels(region.latitudeDelta <= LABEL_ZOOM_THRESHOLD);
+  };
+
+  const handleBuildingSelect = (buildingId: string, buildingData: any) => {
+    setSelectedBuilding(buildingId);
+    setSelectedBuildingData(buildingData);
+  };
+
+  const handleCloseModal = () => {
+    setSelectedBuilding(null);
+    setSelectedBuildingData(null);
   };
 
   const selectedCampus = useMemo(() => {
@@ -88,12 +100,12 @@ export default function Index() {
               }
               strokeWidth={BUILDING_POLYGON_COLORS.strokeWidth}
               tappable
-              onPress={() => setSelectedBuilding(building.id)}
+              onPress={() => handleBuildingSelect(building.id, building)}
             />
-            <Marker
+            {/* <Marker
               coordinate={centroid}
               opacity={0}
-              onPress={() => setSelectedBuilding(building.id)}
+              onPress={() => handleBuildingSelect(building.id, building)}
             >
               <Callout>
                 <View style={styles.calloutContainer}>
@@ -101,7 +113,7 @@ export default function Index() {
                   <Text style={styles.calloutDescription}>{name}</Text>
                 </View>
               </Callout>
-            </Marker>
+            </Marker> */}
           </React.Fragment>
         );
       }),
@@ -154,7 +166,11 @@ export default function Index() {
         selectedCampus={campusKey}
         onCampusChange={setCampusKey}
       />
-
+      <BuildingModal
+        visible={!!selectedBuilding}
+        building={selectedBuildingData}
+        onClose={handleCloseModal}
+      />
     </View>
   );
 }
