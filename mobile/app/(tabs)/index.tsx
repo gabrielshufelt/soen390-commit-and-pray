@@ -9,6 +9,8 @@ import loyolaBuildingsData from '../../data/buildings/loyola.json';
 import CampusToggle from '../../components/campusToggle';
 import BuildingModal from '../../components/buildingModal';
 
+const HIGHLIGHT_COLOR = 'rgba(33, 150, 243, 0.4)'; // Light blue with transparency
+
 // Calculate the center of a polygon
 const getPolygonCentroid = (coordinates: [number, number][]) => {
   let latSum = 0;
@@ -90,7 +92,7 @@ export default function Index() {
               )}
               fillColor={
                 selectedBuilding === building.id
-                  ? 'rgba(33, 150, 243, 0.4)' // Highlight color when selected
+                  ? HIGHLIGHT_COLOR // Highlight color when selected
                   : BUILDING_POLYGON_COLORS.fillColor
               }
               strokeColor={
