@@ -53,7 +53,6 @@ export function useWatchLocation(options: UseWatchLocationOptions = {}) {
         
         if (isMounted) {
           setLocationState({ location, loading: false, error: null });
-          console.log('Location updated:', location.coords);
         }
       } catch (error) {
         console.error('Error updating location:', error);

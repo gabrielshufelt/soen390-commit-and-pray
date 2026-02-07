@@ -28,14 +28,12 @@ export function useLocationPermissions() {
         
         if (status === 'granted') {
           setPermissionState({ granted: true, loading: false, error: null });
-          console.log('Location permission granted');
         } else {
           setPermissionState({ 
             granted: false, 
             loading: false, 
             error: 'Location permission denied' 
           });
-          console.log('Location permission denied');
         }
       } catch (error) {
         console.error('Error requesting location permissions:', error);
