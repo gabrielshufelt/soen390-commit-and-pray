@@ -6,8 +6,6 @@ import { CAMPUSES, DEFAULT_CAMPUS, findCampusForCoordinate } from '../../constan
 import { BUILDING_POLYGON_COLORS } from '../../constants/mapColors';
 import { useLocationPermissions } from '../../hooks/useLocationPermissions';
 import { useWatchLocation } from '../../hooks/useWatchLocation';
-import { StyleSheet, View, Text } from "react-native";
-import { useTheme } from '../../context/ThemeContext';
 import sgwBuildingsData from '../../data/buildings/sgw.json';
 import loyolaBuildingsData from '../../data/buildings/loyola.json';
 import CampusToggle from '../../components/campusToggle';
@@ -182,7 +180,7 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 18,
     fontWeight: '600',
-  }
+  },
   labelContainer: {
     backgroundColor: 'transparent',
   },
