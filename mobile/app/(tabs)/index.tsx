@@ -104,18 +104,6 @@ export default function Index() {
               tappable
               onPress={() => handleBuildingSelect(building.id, building)}
             />
-            {/* <Marker
-              coordinate={centroid}
-              opacity={0}
-              onPress={() => handleBuildingSelect(building.id, building)}
-            >
-              <Callout>
-                <View style={styles.calloutContainer}>
-                  <Text style={styles.calloutTitle}>{code}</Text>
-                  <Text style={styles.calloutDescription}>{name}</Text>
-                </View>
-              </Callout>
-            </Marker> */}
           </React.Fragment>
         );
       }),
