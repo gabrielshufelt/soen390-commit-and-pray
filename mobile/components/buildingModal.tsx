@@ -54,7 +54,7 @@ export default function BuildingModal({ visible, building, onClose }: BuildingMo
     <Modal
       visible={visible}
       transparent={true}
-      animationType="slide"
+      animationType="fade"
       onRequestClose={onClose}
     >
       <View style={styles.overlay}>
@@ -62,7 +62,7 @@ export default function BuildingModal({ visible, building, onClose }: BuildingMo
         <View style={[styles.bottomSheet, { backgroundColor: isDark ? BLACK : WHITE, height: screenHeight * 0.55 }]}>
           <View style={styles.header}>
             <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-              <Text style={{ color: isDark ? WHITE : BLACK, fontSize: 16 }}>X</Text>
+              <Text style={{ color: isDark ? WHITE : BLACK, fontSize: 16 }}>X</Text> 
             </TouchableOpacity>
           </View>
           
