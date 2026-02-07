@@ -7,9 +7,9 @@ interface BuildingData {
   properties: {
     code?: string;
     name?: string;
-    'address:number'?: string;
-    'address:street'?: string;
-    'address:city'?: string;
+    'addr:number'?: string;
+    'addr:street'?: string;
+    'addr:city'?: string;
     accessibility?: string[];
     amenities?: string[];
   };
@@ -44,20 +44,25 @@ export default function BuildingModal({ visible, building, onClose }: BuildingMo
 
   if (!building) return null;
 
-  const { code, name, 'address:number': number, 'address:street': street, 'address:city': city, accessibility, amenities } = building.properties;
+  const { code, name, 'addr:number': number, 'addr:street': street, 'addr:city': city, accessibility, amenities } = building.properties;
 
   return (
     <Modal
       visible={visible}
       transparent={true}
+      animationType="slide"
       onRequestClose={onClose}
     >
       <View style={styles.overlay}>
         <TouchableOpacity style={styles.backdrop} onPress={onClose} activeOpacity={1} />
         <View style={[styles.bottomSheet, { backgroundColor: isDark ? '#1a1a1a' : '#ffffff', height: screenHeight * 0.55 }]}>
-          <View style={styles.handle} />
+          <View style={styles.header}>
+            <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+              <Text style={{ color: isDark ? '#cccccc' : '#333333', fontSize: 16 }}>X</Text>
+            </TouchableOpacity>
+          </View>
           
-          <ScrollView style={styles.content} showsVerticalScrollIndicator={true}>
+          <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
             <View style={styles.section}>
               <Text style={[styles.buildingCode, { color: '#8B0000' }]}>{code}</Text>
               <Text style={[styles.buildingName, { color: isDark ? '#ffffff' : '#000000' }]}>{name}</Text>
@@ -135,13 +140,15 @@ const styles = StyleSheet.create({
     paddingTop: 12,
     paddingBottom: 20,
   },
-  handle: {
-    width: 40,
-    height: 4,
-    backgroundColor: '#cccccc',
-    borderRadius: 2,
-    alignSelf: 'center',
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+    paddingRight: 12,
     marginBottom: 16,
+  },
+  closeButton: {
+    padding: 8,
   },
   content: {
     flex: 1,
