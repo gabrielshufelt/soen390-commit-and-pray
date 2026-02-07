@@ -52,3 +52,6 @@ backend/coverage/
 *.mobileprovision
 /ios
 /android
+
+# IDE
+.idea

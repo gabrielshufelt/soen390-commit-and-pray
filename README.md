@@ -1,9 +1,26 @@
-# SOEN390-commit-and-pray
+# SOEN390 - Commit and Pray
+# Campus Navigation Mobile Application for Concordia University
 
-# CONCORDIA CAMPUS NAVIGATION WEB APP
+## INTRODUCTION
+Navigating Concordia’s campuses, especially indoor spaces, can be challenging
+for students, staff, and visitors, particularly those with accessibility needs.
 
-## DESCRIPTION
-This repository contains a web application developed as part of the SOEN 390 course at Concordia University. The goal of the project is to help students, staff and visitors navigate Concordia campuses by providing outdoor and indoor directions, building and room search and accessibility-aware routing.
+This project aims to provide a unified mobile solution for outdoor and indoor
+campus navigation, offering accessibility-aware routing, classroom directions,
+and points of interest across both SGW and Loyola campuses.
+
+## TARGET USERS
+- Concordia students navigating between classes
+- Faculty and staff moving across campus buildings
+- Visitors unfamiliar with Concordia campuses
+- Users with accessibility needs requiring step-free routes
+
+## CORE FEATURES
+- Interactive campus maps for SGW and Loyola
+- Outdoor directions using Google Maps API
+- Indoor navigation with accessibility-aware routing
+- Building and room search
+- Points of interest discovery (washrooms, elevators, food)
 
 ## DEPENDENCIES
 The following tools and dependencies are required to run this project:
@@ -15,15 +32,16 @@ The following tools and dependencies are required to run this project:
 
 ## FASTAPI INSTALLATION (UNIX)
 If FastAPI is not installed, you can set it up on Unix-based systems with:
-
+```
 sudo apt install -y python3 python3-venv python3-pip
 cd backend
 python3 -m venv .venv
 source .venv/bin/activate
 pip install "fastapi[standard]"
 cd ..
+```
   
-## INSTALLATION (to improve: must add backend and frontend dependencies)
+## INSTALLATION
 1. Clone the repository:
    `git clone https://github.com/gabrielshufelt/soen390-commit-and-pray.git`
 
@@ -31,19 +49,22 @@ cd ..
    `cd soen390-commit-and-pray`
 
 3. Install frontend (mobile app) dependencies:
-   `cd mobile
+   ```
+   cd mobile
    npm install
    npm install expo
-   cd ..`
+   cd ..
+   ```
 
 4. Install backend dependencies:
-   `cd backend
+   ```
+   cd backend
    pip install -r requirements.txt
-   cd ..`
+   cd ..
+   ```
    
 ## RUNNING THE APPLICATION
-
-FRONTEND (MOBILE APP)
+### FRONTEND (MOBILE APP)
 
 1. Navigate to the mobile directory:
    `cd mobile`
@@ -57,9 +78,7 @@ FRONTEND (MOBILE APP)
 
 The application will load and run on your device through Expo Go.
 
-
-## BACKEND
-
+### BACKEND
 5. Navigate to the backend directory:
    `cd backend`
 
@@ -68,7 +87,7 @@ The application will load and run on your device through Expo Go.
 
 The backend server will start locally on the configured port.
 
-## DOCUMENTATION
+## DOCUMENTATION & PROCESS
 All detailed documentation for this project can be found in the GitHub Wiki which includes: 
 - Domain Model
 - Component Diagram
