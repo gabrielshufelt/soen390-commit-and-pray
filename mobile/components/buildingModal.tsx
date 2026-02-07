@@ -2,6 +2,10 @@ import React from 'react';
 import { Modal, View, Text, TouchableOpacity, ScrollView, StyleSheet, Dimensions } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
 
+const BLACK = 'rgba(0, 0, 0)';
+const WHITE = 'rgba(255, 255, 255)';
+const RED = '#8B0000';
+
 interface BuildingData {
   id: string;
   properties: {
@@ -55,26 +59,26 @@ export default function BuildingModal({ visible, building, onClose }: BuildingMo
     >
       <View style={styles.overlay}>
         <TouchableOpacity style={styles.backdrop} onPress={onClose} activeOpacity={1} />
-        <View style={[styles.bottomSheet, { backgroundColor: isDark ? '#1a1a1a' : '#ffffff', height: screenHeight * 0.55 }]}>
+        <View style={[styles.bottomSheet, { backgroundColor: isDark ? BLACK : WHITE, height: screenHeight * 0.55 }]}>
           <View style={styles.header}>
             <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-              <Text style={{ color: isDark ? '#cccccc' : '#333333', fontSize: 16 }}>X</Text>
+              <Text style={{ color: isDark ? WHITE : BLACK, fontSize: 16 }}>X</Text>
             </TouchableOpacity>
           </View>
           
           <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
             <View style={styles.section}>
-              <Text style={[styles.buildingCode, { color: '#8B0000' }]}>{code}</Text>
-              <Text style={[styles.buildingName, { color: isDark ? '#ffffff' : '#000000' }]}>{name}</Text>
+              <Text style={[styles.buildingCode, { color: RED }]}>{code}</Text>
+              <Text style={[styles.buildingName, { color: isDark ? WHITE : BLACK }]}>{name}</Text>
             </View>
 
             {(number || street || city) && (
               <View style={styles.section}>
-                <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#000000' }]}>Address</Text>
-                <Text style={[styles.sectionContent, { color: isDark ? '#cccccc' : '#333333' }]}>
+                <Text style={[styles.sectionTitle, { color: isDark ? WHITE : BLACK }]}>Address</Text>
+                <Text style={[styles.sectionContent, { color: isDark ? WHITE : BLACK }]}>
                   {number} {street}
                 </Text>
-                <Text style={[styles.sectionContent, { color: isDark ? '#cccccc' : '#333333' }]}>
+                <Text style={[styles.sectionContent, { color: isDark ? WHITE : BLACK }]}>
                   {city}
                 </Text>
               </View>
@@ -82,11 +86,11 @@ export default function BuildingModal({ visible, building, onClose }: BuildingMo
 
             {accessibility && accessibility.length > 0 && (
               <View style={styles.section}>
-                <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#000000' }]}>Accessibility</Text>
+                <Text style={[styles.sectionTitle, { color: isDark ? WHITE : BLACK }]}>Accessibility</Text>
                 <View style={styles.itemsList}>
                   {accessibility.map((item, index) => (
                     <View key={index} style={styles.listItem}>
-                      <Text style={[styles.listItemText, { color: isDark ? '#cccccc' : '#333333' }]}>
+                      <Text style={[styles.listItemText, { color: isDark ? WHITE : BLACK }]}>
                         • {formatAccessibilityName(item)}
                       </Text>
                     </View>
@@ -97,11 +101,11 @@ export default function BuildingModal({ visible, building, onClose }: BuildingMo
 
             {amenities && amenities.length > 0 && (
               <View style={styles.section}>
-                <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#000000' }]}>Amenities</Text>
+                <Text style={[styles.sectionTitle, { color: isDark ? WHITE : BLACK }]}>Amenities</Text>
                 <View style={styles.itemsList}>
                   {amenities.map((item, index) => (
                     <View key={index} style={styles.listItem}>
-                      <Text style={[styles.listItemText, { color: isDark ? '#cccccc' : '#333333' }]}>
+                      <Text style={[styles.listItemText, { color: isDark ? WHITE : BLACK }]}>
                         • {formatAmenityName(item)}
                       </Text>
                     </View>
@@ -188,7 +192,7 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   directionsButton: {
-    backgroundColor: '#8B0000',
+    backgroundColor: RED,
     paddingVertical: 12,
     paddingHorizontal: 20,
     borderRadius: 6,
@@ -197,7 +201,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   directionsButtonText: {
-    color: '#ffffff',
+    color: WHITE,
     fontSize: 15,
     fontWeight: '600',
   },
