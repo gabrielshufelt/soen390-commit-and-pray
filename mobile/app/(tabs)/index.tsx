@@ -9,7 +9,16 @@ import loyolaBuildingsData from '../../data/buildings/loyola.json';
 import CampusToggle from '../../components/campusToggle';
 import BuildingModal from '../../components/buildingModal';
 
-const HIGHLIGHT_COLOR = 'rgba(33, 150, 243, 0.4)'; // Light blue with transparency
+// Constants for colors
+const HIGHLIGHT_COLOR = 'rgba(33, 150, 243, 0.4)';
+const STROKE_COLOR = '#2196F3'
+const BLACK = 'rgba(0, 0, 0, 0.75)';
+const GREY = '#666'; // Aouthoubillah
+
+// Constants for display
+const LABEL_ZOOM_THRESHOLD = 0.015;
+const ANCHOR_OFFSET = { x: 0.5, y: 0.5 };
+const ANIMATION_DURATION = 600;
 
 // Calculate the center of a polygon
 const getPolygonCentroid = (coordinates: [number, number][]) => {
@@ -27,9 +36,6 @@ const getPolygonCentroid = (coordinates: [number, number][]) => {
     longitude: lngSum / n,
   };
 };
-
-// Zoom threshold for showing labels (smaller = more zoomed in)
-const LABEL_ZOOM_THRESHOLD = 0.015;
 
 export default function Index() {
   const { colorScheme } = useTheme();
@@ -70,7 +76,7 @@ export default function Index() {
   const mapRef = useRef<MapView>(null);
 
   useEffect(() => {
-    mapRef.current?.animateToRegion(selectedCampus.initialRegion, 600);
+    mapRef.current?.animateToRegion(selectedCampus.initialRegion, ANIMATION_DURATION);
   }, [selectedCampus]
   );
 
@@ -92,12 +98,12 @@ export default function Index() {
               )}
               fillColor={
                 selectedBuilding === building.id
-                  ? HIGHLIGHT_COLOR // Highlight color when selected
+                  ? HIGHLIGHT_COLOR
                   : BUILDING_POLYGON_COLORS.fillColor
               }
               strokeColor={
                 selectedBuilding === building.id
-                  ? '#2196F3'
+                  ? STROKE_COLOR
                   : BUILDING_POLYGON_COLORS.strokeColor
               }
               strokeWidth={BUILDING_POLYGON_COLORS.strokeWidth}
@@ -121,7 +127,7 @@ export default function Index() {
             <Marker
               key={`label-${building.id}`}
               coordinate={centroid}
-              anchor={{ x: 0.5, y: 0.5 }}
+              anchor={ANCHOR_OFFSET}
               tracksViewChanges={false}
             >
               <View style={styles.labelContainer}>
@@ -183,7 +189,7 @@ const styles = StyleSheet.create({
     color: 'white',
     fontWeight: 'bold',
     fontSize: 12,
-    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowColor: BLACK,
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 2,
   },
@@ -198,6 +204,6 @@ const styles = StyleSheet.create({
   },
   calloutDescription: {
     fontSize: 14,
-    color: '#666',
+    color: GREY,
   },
 });
