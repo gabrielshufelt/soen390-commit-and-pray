@@ -11,9 +11,10 @@ interface BuildingData {
   properties: {
     code?: string;
     name?: string;
-    'addr:number'?: string;
+    'addr:housenumber'?: string;
     'addr:street'?: string;
     'addr:city'?: string;
+    'addr:province'?: string;
     accessibility?: string[];
     amenities?: string[];
   };
@@ -48,7 +49,7 @@ export default function BuildingModal({ visible, building, onClose }: BuildingMo
 
   if (!building) return null;
 
-  const { code, name, 'addr:number': number, 'addr:street': street, 'addr:city': city, accessibility, amenities } = building.properties;
+  const { code, name, 'addr:housenumber': number, 'addr:street': street, 'addr:city': city, 'addr:province': province, accessibility, amenities } = building.properties;
 
   return (
     <Modal
@@ -72,14 +73,14 @@ export default function BuildingModal({ visible, building, onClose }: BuildingMo
               <Text style={[styles.buildingName, { color: isDark ? WHITE : BLACK }]}>{name}</Text>
             </View>
 
-            {(number || street || city) && (
+            {(number || street || city || province) && (
               <View style={styles.section}>
                 <Text style={[styles.sectionTitle, { color: isDark ? WHITE : BLACK }]}>Address</Text>
                 <Text style={[styles.sectionContent, { color: isDark ? WHITE : BLACK }]}>
-                  {number} {street}
+                  {number} {street}{city ? `,` : ''}
                 </Text>
                 <Text style={[styles.sectionContent, { color: isDark ? WHITE : BLACK }]}>
-                  {city}
+                  {city}{province ? `, ${province}` : ''}
                 </Text>
               </View>
             )}

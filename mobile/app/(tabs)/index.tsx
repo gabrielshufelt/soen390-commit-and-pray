@@ -1,11 +1,6 @@
 import React, { useMemo, useRef, useEffect, useState } from "react";
-<<<<<<< 46-enable-building-click-interaction-&-show-building-information
 import MapView, { Marker, Polygon, Region, Callout } from 'react-native-maps';
 import { StyleSheet, View, Text } from "react-native";
-=======
-import MapView, { Marker, Polygon, Region } from 'react-native-maps';
-import { StyleSheet, Text, View } from "react-native";
->>>>>>> master
 import { useTheme } from '../../context/ThemeContext';
 import { CAMPUSES, DEFAULT_CAMPUS, findCampusForCoordinate } from '../../constants/campusLocations';
 import { BUILDING_POLYGON_COLORS } from '../../constants/mapColors';
