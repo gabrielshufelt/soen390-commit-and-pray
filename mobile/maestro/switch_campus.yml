@@ -1,0 +1,4 @@
+appId: com.anonymous.mobile
+---
+- tapOn: "Select Loyola campus"
+- tapOn: "Select SGW campus"
