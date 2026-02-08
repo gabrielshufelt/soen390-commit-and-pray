@@ -6,6 +6,7 @@ import { CAMPUSES, DEFAULT_CAMPUS, findCampusForCoordinate } from '../../constan
 import { BUILDING_POLYGON_COLORS } from '../../constants/mapColors';
 import { useLocationPermissions } from '../../hooks/useLocationPermissions';
 import { useWatchLocation } from '../../hooks/useWatchLocation';
+import { useUserBuilding } from "../../hooks/useUserBuilding";
 import sgwBuildingsData from '../../data/buildings/sgw.json';
 import loyolaBuildingsData from '../../data/buildings/loyola.json';
 import CampusToggle from '../../components/campusToggle';
@@ -23,7 +24,7 @@ const ANCHOR_OFFSET = { x: 0.5, y: 0.5 };
 const ANIMATION_DURATION = 600;
 
 // Calculate the center of a polygon
-const getPolygonCentroid = (coordinates: [number, number][]) => {
+const getPolygonCentroid = (coordinates: number[][]) => {
   let latSum = 0;
   let lngSum = 0;
   const n = coordinates.length;
@@ -49,14 +50,23 @@ export default function Index() {
   const defaultCampus = CAMPUSES[DEFAULT_CAMPUS];
   const permissionState = useLocationPermissions();
   const { location } = useWatchLocation({ enabled: permissionState.granted });
+  ////////////
+  const DEBUG_FORCE_LOCATION = true; // set to false to use real GPS again
+  const DEBUG_LOCATION = { // example inside "H - Henry F. Hall Building" (SGW)
+    coords: { latitude: 45.4972, longitude: -73.5790 },
+    timestamp: Date.now(),
+  };
+  const effectiveLocation = DEBUG_FORCE_LOCATION ? DEBUG_LOCATION : location;
+  ////////////
+  const userBuilding = useUserBuilding(effectiveLocation);
 
   const currentCampus = useMemo(() => {
-    if (!location) return undefined;
+    if (!effectiveLocation) return undefined;
     return findCampusForCoordinate(
-      location.coords.latitude,
-      location.coords.longitude
+      effectiveLocation.coords.latitude,
+      effectiveLocation.coords.longitude
     );
-  }, [location]);
+  }, [effectiveLocation]);
   const [campusKey, setCampusKey] = useState(DEFAULT_CAMPUS);
   const [showLabels, setShowLabels] = useState(
     defaultCampus.initialRegion.latitudeDelta <= LABEL_ZOOM_THRESHOLD
@@ -98,6 +108,8 @@ export default function Index() {
         const centroid = getPolygonCentroid(building.geometry.coordinates[0]);
         const code = (building.properties as { code?: string }).code || 'Unknown';
         const name = (building.properties as { name?: string }).name || 'Building';
+        const isSelected = selectedBuilding === building.id;
+        const isUserInside = userBuilding?.id === building.id;
 
         return (
           <React.Fragment key={building.id}>
@@ -109,12 +121,12 @@ export default function Index() {
                 })
               )}
               fillColor={
-                selectedBuilding === building.id
+                isSelected || isUserInside
                   ? HIGHLIGHT_COLOR
                   : BUILDING_POLYGON_COLORS.fillColor
               }
               strokeColor={
-                selectedBuilding === building.id
+                isSelected || isUserInside
                   ? STROKE_COLOR
                   : BUILDING_POLYGON_COLORS.strokeColor
               }
@@ -178,6 +190,11 @@ export default function Index() {
             ? currentCampus?.campus.name ?? 'Outside campus boundaries'
             : 'Location permission required'}
         </Text>
+        {userBuilding && (
+          <Text style={styles.overlayBuilding}>
+            📍 Inside: {userBuilding.name}
+          </Text>
+        )}
       </View>
       <CampusToggle
         selectedCampus={campusKey}
@@ -219,6 +236,12 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 0.8,
     marginBottom: 4,
+  },
+  overlayBuilding: {
+    color: '#60a5fa',
+    fontSize: 14,
+    fontWeight: '500',
+    marginTop: 4,
   },
   overlayValue: {
     color: '#ffffff',
