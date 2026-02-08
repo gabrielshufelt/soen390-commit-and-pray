@@ -2,6 +2,7 @@ import React from 'react';
 import { render, waitFor } from '@testing-library/react-native';
 import Index from '../app/(tabs)/index';
 import { ThemeProvider } from '../context/ThemeContext';
+import { fireEvent, screen } from '@testing-library/react-native';
 
 jest.mock('@react-native-async-storage/async-storage', () => ({
   getItem: jest.fn(() => Promise.resolve(null)),
@@ -97,6 +98,33 @@ describe('<Index />', () => {
 
     await waitFor(() => {
       expect(mockPolygonRenderCount).toBe(initialRenderCount);
+    });
+  });
+
+  it('opens BuildingModal', async () => {
+  const { getAllByTestId, getByText} = renderWithTheme(<Index />);
+  
+  const polygons = await waitFor(() => getAllByTestId('polygon'));
+  fireEvent.press(polygons[0]);
+
+  await waitFor(() => {
+    expect(getByText('Get Directions')).toBeTruthy();
+  });
+
+  expect(screen.getByText(/Get Directions/i)).toBeTruthy();
+  });
+
+  it('closes BuildingModal', async () => {
+    const { getAllByTestId, getByText, queryByText } = renderWithTheme(<Index />);
+
+    const polygons = await waitFor(() => getAllByTestId('polygon'));
+    fireEvent.press(polygons[0]);
+
+    const closeButton = getByText('X');
+    fireEvent.press(closeButton);
+
+    await waitFor(() => {
+      expect(queryByText('Get Directions')).toBeNull();
     });
   });
 });
