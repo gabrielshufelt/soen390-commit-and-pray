@@ -1,8 +1,7 @@
-
 import React from 'react';
-import { render} from '@testing-library/react-native';
+import { render, fireEvent } from '@testing-library/react-native';
+import '@testing-library/jest-native/extend-expect';
 import CampusToggle from '../components/campusToggle';
-
 
 describe('CampusToggle', () => {
   const onCampusChangeMock = jest.fn();
@@ -21,19 +20,32 @@ describe('CampusToggle', () => {
   });
 
   it('highlights the selected campus', () => {
-    const { getByText, rerender } = render(
+    const { getByLabelText, rerender } = render(
       <CampusToggle selectedCampus="SGW" onCampusChange={onCampusChangeMock} />
     );
 
-    const sgwButton = getByText('SGW');
-    const loyolaButton = getByText('Loyola');
+    const sgwButton = getByLabelText('Select SGW campus');
+    const loyolaButton = getByLabelText('Select Loyola campus');
 
-    expect(sgwButton.props.style).toMatchObject({ color: '#fff' });
-    expect(loyolaButton.props.style).toMatchObject({ color: '#222' });
+    expect(sgwButton).toHaveAccessibilityState({ selected: true });
+    expect(loyolaButton).toHaveAccessibilityState({ selected: false });
 
-    // Switch campus
-    rerender(<CampusToggle selectedCampus="LOYOLA" onCampusChange={onCampusChangeMock} />);
-    expect(getByText('Loyola').props.style).toMatchObject({ color: '#fff' });
+    rerender(
+      <CampusToggle selectedCampus="LOYOLA" onCampusChange={onCampusChangeMock} />
+    );
+
+    expect(getByLabelText('Select SGW campus')).toHaveAccessibilityState({ selected: false });
+    expect(getByLabelText('Select Loyola campus')).toHaveAccessibilityState({ selected: true });
   });
 
+  it('calls onCampusChange when a campus button is pressed', () => {
+    const { getByText } = render(
+      <CampusToggle selectedCampus="SGW" onCampusChange={onCampusChangeMock} />
+    );
+
+    fireEvent.press(getByText('Loyola'));
+
+    expect(onCampusChangeMock).toHaveBeenCalledTimes(1);
+    expect(onCampusChangeMock).toHaveBeenCalledWith('LOYOLA');
+  });
 });
