@@ -1,6 +1,7 @@
 import { findBuildingForLocation } from '../hooks/useUserBuilding';
 import sgwBuildingsData from '../data/buildings/sgw.json';
 import loyolaBuildingsData from '../data/buildings/loyola.json';
+import { getInteriorPoint } from '../utils/geometry';
 
 const allBuildings = [
   ...sgwBuildingsData.features,
@@ -8,28 +9,11 @@ const allBuildings = [
 ];
 
 /**
- * Computes the centroid of a polygon (guaranteed to be a reasonable
- * interior point for convex-ish buildings).
- */
-function getCentroid(coords: number[][]): { latitude: number; longitude: number } {
-  let latSum = 0;
-  let lngSum = 0;
-  for (const [lng, lat] of coords) {
-    latSum += lat;
-    lngSum += lng;
-  }
-  return {
-    latitude: latSum / coords.length,
-    longitude: lngSum / coords.length,
-  };
-}
-
-/**
  * Returns a point that is well outside any campus building
  * by offsetting from the polygon centroid.
  */
 function getOutsidePoint(coords: number[][]): { latitude: number; longitude: number } {
-  const centroid = getCentroid(coords);
+  const centroid = getInteriorPoint(coords);
   return {
     latitude: centroid.latitude + 0.01, // ~1.1 km north — clearly outside
     longitude: centroid.longitude + 0.01,
@@ -45,7 +29,7 @@ describe('findBuildingForLocation', () => {
       const coords = building.geometry.coordinates[0] as number[][];
 
       it(`should detect user inside building ${code}`, () => {
-        const centroid = getCentroid(coords);
+        const centroid = getInteriorPoint(coords);
         const result = findBuildingForLocation(centroid.latitude, centroid.longitude);
 
         expect(result).not.toBeNull();
@@ -97,7 +81,7 @@ describe('findBuildingForLocation', () => {
       const coords = building.geometry.coordinates[0] as number[][];
 
       it(`should transition correctly for building ${code}`, () => {
-        const inside = getCentroid(coords);
+        const inside = getInteriorPoint(coords);
         const outside = getOutsidePoint(coords);
 
         // Step 1: user walks in
