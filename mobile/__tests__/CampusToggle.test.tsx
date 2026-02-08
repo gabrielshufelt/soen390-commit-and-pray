@@ -1,6 +1,5 @@
 import React from 'react';
 import { render, fireEvent } from '@testing-library/react-native';
-import '@testing-library/jest-native/extend-expect';
 import CampusToggle from '../components/campusToggle';
 
 describe('CampusToggle', () => {

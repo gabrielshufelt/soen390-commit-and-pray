@@ -31,6 +31,12 @@ jobs:
         with:
           name: backend-coverage
           path: backend/coverage.xml
+      - name: Upload to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./backend/coverage.xml
+          flags: backend
 
   # job 2 for validating the react native front end env and components
   mobile-tests:
@@ -50,4 +56,10 @@ jobs:
       - name: Run Linting and Tests
         run: |
           cd mobile
-          npm test
+          npm test -- --coverage
+      - name: Upload to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          directory: ./mobile/coverage/
+          flags: mobile
