@@ -50,23 +50,15 @@ export default function Index() {
   const defaultCampus = CAMPUSES[DEFAULT_CAMPUS];
   const permissionState = useLocationPermissions();
   const { location } = useWatchLocation({ enabled: permissionState.granted });
-  ////////////
-  const DEBUG_FORCE_LOCATION = true; // set to false to use real GPS again
-  const DEBUG_LOCATION = { // example inside "H - Henry F. Hall Building" (SGW)
-    coords: { latitude: 45.4972, longitude: -73.5790 },
-    timestamp: Date.now(),
-  };
-  const effectiveLocation = DEBUG_FORCE_LOCATION ? DEBUG_LOCATION : location;
-  ////////////
-  const userBuilding = useUserBuilding(effectiveLocation);
+  const userBuilding = useUserBuilding(location);
 
   const currentCampus = useMemo(() => {
-    if (!effectiveLocation) return undefined;
+    if (!location) return undefined;
     return findCampusForCoordinate(
-      effectiveLocation.coords.latitude,
-      effectiveLocation.coords.longitude
+      location.coords.latitude,
+      location.coords.longitude
     );
-  }, [effectiveLocation]);
+  }, [location]);
   const [campusKey, setCampusKey] = useState(DEFAULT_CAMPUS);
   const [showLabels, setShowLabels] = useState(
     defaultCampus.initialRegion.latitudeDelta <= LABEL_ZOOM_THRESHOLD
