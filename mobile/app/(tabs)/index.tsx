@@ -102,6 +102,7 @@ export default function Index() {
         return (
           <React.Fragment key={building.id}>
             <Polygon
+              testID={`building-${building.id}`}
               coordinates={building.geometry.coordinates[0].map(
                 ([longitude, latitude]) => ({
                   latitude,
