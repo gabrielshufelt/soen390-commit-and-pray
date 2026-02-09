@@ -103,7 +103,8 @@ export const getInteriorPoint = (polygon: number[][]): { latitude: number; longi
     }
 
     // Grid search to find the point with maximum distance to polygon edges
-    const cellSize = Math.min(maxLat - minLat, maxLng - minLng) / 20;
+    const GRID_DIVISIONS = 20;
+	const cellSize = Math.min(maxLat - minLat, maxLng - minLng) / GRID_DIVISIONS;
     let bestLat = centroid.latitude;
     let bestLng = centroid.longitude;
     let bestDist = 0;
@@ -123,7 +124,8 @@ export const getInteriorPoint = (polygon: number[][]): { latitude: number; longi
     }
 
     // Refine with a finer grid around the best point
-    const refineCellSize = cellSize / 4;
+    const REFINEMENT_FACTOR = 4;
+	const refineCellSize = cellSize / REFINEMENT_FACTOR;
     for (let lat = bestLat - cellSize; lat <= bestLat + cellSize; lat += refineCellSize) {
         for (let lng = bestLng - cellSize; lng <= bestLng + cellSize; lng += refineCellSize) {
             if (isPointInPolygon({ latitude: lat, longitude: lng }, polygon)) {
