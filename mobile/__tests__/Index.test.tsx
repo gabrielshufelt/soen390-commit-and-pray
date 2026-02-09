@@ -14,6 +14,24 @@ jest.mock('expo-splash-screen', () => ({
   hideAsync: jest.fn(),
 }));
 
+jest.mock('expo-location', () => ({
+  requestForegroundPermissionsAsync: jest.fn(() =>
+    Promise.resolve({ status: 'granted' })
+  ),
+  getCurrentPositionAsync: jest.fn(() =>
+    Promise.resolve({
+      coords: {
+        latitude: 45.4972,
+        longitude: -73.5790,
+      },
+      timestamp: Date.now(),
+    })
+  ),
+  Accuracy: {
+    Balanced: 3,
+  },
+}));
+
 let mockPolygonRenderCount = 0;
 
 jest.mock('react-native-maps', () => {

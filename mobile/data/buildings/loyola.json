@@ -849,38 +849,6 @@
     },
     {
       "type": "Feature",
-      "id": "way/1362712744",
-      "geometry": {
-        "type": "Polygon",
-        "coordinates": [
-          [
-            [-73.6407, 45.458455],
-            [-73.640844, 45.458317],
-            [-73.640842, 45.458317],
-            [-73.64003, 45.458],
-            [-73.639906, 45.458148],
-            [-73.6407, 45.458455]
-          ]
-        ]
-      },
-      "properties": {
-        "@id": "way/1362712744",
-        "building": "university",
-        "name": "Concordia Loyola Campus Central Building",
-
-        "amenities": [
-          "info",
-          "bike_parking"
-        ],
-        "accessibility": [
-          "wheelchair_lift",
-          "accessible_entrance",
-          "accessible_elevator"
-        ]
-      }
-    },
-    {
-      "type": "Feature",
       "id": "way/1362724471",
       "geometry": {
         "type": "Polygon",

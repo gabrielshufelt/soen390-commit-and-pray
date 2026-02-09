@@ -6,6 +6,8 @@ import { CAMPUSES, DEFAULT_CAMPUS, findCampusForCoordinate } from '../../constan
 import { BUILDING_POLYGON_COLORS } from '../../constants/mapColors';
 import { useLocationPermissions } from '../../hooks/useLocationPermissions';
 import { useWatchLocation } from '../../hooks/useWatchLocation';
+import { useUserBuilding } from "../../hooks/useUserBuilding";
+import { getInteriorPoint } from "../../utils/geometry";
 import sgwBuildingsData from '../../data/buildings/sgw.json';
 import loyolaBuildingsData from '../../data/buildings/loyola.json';
 import CampusToggle from '../../components/campusToggle';
@@ -22,34 +24,16 @@ const LABEL_ZOOM_THRESHOLD = 0.015;
 const ANCHOR_OFFSET = { x: 0.5, y: 0.5 };
 const ANIMATION_DURATION = 600;
 
-// Calculate the center of a polygon
-const getPolygonCentroid = (coordinates: [number, number][]) => {
-  let latSum = 0;
-  let lngSum = 0;
-  const n = coordinates.length;
-
-  for (const [lng, lat] of coordinates) {
-    latSum += lat;
-    lngSum += lng;
-  }
-
-  return {
-    latitude: latSum / n,
-    longitude: lngSum / n,
-  };
-};
-
 export default function Index() {
   const { colorScheme } = useTheme();
   const isDark = colorScheme === 'dark';
   const campusBuildingsData = [
     ...sgwBuildingsData.features, ...loyolaBuildingsData.features,
   ];
-
   const defaultCampus = CAMPUSES[DEFAULT_CAMPUS];
   const permissionState = useLocationPermissions();
   const { location } = useWatchLocation({ enabled: permissionState.granted });
-
+  const userBuilding = useUserBuilding(location);
   const currentCampus = useMemo(() => {
     if (!location) return undefined;
     return findCampusForCoordinate(
@@ -95,10 +79,8 @@ export default function Index() {
   const buildingPolygons = useMemo(
     () =>
       campusBuildingsData.map((building) => {
-        const centroid = getPolygonCentroid(building.geometry.coordinates[0]);
-        const code = (building.properties as { code?: string }).code || 'Unknown';
-        const name = (building.properties as { name?: string }).name || 'Building';
-
+        const isSelected = selectedBuilding === building.id;
+        const isUserInside = userBuilding?.id === building.id;
         return (
           <React.Fragment key={building.id}>
             <Polygon
@@ -109,12 +91,12 @@ export default function Index() {
                 })
               )}
               fillColor={
-                selectedBuilding === building.id
+                isSelected || isUserInside
                   ? HIGHLIGHT_COLOR
                   : BUILDING_POLYGON_COLORS.fillColor
               }
               strokeColor={
-                selectedBuilding === building.id
+                isSelected || isUserInside
                   ? STROKE_COLOR
                   : BUILDING_POLYGON_COLORS.strokeColor
               }
@@ -133,7 +115,7 @@ export default function Index() {
       campusBuildingsData
         .filter((building) => (building.properties as { code?: string }).code)
         .map((building) => {
-          const centroid = getPolygonCentroid(building.geometry.coordinates[0]);
+          const centroid = getInteriorPoint(building.geometry.coordinates[0]);
           const code = (building.properties as { code: string }).code;
           return (
             <Marker
@@ -178,6 +160,11 @@ export default function Index() {
             ? currentCampus?.campus.name ?? 'Outside campus boundaries'
             : 'Location permission required'}
         </Text>
+        {userBuilding && (
+          <Text style={styles.overlayBuilding}>
+            📍 Inside: {userBuilding.name}
+          </Text>
+        )}
       </View>
       <CampusToggle
         selectedCampus={campusKey}
@@ -219,6 +206,12 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 0.8,
     marginBottom: 4,
+  },
+  overlayBuilding: {
+    color: '#60a5fa',
+    fontSize: 14,
+    fontWeight: '500',
+    marginTop: 4,
   },
   overlayValue: {
     color: '#ffffff',
