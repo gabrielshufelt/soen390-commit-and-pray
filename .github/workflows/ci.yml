@@ -26,20 +26,22 @@ jobs:
         run: |
           cd backend
           pytest --cov=main --cov-report=xml
-      - name: Upload Coverage Report
+      - name: Upload Backend Coverage
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: backend-coverage
           path: backend/coverage.xml
       - name: Upload to Codecov
+        if: always()
         uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ./backend/coverage.xml
           flags: backend
 
-  # job 2 for validating the react native front end env and components
   mobile-tests:
+    # job 2 for validating the react native front end env and components
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -57,14 +59,22 @@ jobs:
         run: |
           cd mobile
           npm test -- --coverage
+      - name: Upload Mobile Coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mobile-coverage
+          path: mobile/coverage/
       - name: Upload to Codecov
+        if: always()
         uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           directory: ./mobile/coverage/
           flags: mobile
-  # job 3 for running sonar cloud analysis
+
   sonar-scan:
+    # job 3 for running sonar cloud analysis
     needs: [backend-tests, mobile-tests]
     runs-on: ubuntu-latest
     steps:
