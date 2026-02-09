@@ -63,3 +63,25 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           directory: ./mobile/coverage/
           flags: mobile
+  # job 3 for running sonar cloud analysis
+  sonar-scan:
+    needs: [backend-tests, mobile-tests]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Download Backend Coverage
+        uses: actions/download-artifact@v4
+        with:
+          name: backend-coverage
+          path: backend
+      - name: Download Mobile Coverage
+        uses: actions/download-artifact@v4
+        with:
+          name: mobile-coverage
+          path: mobile/coverage
+      - name: SonarQube Scan
+        uses: SonarSource/sonarqube-scan-action@fd88b7d7ccbaefd23d8f36f73b59db7a3d246602
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
