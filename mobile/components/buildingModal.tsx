@@ -1,6 +1,9 @@
 import React from 'react';
 import { Modal, View, Text, TouchableOpacity, ScrollView, StyleSheet, Dimensions } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
+import { useDirections } from '@/hooks/useDirections';
+import { useLocationPermissions } from '@/hooks/useLocationPermissions';
+import { useWatchLocation } from '@/hooks/useWatchLocation';
 
 const BLACK = 'rgba(0, 0, 0)';
 const WHITE = 'rgba(255, 255, 255)';
@@ -43,6 +46,9 @@ const formatAmenityName = (name: string): string => {
 };
 
 export default function BuildingModal({ visible, building, onClose }: BuildingModalProps) {
+  const { startDirectionsWithAddress } = useDirections();
+  const permissionState = useLocationPermissions();
+  const { location } = useWatchLocation({ enabled: permissionState.granted });
   const { colorScheme } = useTheme();
   const isDark = colorScheme === 'dark';
   const screenHeight = Dimensions.get('window').height;
@@ -50,6 +56,7 @@ export default function BuildingModal({ visible, building, onClose }: BuildingMo
   if (!building) return null;
 
   const { code, name, 'addr:housenumber': number, 'addr:street': street, 'addr:city': city, 'addr:province': province, accessibility, amenities } = building.properties;
+  const address = `${number} ${street}, ${city}, ${province}`;
 
   return (
     <Modal
@@ -117,7 +124,11 @@ export default function BuildingModal({ visible, building, onClose }: BuildingMo
 
             <TouchableOpacity
               style={styles.directionsButton}
-              onPress={() => {}} // Get Directions button to be implemented later
+              onPress={() => {
+                if (location) {
+                  startDirectionsWithAddress(location, address)
+                }
+              }}
               activeOpacity={0.7}
             >
               <Text style={styles.directionsButtonText}>Get Directions</Text>
