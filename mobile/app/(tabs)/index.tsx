@@ -43,7 +43,7 @@ export default function Index() {
       location.coords.longitude
     );
   }, [location]);
-  const { state: directionsState, apiKey, onRouteReady } = useDirections();
+  const { state: directionsState, apiKey, startDirectionsWithAddress, onRouteReady } = useDirections();
 
   const [campusKey, setCampusKey] = useState(DEFAULT_CAMPUS);
   const [showLabels, setShowLabels] = useState(
@@ -163,7 +163,20 @@ export default function Index() {
             apikey={apiKey}
             strokeWidth={4}
             strokeColor="#2196F3"
-            onReady={onRouteReady}
+            onReady={(result) => {
+              onRouteReady(result);
+
+              // Zoom to fit the route
+              if (directionsState.origin && directionsState.destination) {
+                mapRef.current?.fitToCoordinates(
+                  [directionsState.origin, directionsState.destination],
+                  { edgePadding: { top: 100, right: 50, bottom: 150, left: 50 }, animated: true }
+                );
+              }
+            }}
+            onError={(error) => {
+              console.error('[Index] MapViewDirections ERROR:', error);
+            }}
           />
         )}
       </MapView>
@@ -188,6 +201,8 @@ export default function Index() {
         visible={!!selectedBuilding}
         building={selectedBuildingData}
         onClose={handleCloseModal}
+        location={location}
+        onGetDirections={startDirectionsWithAddress}
       />
     </View>
   );
