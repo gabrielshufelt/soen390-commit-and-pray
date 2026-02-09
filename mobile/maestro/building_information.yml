@@ -1,0 +1,26 @@
+appId: com.anonymous.mobile
+---
+- tapOn: "Select SGW campus"
+
+- tapOn:
+    point: 92%, 55%
+    #VA building on SGW campus
+
+- waitForAnimationToEnd:
+    timeout: 5000
+
+- tapOn:
+    point: 88%, 48%
+    #exits building information view using X button
+
+
+- tapOn:
+    point: 53%,47%
+    #EV building on SGW campus
+
+- waitForAnimationToEnd:
+    timeout: 5000
+
+- tapOn:
+    point: 49%,33%
+    #close pop up by tapping outside of card 
