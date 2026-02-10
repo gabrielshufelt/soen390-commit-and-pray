@@ -149,20 +149,13 @@ export default function Index() {
       >
         {buildingPolygons}
         {showLabels && buildingLabels}
-        {Object.entries(CAMPUSES).map(([key, campus]) => (
-          <Marker
-            key={key}
-            coordinate={campus.coordinate}
-            title={campus.name}
-          />
-        ))}
         {directionsState.isActive && directionsState.origin && directionsState.destination && (
           <MapViewDirections
             origin={directionsState.origin}
             destination={directionsState.destination}
             apikey={apiKey}
             strokeWidth={4}
-            strokeColor="#2196F3"
+            strokeColor={STROKE_COLOR}
             onReady={(result) => {
               onRouteReady(result);
 

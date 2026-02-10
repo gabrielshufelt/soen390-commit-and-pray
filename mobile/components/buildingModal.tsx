@@ -70,10 +70,10 @@ export default function BuildingModal({ visible, building, onClose, location, on
         <View style={[styles.bottomSheet, { backgroundColor: isDark ? BLACK : WHITE, height: screenHeight * 0.55 }]}>
           <View style={styles.header}>
             <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-              <Text style={{ color: isDark ? WHITE : BLACK, fontSize: 16 }}>X</Text> 
+              <Text style={{ color: isDark ? WHITE : BLACK, fontSize: 16 }}>X</Text>
             </TouchableOpacity>
           </View>
-          
+
           <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
             <View style={styles.section}>
               <Text style={[styles.buildingCode, { color: RED }]}>{code}</Text>
