@@ -9,6 +9,10 @@ const RED = '#8B0000';
 
 interface BuildingData {
   id: string;
+  geometry: {
+    type: string;
+    coordinates: number[][][];
+  };
   properties: {
     code?: string;
     name?: string;
@@ -26,7 +30,7 @@ interface BuildingModalProps {
   building: BuildingData | null;
   onClose: () => void;
   location: Location.LocationObject | null;
-  onGetDirections: (location: Location.LocationObject, address: string) => void;
+  onGetDirections: (location: Location.LocationObject, buildingPolygon: number[][]) => void;
 }
 
 const formatAccessibilityName = (name: string): string => {
@@ -53,7 +57,6 @@ export default function BuildingModal({ visible, building, onClose, location, on
   if (!building) return null;
 
   const { code, name, 'addr:housenumber': number, 'addr:street': street, 'addr:city': city, 'addr:province': province, accessibility, amenities } = building.properties;
-  const address = `${number} ${street}, ${city}, ${province}`;
 
   return (
     <Modal
@@ -122,8 +125,8 @@ export default function BuildingModal({ visible, building, onClose, location, on
             <TouchableOpacity
               style={styles.directionsButton}
               onPress={() => {
-                if (location) {
-                  onGetDirections(location, address);
+                if (location && building.geometry.coordinates[0]) {
+                  onGetDirections(location, building.geometry.coordinates[0]);
                   onClose();
                 }
               }}

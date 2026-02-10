@@ -43,7 +43,7 @@ export default function Index() {
       location.coords.longitude
     );
   }, [location]);
-  const { state: directionsState, apiKey, startDirectionsWithAddress, onRouteReady } = useDirections();
+  const { state: directionsState, apiKey, startDirectionsToBuilding, onRouteReady } = useDirections();
 
   const [campusKey, setCampusKey] = useState(DEFAULT_CAMPUS);
   const [showLabels, setShowLabels] = useState(
@@ -202,7 +202,7 @@ export default function Index() {
         building={selectedBuildingData}
         onClose={handleCloseModal}
         location={location}
-        onGetDirections={startDirectionsWithAddress}
+        onGetDirections={startDirectionsToBuilding}
       />
     </View>
   );
