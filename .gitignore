@@ -56,7 +56,7 @@ junit.xml
 *.key
 *.mobileprovision
 /ios
-/android
+/mobile/android
 
 # IDE
 .idea
