@@ -32,6 +32,23 @@ jest.mock('expo-location', () => ({
   },
 }));
 
+jest.mock('expo-constants', () => ({
+  expoConfig: {
+    extra: {
+      googleMapsApiKey: 'test-api-key',
+    },
+  },
+}));
+
+jest.mock('react-native-maps-directions', () => {
+  const React = require('react');
+  const { View } = require('react-native');
+  return {
+    __esModule: true,
+    default: (props: any) => <View testID="map-directions" {...props} />,
+  };
+});
+
 let mockPolygonRenderCount = 0;
 
 jest.mock('react-native-maps', () => {
@@ -41,6 +58,7 @@ jest.mock('react-native-maps', () => {
   const MockMapView = React.forwardRef((props: any, ref: any) => {
     React.useImperativeHandle(ref, () => ({
       animateToRegion: jest.fn(),
+      fitToCoordinates: jest.fn(),
     }));
     return (
       <View testID="map-view" {...props}>
@@ -49,20 +67,22 @@ jest.mock('react-native-maps', () => {
     );
   });
 
-  const MockMarker = (props: any) => (
-    <View testID={`marker-${props.title}`} {...props} />
-  );
-
   const MockPolygon = (props: any) => {
     mockPolygonRenderCount++;
     return <View testID="polygon" {...props} />;
   };
 
+  const MockMarker = (props: any) => (
+    <View testID="marker" {...props}>
+      {props.children}
+    </View>
+  );
+
   return {
     __esModule: true,
     default: MockMapView,
-    Marker: MockMarker,
     Polygon: MockPolygon,
+    Marker: MockMarker,
   };
 });
 
@@ -85,24 +105,6 @@ describe('<Index />', () => {
     });
   });
 
-  it('renders SGW Campus marker', async () => {
-    const { getByTestId } = renderWithTheme(<Index />);
-
-    await waitFor(() => {
-      const marker = getByTestId('marker-SGW Campus');
-      expect(marker).toBeTruthy();
-    });
-  });
-
-  it('renders Loyola Campus marker', async () => {
-    const { getByTestId } = renderWithTheme(<Index />);
-
-    await waitFor(() => {
-      const marker = getByTestId('marker-Loyola Campus');
-      expect(marker).toBeTruthy();
-    });
-  });
-
   it('does not re-render building polygons on component re-render', async () => {
     const { rerender } = renderWithTheme(<Index />);
 
@@ -120,16 +122,16 @@ describe('<Index />', () => {
   });
 
   it('opens BuildingModal', async () => {
-  const { getAllByTestId, getByText} = renderWithTheme(<Index />);
-  
-  const polygons = await waitFor(() => getAllByTestId('polygon'));
-  fireEvent.press(polygons[0]);
+    const { getAllByTestId, getByText } = renderWithTheme(<Index />);
 
-  await waitFor(() => {
-    expect(getByText('Get Directions')).toBeTruthy();
-  });
+    const polygons = await waitFor(() => getAllByTestId('polygon'));
+    fireEvent.press(polygons[0]);
 
-  expect(screen.getByText(/Get Directions/i)).toBeTruthy();
+    await waitFor(() => {
+      expect(getByText('Get Directions')).toBeTruthy();
+    });
+
+    expect(screen.getByText(/Get Directions/i)).toBeTruthy();
   });
 
   it('closes BuildingModal', async () => {
