@@ -1,5 +1,5 @@
 import React, { useMemo, useRef, useEffect, useState } from "react";
-import MapView, { Marker, Polygon, Region, Callout } from 'react-native-maps';
+import MapView, { Marker, Polygon, Region } from 'react-native-maps';
 import { StyleSheet, View, Text } from "react-native";
 import { useTheme } from '../../context/ThemeContext';
 import { CAMPUSES, DEFAULT_CAMPUS, findCampusForCoordinate } from '../../constants/campusLocations';
@@ -12,6 +12,8 @@ import sgwBuildingsData from '../../data/buildings/sgw.json';
 import loyolaBuildingsData from '../../data/buildings/loyola.json';
 import CampusToggle from '../../components/campusToggle';
 import BuildingModal from '../../components/buildingModal';
+import { useDirections } from '@/hooks/useDirections';
+import MapViewDirections from 'react-native-maps-directions';
 
 // Constants for colors
 const HIGHLIGHT_COLOR = 'rgba(33, 150, 243, 0.4)';
@@ -41,6 +43,8 @@ export default function Index() {
       location.coords.longitude
     );
   }, [location]);
+  const { state: directionsState, apiKey, startDirectionsToBuilding, onRouteReady } = useDirections();
+
   const [campusKey, setCampusKey] = useState(DEFAULT_CAMPUS);
   const [showLabels, setShowLabels] = useState(
     defaultCampus.initialRegion.latitudeDelta <= LABEL_ZOOM_THRESHOLD
@@ -145,13 +149,29 @@ export default function Index() {
       >
         {buildingPolygons}
         {showLabels && buildingLabels}
-        {Object.entries(CAMPUSES).map(([key, campus]) => (
-          <Marker
-            key={key}
-            coordinate={campus.coordinate}
-            title={campus.name}
+        {directionsState.isActive && directionsState.origin && directionsState.destination && (
+          <MapViewDirections
+            origin={directionsState.origin}
+            destination={directionsState.destination}
+            apikey={apiKey}
+            strokeWidth={4}
+            strokeColor={STROKE_COLOR}
+            onReady={(result) => {
+              onRouteReady(result);
+
+              // Zoom to fit the route
+              if (directionsState.origin && directionsState.destination) {
+                mapRef.current?.fitToCoordinates(
+                  [directionsState.origin, directionsState.destination],
+                  { edgePadding: { top: 100, right: 50, bottom: 150, left: 50 }, animated: true }
+                );
+              }
+            }}
+            onError={(error) => {
+              console.error('[Index] MapViewDirections ERROR:', error);
+            }}
           />
-        ))}
+        )}
       </MapView>
       <View style={styles.overlay}>
         <Text style={styles.overlayTitle}>Current Location</Text>
@@ -174,6 +194,8 @@ export default function Index() {
         visible={!!selectedBuilding}
         building={selectedBuildingData}
         onClose={handleCloseModal}
+        location={location}
+        onGetDirections={startDirectionsToBuilding}
       />
     </View>
   );
@@ -228,18 +250,5 @@ const styles = StyleSheet.create({
     textShadowColor: BLACK,
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 2,
-  },
-  calloutContainer: {
-    minWidth: 150,
-    padding: 10,
-  },
-  calloutTitle: {
-    fontWeight: 'bold',
-    fontSize: 16,
-    marginBottom: 4,
-  },
-  calloutDescription: {
-    fontSize: 14,
-    color: GREY,
-  },
+  }
 });
