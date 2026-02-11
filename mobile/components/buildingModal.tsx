@@ -1,13 +1,19 @@
 import React from 'react';
 import { Modal, View, Text, TouchableOpacity, ScrollView, StyleSheet, Dimensions } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
+import * as Location from 'expo-location';
 
 const BLACK = 'rgba(0, 0, 0)';
 const WHITE = 'rgba(255, 255, 255)';
 const RED = '#8B0000';
+const GRAY = '#a0a0a0';
 
 interface BuildingData {
   id: string;
+  geometry: {
+    type: string;
+    coordinates: number[][][];
+  };
   properties: {
     code?: string;
     name?: string;
@@ -24,6 +30,8 @@ interface BuildingModalProps {
   visible: boolean;
   building: BuildingData | null;
   onClose: () => void;
+  location: Location.LocationObject | null;
+  onGetDirections: (location: Location.LocationObject, buildingPolygon: number[][]) => void;
 }
 
 const formatAccessibilityName = (name: string): string => {
@@ -42,7 +50,7 @@ const formatAmenityName = (name: string): string => {
     .join(' ');
 };
 
-export default function BuildingModal({ visible, building, onClose }: BuildingModalProps) {
+export default function BuildingModal({ visible, building, onClose, location, onGetDirections }: BuildingModalProps) {
   const { colorScheme } = useTheme();
   const isDark = colorScheme === 'dark';
   const screenHeight = Dimensions.get('window').height;
@@ -63,10 +71,10 @@ export default function BuildingModal({ visible, building, onClose }: BuildingMo
         <View style={[styles.bottomSheet, { backgroundColor: isDark ? BLACK : WHITE, height: screenHeight * 0.55 }]}>
           <View style={styles.header}>
             <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-              <Text style={{ color: isDark ? WHITE : BLACK, fontSize: 16 }}>X</Text> 
+              <Text style={{ color: isDark ? WHITE : BLACK, fontSize: 16 }}>X</Text>
             </TouchableOpacity>
           </View>
-          
+
           <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
             <View style={styles.section}>
               <Text style={[styles.buildingCode, { color: RED }]}>{code}</Text>
@@ -116,8 +124,14 @@ export default function BuildingModal({ visible, building, onClose }: BuildingMo
             )}
 
             <TouchableOpacity
-              style={styles.directionsButton}
-              onPress={() => {}} // Get Directions button to be implemented later
+              disabled={!location}
+              style={[styles.directionsButton, { backgroundColor: !location ? GRAY : RED }]}
+              onPress={() => {
+                if (location && building.geometry.coordinates[0]) {
+                  onGetDirections(location, building.geometry.coordinates[0]);
+                  onClose();
+                }
+              }}
               activeOpacity={0.7}
             >
               <Text style={styles.directionsButtonText}>Get Directions</Text>
