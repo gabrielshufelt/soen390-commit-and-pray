@@ -6,6 +6,7 @@ import * as Location from 'expo-location';
 const BLACK = 'rgba(0, 0, 0)';
 const WHITE = 'rgba(255, 255, 255)';
 const RED = '#8B0000';
+const GRAY = '#a0a0a0';
 
 interface BuildingData {
   id: string;
@@ -123,7 +124,8 @@ export default function BuildingModal({ visible, building, onClose, location, on
             )}
 
             <TouchableOpacity
-              style={styles.directionsButton}
+              disabled={!location}
+              style={[styles.directionsButton, { backgroundColor: !location ? GRAY : RED }]}
               onPress={() => {
                 if (location && building.geometry.coordinates[0]) {
                   onGetDirections(location, building.geometry.coordinates[0]);
