@@ -56,6 +56,10 @@ export default function Index() {
   const [selectedBuilding, setSelectedBuilding] = useState<string | null>(null);
   const [selectedBuildingData, setSelectedBuildingData] = useState<any>(null);
 
+  const [startChoice, setStartChoice] = useState<BuildingChoice | null>(null);
+  const [destChoice, setDestChoice] = useState<BuildingChoice | null>(null);
+
+
   const handleRegionChange = (region: Region) => {
     setShowLabels(region.latitudeDelta <= LABEL_ZOOM_THRESHOLD);
   };
@@ -164,16 +168,16 @@ export default function Index() {
       </MapView>
 
 
-      <SearchBar
-        buildings={buildingChoices}
-        start={null}
-        destination={null}
-        onChangeStart={() => {}}
-        onChangeDestination={() => {}}
-        routeActive={false}
-        onGetDirections={() => {}}
-        onExitRoute={() => {}}
-      />
+
+        <SearchBar
+      buildings={buildingChoices}
+      start={startChoice}
+      destination={destChoice}
+      onChangeStart={setStartChoice}
+      onChangeDestination={setDestChoice}
+      routeActive={directionsState.isActive}
+    />
+
 
       <View style={styles.overlay}>
         <Text style={styles.overlayTitle}>Current Location</Text>
