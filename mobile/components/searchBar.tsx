@@ -34,6 +34,7 @@ type Props = {
 
   onOpenBuilding?: (b: BuildingChoice) => void; // arrow tap
   onEndRoute?: () => void;
+  onStartRoute?: () => void;
 };
 
 const MAROON = "#912338";
@@ -138,6 +139,7 @@ export default function SearchBar({
   defaultExpanded = false,
   onOpenBuilding,
   onEndRoute,
+  onStartRoute,
 }: Props) {
   const [expanded, setExpanded] = useState(defaultExpanded);
   const [campus, setCampus] = useState<"SGW" | "Loyola">("SGW");
@@ -408,6 +410,16 @@ export default function SearchBar({
               <Text style={styles.endRouteButtonText}>End Directions</Text>
             </TouchableOpacity>
           )}
+
+          {!routeActive && destination && onStartRoute && (
+            <TouchableOpacity
+              style={styles.startRouteButton}
+              activeOpacity={0.9}
+              onPress={onStartRoute}
+            >
+              <Text style={styles.startRouteButtonText}>Start Directions</Text>
+            </TouchableOpacity>
+          )}
         </View>
 
         {/* filter chips */}
@@ -627,6 +639,20 @@ const styles = StyleSheet.create({
   endRouteButtonText: {
     fontWeight: "900",
     color: MAROON,
+    letterSpacing: 0.3,
+  },
+  startRouteButton: {
+    marginTop: 12,
+    borderRadius: 14,
+    paddingVertical: 12,
+    alignItems: "center",
+    backgroundColor: MAROON,
+    borderWidth: 1,
+    borderColor: MAROON,
+  },
+  startRouteButtonText: {
+    fontWeight: "900",
+    color: "#FFFFFF",
     letterSpacing: 0.3,
   },
   suggestionItem: { paddingHorizontal: 14, paddingVertical: 12 },

@@ -65,16 +65,13 @@ export default function Index() {
   const [startChoice, setStartChoice] = useState<BuildingChoice | null>(null);
   const [destChoice, setDestChoice] = useState<BuildingChoice | null>(null);
 
-  const lastRouteKeyRef = useRef<string | null>(null);
-
   const handleEndDirections = () => {
     endDirections();
     setStartChoice(null);
     setDestChoice(null);
-    lastRouteKeyRef.current = null;
   };
 
-  useEffect(() => {
+  const handleStartRoute = () => {
     if (!destChoice) return;
 
     const origin = startChoice?.coordinate
@@ -85,12 +82,8 @@ export default function Index() {
 
     if (!origin) return;
 
-    const key = `${origin.latitude},${origin.longitude}:${destChoice.coordinate.latitude},${destChoice.coordinate.longitude}`;
-    if (lastRouteKeyRef.current === key) return;
-
-    lastRouteKeyRef.current = key;
     startDirections(origin, destChoice.coordinate);
-  }, [startChoice, destChoice, location, startDirections]);
+  };
 
 
   const handleRegionChange = (region: Region) => {
@@ -210,6 +203,7 @@ export default function Index() {
         onChangeDestination={setDestChoice}
         routeActive={directionsState.isActive}
         onEndRoute={handleEndDirections}
+        onStartRoute={handleStartRoute}
       />
 
 
