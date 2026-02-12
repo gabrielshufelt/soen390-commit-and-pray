@@ -46,8 +46,14 @@ export default function Index() {
     return findCampusForCoordinate(location.coords.latitude, location.coords.longitude);
   }, [location]);
 
-  const { state: directionsState, apiKey, startDirectionsToBuilding, onRouteReady, endDirections } =
-    useDirections();
+  const {
+    state: directionsState,
+    apiKey,
+    startDirections,
+    startDirectionsToBuilding,
+    onRouteReady,
+    endDirections,
+  } = useDirections();
 
   const [showLabels, setShowLabels] = useState(
     defaultCampus.initialRegion.latitudeDelta <= LABEL_ZOOM_THRESHOLD
@@ -59,11 +65,32 @@ export default function Index() {
   const [startChoice, setStartChoice] = useState<BuildingChoice | null>(null);
   const [destChoice, setDestChoice] = useState<BuildingChoice | null>(null);
 
+  const lastRouteKeyRef = useRef<string | null>(null);
+
   const handleEndDirections = () => {
     endDirections();
     setStartChoice(null);
     setDestChoice(null);
+    lastRouteKeyRef.current = null;
   };
+
+  useEffect(() => {
+    if (!destChoice) return;
+
+    const origin = startChoice?.coordinate
+      ? startChoice.coordinate
+      : location
+        ? { latitude: location.coords.latitude, longitude: location.coords.longitude }
+        : null;
+
+    if (!origin) return;
+
+    const key = `${origin.latitude},${origin.longitude}:${destChoice.coordinate.latitude},${destChoice.coordinate.longitude}`;
+    if (lastRouteKeyRef.current === key) return;
+
+    lastRouteKeyRef.current = key;
+    startDirections(origin, destChoice.coordinate);
+  }, [startChoice, destChoice, location, startDirections]);
 
 
   const handleRegionChange = (region: Region) => {

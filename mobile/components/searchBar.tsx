@@ -146,6 +146,10 @@ export default function SearchBar({
   const [destFocused, setDestFocused] = useState(false);
   const destInputRef = useRef<TextInput>(null);
 
+  const [startText, setStartText] = useState("");
+  const [startFocused, setStartFocused] = useState(false);
+  const startInputRef = useRef<TextInput>(null);
+
   // local in-memory history (swap to AsyncStorage later if you want persistence)
   const [history, setHistory] = useState<BuildingChoice[]>([]);
   const [quickFilter, setQuickFilter] = useState<"Home" | "Library" | "Favorites">("Home");
@@ -160,7 +164,16 @@ export default function SearchBar({
     if (!destFocused) setDestText(displayName(destination));
   }, [destination, destFocused]);
 
+  useEffect(() => {
+    if (!start) {
+      if (!startFocused) setStartText("");
+      return;
+    }
+    if (!startFocused) setStartText(displayName(start));
+  }, [start, startFocused]);
+
   const destinationQuery = destText.trim().toLowerCase();
+  const startQuery = startText.trim().toLowerCase();
 
   const campusFiltered = useMemo(() => {
     return buildings.filter((b) => !b.campus || b.campus === campus);
@@ -176,6 +189,16 @@ export default function SearchBar({
       .slice(0, 10);
   }, [expanded, campusFiltered, destFocused, destinationQuery, routeActive]);
 
+  const startSuggestions = useMemo(() => {
+    if (!expanded || !startFocused || !startQuery || routeActive) return [];
+    return campusFiltered
+      .filter((b) => {
+        const hay = `${stripCodePrefix(b.name, b.code)} ${b.code ?? ""} ${b.address ?? ""}`.toLowerCase();
+        return hay.includes(startQuery);
+      })
+      .slice(0, 10);
+  }, [expanded, campusFiltered, startFocused, startQuery, routeActive]);
+
   function addToHistory(b: BuildingChoice) {
     setHistory((prev) => {
       const without = prev.filter((x) => x.id !== b.id);
@@ -190,7 +213,11 @@ export default function SearchBar({
     setDestFocused(false);
   }
 
-  const startLabel = start ? displayName(start) : "Current Location";
+  function pickStart(b: BuildingChoice) {
+    onChangeStart(b);
+    setStartText(displayName(b));
+    setStartFocused(false);
+  }
 
   const filteredHistory = useMemo(() => {
     const base = history.filter((h) => !h.campus || h.campus === campus);
@@ -234,6 +261,7 @@ export default function SearchBar({
             onPress={() => {
               setExpanded(false);
               setDestFocused(false);
+              setStartFocused(false);
             }}
             activeOpacity={0.85}
           >
@@ -270,14 +298,51 @@ export default function SearchBar({
         {/* route card */}
         <View style={styles.routeCard}>
           <Text style={styles.sectionLabel}>START POINT</Text>
-          <TouchableOpacity style={styles.inputRow} activeOpacity={0.9} onPress={() => onChangeStart(null)}>
+          <TouchableOpacity
+            style={styles.inputRow}
+            activeOpacity={1}
+            onPress={() => startInputRef.current?.focus()}
+          >
             <View style={styles.leftIconCircle}>
               <IconPin size={18} />
             </View>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.inputTextStrong}>{startLabel}</Text>
-            </View>
+            <TextInput
+              ref={startInputRef}
+              style={styles.destInput}
+              value={startText}
+              editable={!routeActive}
+              placeholder="Current Location"
+              placeholderTextColor="rgba(17,24,39,0.35)"
+              onFocus={() => setStartFocused(true)}
+              onBlur={() => setStartFocused(false)}
+              onChangeText={(t) => {
+                setStartText(t);
+                onChangeStart(null);
+              }}
+              returnKeyType="search"
+            />
           </TouchableOpacity>
+
+          {startSuggestions.length > 0 && (
+            <View style={styles.suggestionsBox}>
+              <FlatList
+                keyboardShouldPersistTaps="handled"
+                data={startSuggestions}
+                keyExtractor={(b) => b.id}
+                renderItem={({ item }) => (
+                  <TouchableOpacity
+                    style={styles.suggestionItem}
+                    onPress={() => pickStart(item)}
+                    activeOpacity={0.85}
+                  >
+                    <Text style={styles.suggestionTitle}>{displayName(item)}</Text>
+                    {!!item.address && <Text style={styles.suggestionSub}>{item.address}</Text>}
+                  </TouchableOpacity>
+                )}
+                ItemSeparatorComponent={() => <View style={styles.sep} />}
+              />
+            </View>
+          )}
 
           <Text style={[styles.sectionLabel, { marginTop: 14 }]}>DESTINATION</Text>
 
