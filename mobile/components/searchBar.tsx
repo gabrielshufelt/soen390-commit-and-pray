@@ -33,6 +33,7 @@ type Props = {
   defaultExpanded?: boolean;
 
   onOpenBuilding?: (b: BuildingChoice) => void; // arrow tap
+  onEndRoute?: () => void;
 };
 
 const MAROON = "#912338";
@@ -136,6 +137,7 @@ export default function SearchBar({
   routeActive,
   defaultExpanded = false,
   onOpenBuilding,
+  onEndRoute,
 }: Props) {
   const [expanded, setExpanded] = useState(defaultExpanded);
   const [campus, setCampus] = useState<"SGW" | "Loyola">("SGW");
@@ -326,6 +328,20 @@ export default function SearchBar({
                 ItemSeparatorComponent={() => <View style={styles.sep} />}
               />
             </View>
+          )}
+
+          {routeActive && onEndRoute && (
+            <TouchableOpacity
+              style={styles.endRouteButton}
+              activeOpacity={0.9}
+              onPress={() => {
+                onEndRoute();
+                setDestText("");
+                setDestFocused(false);
+              }}
+            >
+              <Text style={styles.endRouteButtonText}>End Directions</Text>
+            </TouchableOpacity>
           )}
         </View>
 
@@ -533,6 +549,20 @@ const styles = StyleSheet.create({
     borderColor: BORDER,
     backgroundColor: CARD_BG,
     maxHeight: 220,
+  },
+  endRouteButton: {
+    marginTop: 12,
+    borderRadius: 14,
+    paddingVertical: 12,
+    alignItems: "center",
+    backgroundColor: "rgba(145,35,56,0.10)",
+    borderWidth: 1,
+    borderColor: "rgba(145,35,56,0.35)",
+  },
+  endRouteButtonText: {
+    fontWeight: "900",
+    color: MAROON,
+    letterSpacing: 0.3,
   },
   suggestionItem: { paddingHorizontal: 14, paddingVertical: 12 },
   suggestionTitle: { fontWeight: "900", color: TEXT },

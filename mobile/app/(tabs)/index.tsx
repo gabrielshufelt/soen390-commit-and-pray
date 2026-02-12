@@ -46,7 +46,7 @@ export default function Index() {
     return findCampusForCoordinate(location.coords.latitude, location.coords.longitude);
   }, [location]);
 
-  const { state: directionsState, apiKey, startDirectionsToBuilding, onRouteReady, clearDirections } =
+  const { state: directionsState, apiKey, startDirectionsToBuilding, onRouteReady, endDirections } =
     useDirections();
 
   const [showLabels, setShowLabels] = useState(
@@ -58,6 +58,12 @@ export default function Index() {
 
   const [startChoice, setStartChoice] = useState<BuildingChoice | null>(null);
   const [destChoice, setDestChoice] = useState<BuildingChoice | null>(null);
+
+  const handleEndDirections = () => {
+    endDirections();
+    setStartChoice(null);
+    setDestChoice(null);
+  };
 
 
   const handleRegionChange = (region: Region) => {
@@ -169,14 +175,15 @@ export default function Index() {
 
 
 
-        <SearchBar
-      buildings={buildingChoices}
-      start={startChoice}
-      destination={destChoice}
-      onChangeStart={setStartChoice}
-      onChangeDestination={setDestChoice}
-      routeActive={directionsState.isActive}
-    />
+      <SearchBar
+        buildings={buildingChoices}
+        start={startChoice}
+        destination={destChoice}
+        onChangeStart={setStartChoice}
+        onChangeDestination={setDestChoice}
+        routeActive={directionsState.isActive}
+        onEndRoute={handleEndDirections}
+      />
 
 
       <View style={styles.overlay}>

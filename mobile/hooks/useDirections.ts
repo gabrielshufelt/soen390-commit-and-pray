@@ -34,6 +34,7 @@ interface DirectionsResult {
     origin: Location.LocationObject,
     buildingPolygon: number[][]
   ) => void;
+  endDirections: () => void;
   clearDirections: () => void;
   onRouteReady: (result: { distance: number; duration: number }) => void;
 }
@@ -76,6 +77,10 @@ export function useDirections(): DirectionsResult {
     setState(initialState);
   }, []);
 
+  const endDirections = useCallback(() => {
+    setState(initialState);
+  }, []);
+
   const onRouteReady = useCallback(
     (result: { distance: number; duration: number }) => {
       setState((prev) => ({ ...prev, routeInfo: { distance: result.distance, duration: result.duration } }));
@@ -83,5 +88,5 @@ export function useDirections(): DirectionsResult {
     []
   );
 
-  return { state, apiKey, startDirections, startDirectionsToBuilding, clearDirections, onRouteReady };
+  return { state, apiKey, startDirections, startDirectionsToBuilding, endDirections, clearDirections, onRouteReady };
 }
