@@ -1,0 +1,7 @@
+appId: com.anonymous.mobile
+---
+
+- setLocation:
+    latitude: -73.6104
+    longitude: 45.4972
+- assertVisible: '.*Loyola.*'

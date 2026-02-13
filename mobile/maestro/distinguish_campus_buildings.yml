@@ -1,0 +1,131 @@
+appId: com.anonymous.mobile
+---
+
+# Test that all campus buildings are rendered on the map
+
+# SGW Campus Buildings (11 buildings)
+- tapOn: "Select SGW campus"
+
+- assertVisible:
+    id: building-way/22080570
+    # H - Henry F. Hall Building
+
+- assertVisible:
+    id: building-way/22080572
+    # LB - J. W. McConnell Building
+
+- assertVisible:
+    id: building-way/22080581
+    # MB - John Molson School of Business
+
+- assertVisible:
+    id: building-way/86068897
+    # GM - Guy Metro Building
+
+- assertVisible:
+    id: building-way/103248049
+    # TD - TD Bank Building
+
+- assertVisible:
+    id: building-way/103248050
+    # FG - Le Faubourg
+
+- assertVisible:
+    id: building-way/103248058
+    # FB - Faubourg Tower
+
+- assertVisible:
+    id: building-way/103248064
+    # EV - Engineering, Computer Science and Visual Arts Integrated Complex
+
+- assertVisible:
+    id: building-way/103521746
+    # VA - Visual Arts Building
+
+- assertVisible:
+    id: building-way/979438074
+    # LS - Concordia Learning Square
+
+- assertVisible:
+    id: building-way/1369689991
+    # GN - Maison-Mère des Sœurs grises (Grey Nuns Residence)
+
+# Switch to Loyola Campus
+- tapOn: "Select Loyola campus"
+
+# Loyola Campus Buildings (21 buildings)
+- assertVisible:
+    id: building-way/47331993
+    # SP - Richard J Renaud Science Complex
+
+- assertVisible:
+    id: building-way/47332003
+    # FC - F.C. Smith Building
+
+- assertVisible:
+    id: building-way/47332005
+    # RA - Recreation and Athletics Complex
+
+- assertVisible:
+    id: building-way/47332006
+    # PS - Physical Services
+
+- assertVisible:
+    id: building-way/47332007
+    # CJ - Communication Studies and Journalism Building
+
+- assertVisible:
+    id: building-way/47332009
+    # SC - Student Centre
+
+- assertVisible:
+    id: building-way/129437733
+    # JR - Jesuit Residence
+
+- assertVisible:
+    id: building-way/352622186
+    # SH - Solar House
+
+- assertVisible:
+    id: building-way/352622559
+    # TA - Concordia Terrebonne Building
+
+- assertVisible:
+    id: building-way/545014554
+    # GE - Centre for Structural and Functional Genomics
+
+- assertVisible:
+    id: building-way/604019520
+    # PC - PERFORM Centre
+
+- assertVisible:
+    id: building-way/604324438
+    # HC - Hingston Hall
+
+- assertVisible:
+    id: building-way/604324439
+    # BB - Concordia BB Annex
+
+- assertVisible:
+    id: building-way/604324440
+    # BH - Concordia BH Annex
+
+- assertVisible:
+    id: building-way/604324443
+    # PT - Oscar Peterson Concert Hall
+
+- assertVisible:
+    id: building-way/604324455
+    # RF - Loyola Jesuit Hall and Conference Center
+
+- assertVisible:
+    id: building-way/604324456
+    # CC - Central Building
+
+- assertVisible:
+    id: building-way/604324457
+    # AD - Administration Building
+
+- assertVisible:
+    id: building-way/795012497
+    # HU - Applied Science Hub
