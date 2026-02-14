@@ -35,7 +35,6 @@ interface DirectionsResult {
     buildingPolygon: number[][]
   ) => void;
   endDirections: () => void;
-  clearDirections: () => void;
   onRouteReady: (result: { distance: number; duration: number }) => void;
 }
 
@@ -73,10 +72,6 @@ export function useDirections(): DirectionsResult {
     []
   );
 
-  const clearDirections = useCallback(() => {
-    setState(initialState);
-  }, []);
-
   const endDirections = useCallback(() => {
     setState(initialState);
   }, []);
@@ -88,5 +83,5 @@ export function useDirections(): DirectionsResult {
     []
   );
 
-  return { state, apiKey, startDirections, startDirectionsToBuilding, endDirections, clearDirections, onRouteReady };
+  return { state, apiKey, startDirections, startDirectionsToBuilding, endDirections, onRouteReady };
 }

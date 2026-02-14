@@ -32,7 +32,7 @@ type Props = {
   routeActive: boolean;
   defaultExpanded?: boolean;
 
-  onOpenBuilding?: (b: BuildingChoice) => void; // arrow tap
+  onOpenBuilding?: (b: BuildingChoice) => void;
   onEndRoute?: () => void;
   onStartRoute?: () => void;
 };
@@ -57,7 +57,7 @@ function displayName(b: { name: string; code?: string }) {
   return b.code ? `${clean} (${b.code})` : clean;
 }
 
-/** ----------------- “DRAWN” ICONS (no emoji) ----------------- **/
+// Functions to create the incons in the searchbar
 function IconPin({ size = 18 }: { size?: number }) {
   const s = size;
   return (
@@ -124,10 +124,9 @@ function IconLibrary({ active }: { active: boolean }) {
 }
 
 function IconStar({ active }: { active: boolean }) {
-  // glyph, not emoji
   return <Text style={{ fontSize: 14, color: active ? MAROON : MUTED, fontWeight: "900" }}>★</Text>;
 }
-/** ------------------------------------------------------------ **/
+
 
 export default function SearchBar({
   buildings,
@@ -152,17 +151,15 @@ export default function SearchBar({
   const [startFocused, setStartFocused] = useState(false);
   const startInputRef = useRef<TextInput>(null);
 
-  // local in-memory history (swap to AsyncStorage later if you want persistence)
+  // local in-memory history
   const [history, setHistory] = useState<BuildingChoice[]>([]);
   const [quickFilter, setQuickFilter] = useState<"Home" | "Library" | "Favorites">("Home");
 
-  // IMPORTANT: do NOT auto-fill when opening screen (only show chosen destination after user picks)
   useEffect(() => {
     if (!destination) {
       if (!destFocused) setDestText("");
       return;
     }
-    // only update the text if user is not typing
     if (!destFocused) setDestText(displayName(destination));
   }, [destination, destFocused]);
 
@@ -224,14 +221,12 @@ export default function SearchBar({
   const filteredHistory = useMemo(() => {
     const base = history.filter((h) => !h.campus || h.campus === campus);
 
-    // if your history items don't have category, don't filter them out
     const hasCategories = base.some((b) => b.category);
     if (!hasCategories) return base;
 
     return base.filter((b) => b.category === quickFilter);
   }, [history, campus, quickFilter]);
 
-  // ---------------- COLLAPSED (top bar only)
   if (!expanded) {
     return (
       <View style={styles.wrapperCollapsed} pointerEvents="box-none">
@@ -240,7 +235,6 @@ export default function SearchBar({
           style={styles.collapsedBar}
           onPress={() => {
             setExpanded(true);
-            // ✅ NO AUTO-FOCUS: user must tap "Where to?"
           }}
         >
           <View style={styles.leftIconMini}>
@@ -252,7 +246,6 @@ export default function SearchBar({
     );
   }
 
-  // ---------------- EXPANDED (full screen sheet)
   return (
     <View style={styles.fullscreenOverlay} pointerEvents="auto">
       <SafeAreaView style={styles.sheet}>
@@ -270,7 +263,7 @@ export default function SearchBar({
             <Text style={styles.headerBack}>‹</Text>
           </TouchableOpacity>
 
-          {/* "Route" moved slightly left (match mock) */}
+          {/* "Route" */}
           <Text style={styles.headerTitle}>Route</Text>
 
           <TouchableOpacity style={styles.headerRightBtn} activeOpacity={0.85}>
@@ -278,7 +271,7 @@ export default function SearchBar({
           </TouchableOpacity>
         </View>
 
-        {/* campus segmented */}
+        {/* campus names position */}
         <View style={styles.segmentOuter}>
           <TouchableOpacity
             style={[styles.segmentBtn, campus === "SGW" && styles.segmentBtnActive]}
@@ -297,7 +290,7 @@ export default function SearchBar({
           </TouchableOpacity>
         </View>
 
-        {/* route card */}
+        {/* searchbar destination and start area */}
         <View style={styles.routeCard}>
           <Text style={styles.sectionLabel}>START POINT</Text>
           <TouchableOpacity
@@ -348,7 +341,7 @@ export default function SearchBar({
 
           <Text style={[styles.sectionLabel, { marginTop: 14 }]}>DESTINATION</Text>
 
-          {/* Make only "Where to?" clickable -> focus input */}
+          {/* Destination Area */}
           <TouchableOpacity
             activeOpacity={1}
             onPress={() => destInputRef.current?.focus()}
@@ -422,7 +415,7 @@ export default function SearchBar({
           )}
         </View>
 
-        {/* filter chips */}
+        {/* filters */}
         <View style={styles.filterRow}>
           {(["Home", "Library", "Favorites"] as const).map((k) => {
             const active = quickFilter === k;
@@ -446,7 +439,7 @@ export default function SearchBar({
           })}
         </View>
 
-        {/* header */}
+        {/* Suggestions header */}
         <View style={styles.listHeader}>
           <Text style={styles.listTitle}>Suggested Buildings</Text>
           <TouchableOpacity activeOpacity={0.85}>
@@ -454,7 +447,7 @@ export default function SearchBar({
           </TouchableOpacity>
         </View>
 
-        {/* HISTORY ONLY */}
+        {/* Revent buildings */}
         <View style={styles.listCard}>
           {filteredHistory.length === 0 ? (
             <View style={styles.emptyState}>
@@ -541,7 +534,6 @@ const styles = StyleSheet.create({
     paddingTop: Platform.OS === "ios" ? 6 : 10,
   },
 
-  // ✅ Header now positions dots absolutely on the right, and nudges title left
   header: {
     flexDirection: "row",
     alignItems: "center",
