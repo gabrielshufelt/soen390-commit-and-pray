@@ -113,36 +113,6 @@ describe('useDirections', () => {
     });
   });
 
-  describe('clearDirections', () => {
-    it('resets state to initial values', () => {
-      const { result } = renderHook(() => useDirections());
-
-      // First activate directions
-      act(() => {
-        result.current.startDirections(mockOrigin, mockDestination);
-      });
-
-      expect(result.current.state.isActive).toBe(true);
-
-      // Then clear them
-      act(() => {
-        result.current.clearDirections();
-      });
-
-      expect(result.current.state).toEqual({
-        origin: null,
-        destination: null,
-        isActive: false,
-        loading: false,
-        error: null,
-        routeInfo: {
-          distance: null,
-          duration: null,
-        },
-      });
-    });
-  });
-
   describe('onRouteReady', () => {
     it('updates routeInfo with distance and duration', () => {
       const { result } = renderHook(() => useDirections());
@@ -166,4 +136,37 @@ describe('useDirections', () => {
       expect(result.current.state.origin).toEqual(mockOrigin);
     });
   });
+
+
+describe('endDirections', () => {
+    it('resets state to initial values', () => {
+      const { result } = renderHook(() => useDirections());
+
+      // First activate directions
+      act(() => {
+        result.current.startDirections(mockOrigin, mockDestination);
+      });
+
+      expect(result.current.state.isActive).toBe(true);
+
+      // Then end directions
+      act(() => {
+        result.current.endDirections();
+      });
+
+      expect(result.current.state).toEqual({
+        origin: null,
+        destination: null,
+        isActive: false,
+        loading: false,
+        error: null,
+        routeInfo: {
+          distance: null,
+          duration: null,
+        },
+      });
+    });
+  });
+
+
 });
