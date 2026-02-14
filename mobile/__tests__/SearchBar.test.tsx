@@ -167,6 +167,36 @@ describe("<SearchBar />", () => {
                 expect(getByText(/John Molson School of Business \(MB\)/)).toBeTruthy();
             });
         });
+        
+        it("Calls onChangeDestination when suggestion is selected", async () => {
+            const onChangeDestination = jest.fn();
+            const { getByPlaceholderText, getByText } = render(
+                <SearchBar {...defaultProps} onChangeDestination={onChangeDestination} defaultExpanded={true} />
+            );
+      
+            const destInput = getByPlaceholderText("Where to?");
+            fireEvent(destInput, "focus");
+            fireEvent.changeText(destInput, "Hall");
+      
+            await waitFor(() => {
+                expect(getByText(/Henry F. Hall Building \(H\)/)).toBeTruthy();
+            });
+      
+            fireEvent.press(getByText(/Henry F. Hall Building \(H\)/));
+      
+            expect(onChangeDestination).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    id: "1",
+                    name: "Henry F. Hall Building (H)",
+                    code: "H",
+                })
+            );
+    });
+
+
+
+
+
     });
 
     describe("Buttons", () => {
@@ -228,4 +258,29 @@ describe("<SearchBar />", () => {
             expect(onEndRoute).toHaveBeenCalled();
         });
     });
+
+    describe("Quick Filters", () => {
+        it("Shows Home, Library, and Favorites filters", () => {
+            const { getByText } = render(
+                <SearchBar {...defaultProps} defaultExpanded={true} />
+            );
+        
+            expect(getByText("Home")).toBeTruthy();
+            expect(getByText("Library")).toBeTruthy();
+            expect(getByText("Favorites")).toBeTruthy();
+        });
+
+        it("Switches active filter when clicked", () => {
+            const { getByText } = render(
+                <SearchBar {...defaultProps} defaultExpanded={true} />
+            );
+        
+            fireEvent.press(getByText("Library"));
+        
+            expect(getByText("Library")).toBeTruthy();
+        });
+    });
+
+
+
 });
