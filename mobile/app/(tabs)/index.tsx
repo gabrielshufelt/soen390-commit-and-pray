@@ -105,6 +105,18 @@ export default function Index() {
   }, [campusKey]);
 
   const mapRef = useRef<MapView>(null);
+  const previousDirectionsActiveRef = useRef(false);
+  const [shouldFitRoute, setShouldFitRoute] = useState(directionsState.isActive);
+
+  useEffect(() => {
+    if (directionsState.isActive && !previousDirectionsActiveRef.current) {
+      setShouldFitRoute(true);
+    }
+    if (!directionsState.isActive) {
+      setShouldFitRoute(false);
+    }
+    previousDirectionsActiveRef.current = directionsState.isActive;
+  }, [directionsState.isActive]);
 
   useEffect(() => {
     mapRef.current?.animateToRegion(selectedCampus.initialRegion, ANIMATION_DURATION);
@@ -151,13 +163,17 @@ export default function Index() {
   }, [campusBuildingsData]);
 
   const buildingChoices: BuildingChoice[] = useMemo(() => {
-    return campusBuildingsData.map((b: any) => ({
-      id: b.id,
-      name: b.properties?.name ?? b.properties?.code ?? "Unknown building",
-      code: b.properties?.code,
-      coordinate: getInteriorPoint(b.geometry.coordinates[0]),
-    }));
-  }, [campusBuildingsData]);
+    const toChoices = (features: any[], campus: "SGW" | "Loyola") =>
+      features.map((b: any) => ({
+        id: b.id,
+        name: b.properties?.name ?? b.properties?.code ?? "Unknown building",
+        code: b.properties?.code,
+        coordinate: getInteriorPoint(b.geometry.coordinates[0]),
+        campus,
+      }));
+
+    return [...toChoices(sgwBuildingsData.features, "SGW"), ...toChoices(loyolaBuildingsData.features, "Loyola")];
+  }, []);
 
   return (
     <View style={styles.container}>
@@ -174,6 +190,7 @@ export default function Index() {
 
         {directionsState.isActive && directionsState.origin && directionsState.destination && (
           <MapViewDirections
+            key={`${campusKey}-${directionsState.origin?.latitude ?? "x"}-${directionsState.destination?.latitude ?? "y"}`}
             origin={directionsState.origin}
             destination={directionsState.destination}
             apikey={apiKey}
@@ -181,11 +198,12 @@ export default function Index() {
             strokeColor="#0A84FF"
             onReady={(result) => {
               onRouteReady(result);
-              if (result?.coordinates?.length) {
+              if (shouldFitRoute && result?.coordinates?.length) {
                 mapRef.current?.fitToCoordinates(result.coordinates, {
                   edgePadding: { top: 160, right: 50, bottom: 220, left: 50 },
                   animated: true,
                 });
+                setShouldFitRoute(false);
               }
             }}
             onError={(error) => console.error("[Index] MapViewDirections ERROR:", error)}
