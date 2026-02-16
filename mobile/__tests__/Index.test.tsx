@@ -58,7 +58,14 @@ jest.mock('react-native-maps-directions', () => {
     default: (props: any) => {
       React.useEffect(() => {
         if (mockMapDirectionsBehavior === 'ready' && props.onReady) {
-          props.onReady({ distance: 1.5, duration: 10 });
+          props.onReady({
+            distance: 1.5,
+            duration: 10,
+            coordinates: [
+              { latitude: 45.497, longitude: -73.579 },
+              { latitude: 45.458, longitude: -73.639 },
+            ],
+          });
         }
         if (mockMapDirectionsBehavior === 'error' && props.onError) {
           props.onError('Route not found');
@@ -357,11 +364,13 @@ describe('<Index />', () => {
     renderWithTheme(<Index />);
 
     await waitFor(() => {
-      expect(mockOnRouteReady).toHaveBeenCalledWith({ distance: 1.5, duration: 10 });
+      expect(mockOnRouteReady).toHaveBeenCalledWith(
+        expect.objectContaining({ distance: 1.5, duration: 10 })
+      );
     });
     expect(mockFitToCoordinates).toHaveBeenCalledWith(
       [activeDirections.state.origin, activeDirections.state.destination],
-      { edgePadding: { top: 100, right: 50, bottom: 150, left: 50 }, animated: true }
+      { edgePadding: { top: 160, right: 50, bottom: 220, left: 50 }, animated: true }
     );
   });
 
@@ -460,18 +469,25 @@ describe('<Index />', () => {
       renderWithTheme(<Index />);
       await waitFor(() => expect(mockSearchBarProperties.onEndRoute).toBeDefined());
 
-      mockSearchBarProperties.onChangeStart({ 
-        id: 'H', 
-        name: 'Hall Building',
-        coordinate: { latitude: 45.497, longitude: -73.579 } 
-      });
-      mockSearchBarProperties.onChangeDestination({ 
-        id: 'MB', 
-        name: 'Molson Building',
-        coordinate: { latitude: 45.495, longitude: -73.578 } 
+      await act(async () => {
+        mockSearchBarProperties.onChangeStart({ 
+          id: 'H', 
+          name: 'Hall Building',
+          coordinate: { latitude: 45.497, longitude: -73.579 } 
+        });
       });
 
-      mockSearchBarProperties.onEndRoute();
+      await act(async () => {
+        mockSearchBarProperties.onChangeDestination({ 
+          id: 'MB', 
+          name: 'Molson Building',
+          coordinate: { latitude: 45.495, longitude: -73.578 } 
+        });
+      });
+
+      await waitFor(() => {
+        mockSearchBarProperties.onEndRoute();
+      });
 
       expect(mockEndDirections).toHaveBeenCalled();
       
