@@ -1,16 +1,8 @@
 import React, { useMemo, useState, useEffect, useRef } from "react";
-import { View, Text, TextInput, TouchableOpacity, FlatList } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { View, Text, TextInput, TouchableOpacity, FlatList, SafeAreaView } from "react-native";
 
 import { styles } from "../styles/searchBar.styles";
-import {
-  IconPin,
-  IconSearch,
-  IconBuilding,
-  IconHome,
-  IconLibrary,
-  IconStar,
-} from "../icons/searchBar.icons";
+import { IconPin, IconSearch, IconBuilding, IconHome, IconLibrary, IconStar } from "../icons/searchBar.icons";
 
 export type BuildingChoice = {
   id: string;
@@ -24,12 +16,16 @@ export type BuildingChoice = {
 
 type Props = {
   buildings: BuildingChoice[];
-  start: BuildingChoice | null;
+
+  start: BuildingChoice | null; // null => current location
   destination: BuildingChoice | null;
+
   onChangeStart: (b: BuildingChoice | null) => void;
   onChangeDestination: (b: BuildingChoice | null) => void;
+
   routeActive: boolean;
   defaultExpanded?: boolean;
+
   onOpenBuilding?: (b: BuildingChoice) => void;
   onEndRoute?: () => void;
   onStartRoute?: () => void;
@@ -44,16 +40,17 @@ function stripCodePrefix(name: string, code?: string) {
 
 function displayName(b: { name: string; code?: string }) {
   if (!b.code) return b.name;
+
   const clean = stripCodePrefix(b.name, b.code);
+
   const alreadyHasCode = clean.trim().endsWith(`(${b.code})`);
+
   return alreadyHasCode ? clean : `${clean} (${b.code})`;
 }
 
 function makeHaystack(b: BuildingChoice) {
   return `${stripCodePrefix(b.name, b.code)} ${b.code ?? ""} ${b.address ?? ""}`.toLowerCase();
 }
-
-const Separator = () => <View style={styles.sep} />;
 
 export default function SearchBar({
   buildings,
@@ -79,8 +76,7 @@ export default function SearchBar({
   const startInputRef = useRef<TextInput>(null);
 
   const [history, setHistory] = useState<BuildingChoice[]>([]);
-  const [quickFilter, setQuickFilter] =
-    useState<"Home" | "Library" | "Favorites">("Home");
+  const [quickFilter, setQuickFilter] = useState<"Home" | "Library" | "Favorites">("Home");
 
   useEffect(() => {
     if (!destFocused) {
@@ -106,16 +102,12 @@ export default function SearchBar({
 
   const suggestions = useMemo(() => {
     if (!expanded || !destFocused || !destinationQuery || routeActive) return [];
-    return campusFiltered
-      .filter((b) => makeHaystack(b).includes(destinationQuery))
-      .slice(0, 10);
+    return campusFiltered.filter((b) => makeHaystack(b).includes(destinationQuery)).slice(0, 10);
   }, [expanded, campusFiltered, destFocused, destinationQuery, routeActive]);
 
   const startSuggestions = useMemo(() => {
     if (!expanded || !startFocused || !startQuery || routeActive) return [];
-    return campusFiltered
-      .filter((b) => makeHaystack(b).includes(startQuery))
-      .slice(0, 10);
+    return campusFiltered.filter((b) => makeHaystack(b).includes(startQuery)).slice(0, 10);
   }, [expanded, campusFiltered, startFocused, startQuery, routeActive]);
 
   function addToHistory(b: BuildingChoice) {
@@ -157,9 +149,7 @@ export default function SearchBar({
           <View style={styles.leftIconMini}>
             <IconSearch size={18} />
           </View>
-          <Text style={styles.collapsedPlaceholder}>
-            Search buildings, rooms...
-          </Text>
+          <Text style={styles.collapsedPlaceholder}>Search buildings, rooms...</Text>
         </TouchableOpacity>
       </View>
     );
@@ -168,6 +158,7 @@ export default function SearchBar({
   return (
     <View style={styles.fullscreenOverlay} pointerEvents="auto">
       <SafeAreaView style={styles.sheet}>
+        {/* header */}
         <View style={styles.header}>
           <TouchableOpacity
             style={styles.headerBtn}
@@ -180,21 +171,40 @@ export default function SearchBar({
           >
             <Text style={styles.headerBack}>‹</Text>
           </TouchableOpacity>
-
+        
           <Text style={styles.headerTitle}>Route</Text>
-
+        
           <View style={styles.headerRightBtn} />
         </View>
 
-        {/* START FIELD */}
+
+        {/* campus */}
+        <View style={styles.segmentOuter}>
+          <TouchableOpacity
+            style={[styles.segmentBtn, campus === "SGW" && styles.segmentBtnActive]}
+            onPress={() => setCampus("SGW")}
+            activeOpacity={0.9}
+          >
+            <Text style={[styles.segmentText, campus === "SGW" && styles.segmentTextActive]}>SGW Campus</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.segmentBtn, campus === "Loyola" && styles.segmentBtnActive]}
+            onPress={() => setCampus("Loyola")}
+            activeOpacity={0.9}
+          >
+            <Text
+              style={[styles.segmentText, campus === "Loyola" && styles.segmentTextActive]}
+            >
+              Loyola Campus
+            </Text>
+          </TouchableOpacity>
+        </View>
+
         <View style={styles.routeCard}>
           <Text style={styles.sectionLabel}>START POINT</Text>
 
-          <TouchableOpacity
-            style={styles.inputRow}
-            activeOpacity={1}
-            onPress={() => startInputRef.current?.focus()}
-          >
+          <TouchableOpacity style={styles.inputRow} activeOpacity={1} onPress={() => startInputRef.current?.focus()}>
             <View style={styles.leftIconCircle}>
               <IconPin size={18} />
             </View>
@@ -206,33 +216,27 @@ export default function SearchBar({
               value={startText}
               editable={!routeActive}
               placeholder="Current Location"
+              placeholderTextColor="rgba(17,24,39,0.35)"
               onFocus={() => setStartFocused(true)}
               onBlur={() => setStartFocused(false)}
               onChangeText={(t) => {
                 setStartText(t);
                 onChangeStart(null);
               }}
+              returnKeyType="search"
             />
           </TouchableOpacity>
 
           {startSuggestions.length > 0 && (
-            <View style={styles.suggestionsBox}>
+            <View testID="route.start.suggestions" style={styles.suggestionsBox}>
               <FlatList
+                keyboardShouldPersistTaps="handled"
                 data={startSuggestions}
                 keyExtractor={(b) => b.id}
                 renderItem={({ item }) => (
-                  <TouchableOpacity
-                    style={styles.suggestionItem}
-                    onPress={() => pickStart(item)}
-                  >
-                    <Text style={styles.suggestionTitle}>
-                      {displayName(item)}
-                    </Text>
-                    {!!item.address && (
-                      <Text style={styles.suggestionSub}>
-                        {item.address}
-                      </Text>
-                    )}
+                  <TouchableOpacity style={styles.suggestionItem} onPress={() => pickStart(item)} activeOpacity={0.85}>
+                    <Text style={styles.suggestionTitle}>{displayName(item)}</Text>
+                    {!!item.address && <Text style={styles.suggestionSub}>{item.address}</Text>}
                   </TouchableOpacity>
                 )}
                 ItemSeparatorComponent={Separator}
@@ -240,10 +244,7 @@ export default function SearchBar({
             </View>
           )}
 
-          {/* DESTINATION FIELD */}
-          <Text style={[styles.sectionLabel, { marginTop: 14 }]}>
-            DESTINATION
-          </Text>
+          <Text style={[styles.sectionLabel, { marginTop: 14 }]}>DESTINATION</Text>
 
           <TouchableOpacity
             activeOpacity={1}
@@ -261,38 +262,119 @@ export default function SearchBar({
               value={destText}
               editable={!routeActive}
               placeholder="Where to?"
+              placeholderTextColor="rgba(17,24,39,0.35)"
               onFocus={() => setDestFocused(true)}
               onBlur={() => setDestFocused(false)}
               onChangeText={(t) => {
                 setDestText(t);
                 onChangeDestination(null);
               }}
+              returnKeyType="search"
             />
           </TouchableOpacity>
 
           {suggestions.length > 0 && (
-            <View style={styles.suggestionsBox}>
+            <View testID="route.dest.suggestions" style={styles.suggestionsBox}>
               <FlatList
+                keyboardShouldPersistTaps="handled"
                 data={suggestions}
                 keyExtractor={(b) => b.id}
                 renderItem={({ item }) => (
-                  <TouchableOpacity
-                    style={styles.suggestionItem}
-                    onPress={() => pickDestination(item)}
-                  >
-                    <Text style={styles.suggestionTitle}>
-                      {displayName(item)}
-                    </Text>
-                    {!!item.address && (
-                      <Text style={styles.suggestionSub}>
-                        {item.address}
-                      </Text>
-                    )}
+                  <TouchableOpacity style={styles.suggestionItem} onPress={() => pickDestination(item)} activeOpacity={0.85}>
+                    <Text style={styles.suggestionTitle}>{displayName(item)}</Text>
+                    {!!item.address && <Text style={styles.suggestionSub}>{item.address}</Text>}
                   </TouchableOpacity>
                 )}
                 ItemSeparatorComponent={Separator}
               />
             </View>
+          )}
+
+         {routeActive && onEndRoute && (
+          <TouchableOpacity
+            testID="route.end.button"
+            style={styles.endRouteButton}
+            activeOpacity={0.9}
+            onPress={() => {
+              onEndRoute();
+              setStartText("");
+              setDestText("");
+              setStartFocused(false);
+              setDestFocused(false);
+            }}
+          >
+            <Text style={styles.endRouteButtonText}>End Directions</Text>
+          </TouchableOpacity>
+        )}
+
+
+          {!routeActive && destination && onStartRoute && (
+            <TouchableOpacity
+              testID="route.start.button"
+              style={styles.startRouteButton}
+              activeOpacity={0.9}
+              onPress={onStartRoute}
+            >
+              <Text style={styles.startRouteButtonText}>Start Directions</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+
+        {/* filters */}
+        <View style={styles.filterRow}>
+          {(["Home", "Library", "Favorites"] as const).map((k) => {
+            const active = quickFilter === k;
+            return (
+              <TouchableOpacity
+                key={k}
+                style={[styles.filterChip, active && styles.filterChipActive]}
+                onPress={() => setQuickFilter(k)}
+                activeOpacity={0.9}
+              >
+                {k === "Home" ? <IconHome active={active} /> : k === "Library" ? <IconLibrary active={active} /> : <IconStar active={active} />}
+                <Text style={[styles.filterText, active && styles.filterTextActive]}>{k}</Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+
+        {/* header */}
+        <View style={styles.listHeader}>
+          <Text style={styles.listTitle}>Suggested Buildings</Text>
+          <TouchableOpacity activeOpacity={0.85}>
+            <Text style={styles.seeAll}>See All</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* list */}
+        <View style={styles.listCard}>
+          {filteredHistory.length === 0 ? (
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyTitle}>No recent destinations yet</Text>
+              <Text style={styles.emptySub}>Search a building above and it will show here.</Text>
+            </View>
+          ) : (
+            <FlatList
+              data={filteredHistory}
+              keyExtractor={(b) => b.id}
+              ItemSeparatorComponent={Separator}
+              renderItem={({ item }) => (
+                <TouchableOpacity style={styles.buildingRow} activeOpacity={0.9} onPress={() => pickDestination(item)}>
+                  <View style={styles.buildingIconBox}>
+                    <IconBuilding size={18} />
+                  </View>
+
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.buildingName}>{displayName(item)}</Text>
+                    {!!item.address && <Text style={styles.buildingSub}>{item.address}</Text>}
+                  </View>
+
+                  <TouchableOpacity style={styles.chevBtn} activeOpacity={0.85} onPress={() => onOpenBuilding?.(item)}>
+                    <Text style={styles.rowChev}>›</Text>
+                  </TouchableOpacity>
+                </TouchableOpacity>
+              )}
+            />
           )}
         </View>
       </SafeAreaView>
