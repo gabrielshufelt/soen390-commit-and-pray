@@ -74,19 +74,17 @@ export default function SearchBar({
   const [quickFilter, setQuickFilter] = useState<"Home" | "Library" | "Favorites">("Home");
 
   useEffect(() => {
-    if (!destination) {
-      if (!destFocused) setDestText("");
-      return;
+    if (!destFocused) {
+      if (!destination) { setDestText(""); }
+      else { setDestText(displayName(destination)); }
     }
-    if (!destFocused) setDestText(displayName(destination));
   }, [destination, destFocused]);
 
   useEffect(() => {
-    if (!start) {
-      if (!startFocused) setStartText("");
-      return;
+    if (!startFocused) {
+      if (!start) { setStartText(""); }
+      else { setStartText(displayName(start)); }
     }
-    if (!startFocused) setStartText(displayName(start));
   }, [start, startFocused]);
 
   const destinationQuery = destText.trim().toLowerCase();
@@ -152,6 +150,8 @@ export default function SearchBar({
     );
   }
 
+  const Separator = () => <View style={styles.sep} />
+
   return (
     <View style={styles.fullscreenOverlay} pointerEvents="auto">
       <SafeAreaView style={styles.sheet}>
@@ -170,10 +170,6 @@ export default function SearchBar({
           </TouchableOpacity>
 
           <Text style={styles.headerTitle}>Route</Text>
-
-          <TouchableOpacity style={styles.headerRightBtn} activeOpacity={0.85}>
-            <Text style={styles.headerDots}>⋮</Text>
-          </TouchableOpacity>
         </View>
 
         {/* campus */}
@@ -237,7 +233,7 @@ export default function SearchBar({
                     {!!item.address && <Text style={styles.suggestionSub}>{item.address}</Text>}
                   </TouchableOpacity>
                 )}
-                ItemSeparatorComponent={() => <View style={styles.sep} />}
+                ItemSeparatorComponent={Separator}
               />
             </View>
           )}
@@ -283,7 +279,7 @@ export default function SearchBar({
                     {!!item.address && <Text style={styles.suggestionSub}>{item.address}</Text>}
                   </TouchableOpacity>
                 )}
-                ItemSeparatorComponent={() => <View style={styles.sep} />}
+                ItemSeparatorComponent={Separator}
               />
             </View>
           )}
@@ -295,6 +291,7 @@ export default function SearchBar({
               activeOpacity={0.9}
               onPress={() => {
                 onEndRoute();
+                setStartText("");
                 setDestText("");
                 setDestFocused(false);
               }}
@@ -352,7 +349,7 @@ export default function SearchBar({
             <FlatList
               data={filteredHistory}
               keyExtractor={(b) => b.id}
-              ItemSeparatorComponent={() => <View style={styles.sep} />}
+              ItemSeparatorComponent={Separator}
               renderItem={({ item }) => (
                 <TouchableOpacity style={styles.buildingRow} activeOpacity={0.9} onPress={() => pickDestination(item)}>
                   <View style={styles.buildingIconBox}>

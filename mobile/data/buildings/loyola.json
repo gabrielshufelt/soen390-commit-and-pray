@@ -73,7 +73,7 @@
         "building": "university",
         "building:levels": "3",
         "canvec:CODE": "2010252",
-        "name": "Richard J Renaud Science Complex (SP)",
+        "name": "Richard J Renaud Science Complex",
         "source": "CanVec_Import_2009",
         "code": "SP",
 
@@ -130,7 +130,7 @@
         "attribution": "Natural Resources Canada",
         "building": "university",
         "canvec:CODE": "2010392",
-        "name": "F.C. Smith Building (FC)",
+        "name": "F.C. Smith Building",
         "source": "CanVec_Import_2009",
         "website": "http://www.concordia.ca/arts/venues/fc-smith-auditorium.html",
         "code": "FC",
@@ -178,7 +178,7 @@
         "building": "university",
         "canvec:CODE": "2010022",
         "leisure": "sports_centre",
-        "name": "Recreation and Athletics Complex (RA)",
+        "name": "Recreation and Athletics Complex",
         "name_1": "Ed Meagher Arena",
         "sport": "multi",
         "website": "http://www.concordia.ca/campus-life/recreation/facilities/athletic-complex.html",
@@ -222,7 +222,7 @@
         "attribution": "Natural Resources Canada",
         "building": "university",
         "canvec:CODE": "2010252",
-        "name": "Physical Services (PS)",
+        "name": "Physical Services",
         "source": "CanVec_Import_2009",
         "code": "PS"
       }
@@ -277,7 +277,7 @@
         "@id": "way/47332007",
         "building": "university",
         "canvec:CODE": "2010252",
-        "name": "Communication Studies and Journalism Building (CJ)",
+        "name": "Communication Studies and Journalism Building",
         "source": "CanVec_Import_2009",
         "website": "http://www.concordia.ca/artsci/coms.html",
         "code": "CJ",
@@ -320,7 +320,7 @@
         "attribution": "Natural Resources Canada",
         "building": "university",
         "canvec:CODE": "2010252",
-        "name": "Student Centre (SC)",
+        "name": "Student Centre",
         "source": "CanVec_Import_2009",
         "code": "SC",
 
@@ -360,7 +360,7 @@
       "properties": {
         "@id": "way/129437733",
         "building": "university",
-        "name": "Jesuit Residence (JR)",
+        "name": "Jesuit Residence",
         "website": "http://www.concordia.ca/students/housing/residences/jesuit-residence.html",
         "code": "JR",
 
@@ -393,7 +393,7 @@
         "@id": "way/352622186",
         "building": "university",
         "building:levels": "1",
-        "name": "Solar House (SH)",
+        "name": "Solar House",
         "code": "SH",
 
         "accessibility": [
@@ -422,7 +422,7 @@
         "addr:housenumber": "7079",
         "addr:street": "Rue de Terrebonne",
         "building": "university",
-        "name": "Concordia Terrebonne Building (TA)",
+        "name": "Concordia Terrebonne Building",
         "code": "TA",
 
         "amenities": [
@@ -455,7 +455,7 @@
       "properties": {
         "@id": "way/545014554",
         "building": "university",
-        "name": "Centre for Structural and Functional Genomics (GE)",
+        "name": "Centre for Structural and Functional Genomics",
         "website": "http://www.concordia.ca/research/genomics.html",
         "code": "GE",
 
@@ -488,7 +488,7 @@
         "addr:postcode": "H4B 1R6",
         "addr:street": "Rue Sherbrooke Ouest",
         "building": "university",
-        "name": "PERFORM Centre (PC)",
+        "name": "PERFORM Centre",
         "website": "http://www.concordia.ca/research/perform.html",
         "code": "PC",
 
@@ -527,7 +527,7 @@
       "properties": {
         "@id": "way/604324438",
         "building": "university",
-        "name": "Hingston Hall (HC)",
+        "name": "Hingston Hall",
         "code": "HC",
 
         "amenities": [
@@ -561,7 +561,7 @@
         "addr:province": "QC",
         "addr:street": "Avenue Belmore",
         "building": "university",
-        "name": "Concordia BB Annex (BB)",
+        "name": "Concordia BB Annex",
         "website": "https://lesptitsprofs.wordpress.com/",
         "code": "BB"
       }
@@ -589,7 +589,7 @@
         "addr:province": "QC",
         "addr:street": "Avenue Belmore",
         "building": "university",
-        "name": "Concordia BH Annex (BH)",
+        "name": "Concordia BH Annex",
         "website": "https://lesptitsprofs.wordpress.com/",
         "code": "BH"
       }
@@ -617,7 +617,7 @@
         "@id": "way/604324443",
         "amenity": "theatre",
         "building": "university",
-        "name": "Oscar Peterson Concert Hall (PT)",
+        "name": "Oscar Peterson Concert Hall",
         "website": "http://www.concordia.ca/arts/venues/oscar-peterson.html",
         "code": "PT",
 
@@ -659,7 +659,7 @@
       "properties": {
         "@id": "way/604324455",
         "building": "university",
-        "name": "Loyola Jesuit Hall and Conference Center (RF)",
+        "name": "Loyola Jesuit Hall and Conference Center",
         "website": "http://www.concordia.ca/hospitality/hospitality-venues/loyola-jesuit-hall-conference-centre.html",
         "code": "RF",
 
@@ -707,7 +707,7 @@
       "properties": {
         "@id": "way/604324456",
         "building": "university",
-        "name": "Central Building (CC)",
+        "name": "Central Building",
         "website": "csu.concordia.ca",
         "code": "CC",
 
@@ -795,7 +795,7 @@
         "addr:province": "QC",
         "addr:street": "Rue Sherbrooke Ouest",
         "building": "university",
-        "name": "Administration Building (AD)",
+        "name": "Administration Building",
         "website": "http://www.concordia.ca/artsci.html",
         "code": "AD",
 
@@ -838,7 +838,7 @@
       "properties": {
         "@id": "way/795012497",
         "building": "university",
-        "name": "Applied Science Hub (HU)",
+        "name": "Applied Science Hub",
         "code": "HU",
 
         "accessibility": [

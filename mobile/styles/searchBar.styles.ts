@@ -62,16 +62,7 @@ export const styles = StyleSheet.create({
     position: "relative",
   },
   headerBtn: { width: 44, height: 44, alignItems: "center", justifyContent: "center" },
-  headerRightBtn: {
-    position: "absolute",
-    right: 0,
-    width: 44,
-    height: 44,
-    alignItems: "center",
-    justifyContent: "center",
-  },
   headerBack: { fontSize: 26, color: TEXT, opacity: 0.85 },
-  headerDots: { fontSize: 18, color: TEXT, opacity: 0.75 },
   headerTitle: { fontSize: 18, fontWeight: "900", color: TEXT, marginLeft: 6 },
 
   segmentOuter: {
