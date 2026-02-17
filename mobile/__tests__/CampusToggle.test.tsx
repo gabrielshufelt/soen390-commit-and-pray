@@ -26,15 +26,15 @@ describe('CampusToggle', () => {
     const sgwButton = getByLabelText('Select SGW campus');
     const loyolaButton = getByLabelText('Select Loyola campus');
 
-    expect(sgwButton).toHaveAccessibilityState({ selected: true });
-    expect(loyolaButton).toHaveAccessibilityState({ selected: false });
+    expect(sgwButton).toHaveAccessibilityValue({ text: 'SGW' });
+    expect(loyolaButton).toHaveAccessibilityValue({ text: 'Loyola' });
 
     rerender(
       <CampusToggle selectedCampus="LOYOLA" onCampusChange={onCampusChangeMock} />
     );
 
-    expect(getByLabelText('Select SGW campus')).toHaveAccessibilityState({ selected: false });
-    expect(getByLabelText('Select Loyola campus')).toHaveAccessibilityState({ selected: true });
+    expect(getByLabelText('Select SGW campus')).toHaveAccessibilityValue({ text: 'SGW' });
+    expect(getByLabelText('Select Loyola campus')).toHaveAccessibilityValue({ text: 'Loyola' });
   });
 
   it('calls onCampusChange when a campus button is pressed', () => {

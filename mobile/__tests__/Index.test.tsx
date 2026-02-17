@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, waitFor, fireEvent } from '@testing-library/react-native';
+import { render, waitFor, fireEvent, act } from '@testing-library/react-native';
 import Index from '../app/(tabs)/index';
 import { ThemeProvider } from '../context/ThemeContext';
 
@@ -28,6 +28,8 @@ const mockUserBuilding = jest.fn();
 const mockStartDirectionsToBuilding = jest.fn();
 const mockOnRouteReady = jest.fn();
 const mockDirectionsHook = jest.fn();
+const mockEndDirections = jest.fn();
+const mockStartDirections = jest.fn();
 
 jest.mock('../hooks/useLocationPermissions', () => ({
   useLocationPermissions: () => mockPermissionState(),
@@ -56,7 +58,14 @@ jest.mock('react-native-maps-directions', () => {
     default: (props: any) => {
       React.useEffect(() => {
         if (mockMapDirectionsBehavior === 'ready' && props.onReady) {
-          props.onReady({ distance: 1.5, duration: 10 });
+          props.onReady({
+            distance: 1.5,
+            duration: 10,
+            coordinates: [
+              { latitude: 45.497, longitude: -73.579 },
+              { latitude: 45.458, longitude: -73.639 },
+            ],
+          });
         }
         if (mockMapDirectionsBehavior === 'error' && props.onError) {
           props.onError('Route not found');
@@ -107,6 +116,24 @@ jest.mock('react-native-maps', () => {
   };
 });
 
+
+// --- Test Starting and Ending Directions ---
+let mockSearchBarProperties: any = {};
+
+jest.mock('../components/searchBar', () => {
+  const React = require('react');
+  const { View } = require('react-native');
+  return{
+    __esModule: true,
+    default: (props: any) => {
+      mockSearchBarProperties = props;
+      return <View testID="search-bar" />;
+    },
+  };
+})
+
+
+
 // --- Test data ---
 const sgwLocation = {
   coords: { latitude: 45.4972, longitude: -73.579 },
@@ -133,8 +160,9 @@ const defaultDirections = {
     routeInfo: { distance: null, duration: null },
   },
   apiKey: 'test-api-key',
-  startDirections: jest.fn(),
+  startDirections: mockStartDirections,
   startDirectionsToBuilding: mockStartDirectionsToBuilding,
+  endDirections: mockEndDirections,
   clearDirections: jest.fn(),
   onRouteReady: mockOnRouteReady,
 };
@@ -151,6 +179,21 @@ const activeDirections = {
 };
 
 function setupDefaults() {
+  //Remove this it was just for testing
+  const defaultDirections = {
+  state: {
+    origin: null, destination: null, isActive: false,
+    loading: false, error: null,
+    routeInfo: { distance: null, duration: null },
+  },
+  apiKey: 'test-api-key',
+  startDirections: mockStartDirections,
+  startDirectionsToBuilding: mockStartDirectionsToBuilding,
+  endDirections: mockEndDirections,
+  clearDirections: jest.fn(),
+  onRouteReady: mockOnRouteReady,
+};
+
   mockPermissionState.mockReturnValue(defaultPermission);
   mockWatchLocation.mockReturnValue(defaultWatch);
   mockUserBuilding.mockReturnValue(null);
@@ -164,6 +207,7 @@ function renderWithTheme(component: React.ReactElement) {
 describe('<Index />', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockSearchBarProperties = {};
     mockPolygonRenderCount = 0;
     mockMapDirectionsBehavior = 'none';
     setupDefaults();
@@ -320,11 +364,13 @@ describe('<Index />', () => {
     renderWithTheme(<Index />);
 
     await waitFor(() => {
-      expect(mockOnRouteReady).toHaveBeenCalledWith({ distance: 1.5, duration: 10 });
+      expect(mockOnRouteReady).toHaveBeenCalledWith(
+        expect.objectContaining({ distance: 1.5, duration: 10 })
+      );
     });
     expect(mockFitToCoordinates).toHaveBeenCalledWith(
       [activeDirections.state.origin, activeDirections.state.destination],
-      { edgePadding: { top: 100, right: 50, bottom: 150, left: 50 }, animated: true }
+      { edgePadding: { top: 160, right: 50, bottom: 220, left: 50 }, animated: true }
     );
   });
 
@@ -351,6 +397,104 @@ describe('<Index />', () => {
     const { getByTestId } = renderWithTheme(<Index />);
     await waitFor(() => {
       expect(getByTestId('map-view')).toBeTruthy();
+    });
+  });
+
+  // -- Start and End Directions --
+  describe('handleStartRoute', () => {
+
+  it("Starts directions to building of choice with current location as origin", async () => {
+    renderWithTheme(<Index />);
+    await waitFor(() => expect(mockSearchBarProperties.onStartRoute).toBeDefined());
+
+    await act(async () => {
+      mockSearchBarProperties.onChangeDestination({
+      id: 'H',
+      name: 'Hall Building',
+      coordinate: { latitude: 45.497, longitude: -73.579 }
+    });
+  });
+
+
+    await waitFor(() => {
+      expect(mockSearchBarProperties.destination).toBeTruthy();
+    });
+
+    mockSearchBarProperties.onStartRoute();
+
+    expect(mockStartDirections).toHaveBeenCalledWith(
+      { latitude: 45.4972, longitude: -73.579 },
+      { latitude: 45.497, longitude: -73.579 }
+    );
+  });
+
+  it('starts route from selected start building to destination', async () => {
+    renderWithTheme(<Index />);
+    await waitFor(() => expect(mockSearchBarProperties.onStartRoute).toBeDefined());
+
+  
+    await act(async () => {
+      mockSearchBarProperties.onChangeStart({
+        id: 'H',
+        name: 'Hall Building',
+        coordinate: { latitude: 45.497, longitude: -73.579 }
+      });
+    });
+
+    await act(async () => {
+      mockSearchBarProperties.onChangeDestination({
+        id: 'MB',
+        name: 'Molson Building',
+        coordinate: { latitude: 45.495, longitude: -73.578 }
+      });
+    });
+
+  
+    await waitFor(() => {
+      expect(mockSearchBarProperties.start).toBeTruthy();
+      expect(mockSearchBarProperties.destination).toBeTruthy();
+    });
+
+  mockSearchBarProperties.onStartRoute();
+
+    expect(mockStartDirections).toHaveBeenCalledWith(
+      { latitude: 45.497, longitude: -73.579 }, // start building
+      { latitude: 45.495, longitude: -73.578 }  // destination
+    );
+  });
+  });
+
+  describe('handleEndDirections', () => {
+    it('calls endDirections and clears start and destination choices', async () => {
+      renderWithTheme(<Index />);
+      await waitFor(() => expect(mockSearchBarProperties.onEndRoute).toBeDefined());
+
+      await act(async () => {
+        mockSearchBarProperties.onChangeStart({ 
+          id: 'H', 
+          name: 'Hall Building',
+          coordinate: { latitude: 45.497, longitude: -73.579 } 
+        });
+      });
+
+      await act(async () => {
+        mockSearchBarProperties.onChangeDestination({ 
+          id: 'MB', 
+          name: 'Molson Building',
+          coordinate: { latitude: 45.495, longitude: -73.578 } 
+        });
+      });
+
+      await waitFor(() => {
+        mockSearchBarProperties.onEndRoute();
+      });
+
+      expect(mockEndDirections).toHaveBeenCalled();
+      
+      await waitFor(() => {
+        expect(mockSearchBarProperties.start).toBeNull();
+        expect(mockSearchBarProperties.destination).toBeNull();
+      });
     });
   });
 });

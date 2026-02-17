@@ -12,6 +12,7 @@ export default function CampusToggle({ selectedCampus, onCampusChange }) {
         accessibilityRole="button"
         accessibilityLabel="Select SGW campus"
         accessibilityState={{ selected: selectedCampus === "SGW" }}
+        accessibilityValue={{ text: "SGW" }}
         android_ripple={
           Platform.OS === "android" ? { color: "rgba(0,0,0,0.08)" } : undefined
         }
@@ -32,6 +33,7 @@ export default function CampusToggle({ selectedCampus, onCampusChange }) {
         accessibilityRole="button"
         accessibilityLabel="Select Loyola campus"
         accessibilityState={{ selected: selectedCampus === "LOYOLA" }}
+        accessibilityValue={{ text: "Loyola" }}
         android_ripple={
           Platform.OS === "android" ? { color: "rgba(0,0,0,0.08)" } : undefined
         }
