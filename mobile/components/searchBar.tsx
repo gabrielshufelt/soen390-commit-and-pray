@@ -39,13 +39,8 @@ function stripCodePrefix(name: string, code?: string) {
 }
 
 function displayName(b: { name: string; code?: string }) {
-  if (!b.code) return b.name;
-
   const clean = stripCodePrefix(b.name, b.code);
-
-  const alreadyHasCode = clean.trim().endsWith(`(${b.code})`);
-
-  return alreadyHasCode ? clean : `${clean} (${b.code})`;
+  return b.code ? `${clean} (${b.code})` : clean;
 }
 
 function makeHaystack(b: BuildingChoice) {
@@ -79,17 +74,19 @@ export default function SearchBar({
   const [quickFilter, setQuickFilter] = useState<"Home" | "Library" | "Favorites">("Home");
 
   useEffect(() => {
-    if (!destFocused) {
-      if (!destination) setDestText("");
-      else setDestText(displayName(destination));
+    if (!destination) {
+      if (!destFocused) setDestText("");
+      return;
     }
+    if (!destFocused) setDestText(displayName(destination));
   }, [destination, destFocused]);
 
   useEffect(() => {
-    if (!startFocused) {
-      if (!start) setStartText("");
-      else setStartText(displayName(start));
+    if (!start) {
+      if (!startFocused) setStartText("");
+      return;
     }
+    if (!startFocused) setStartText(displayName(start));
   }, [start, startFocused]);
 
   const destinationQuery = destText.trim().toLowerCase();
@@ -240,7 +237,7 @@ export default function SearchBar({
                     {!!item.address && <Text style={styles.suggestionSub}>{item.address}</Text>}
                   </TouchableOpacity>
                 )}
-                ItemSeparatorComponent={Separator}
+                ItemSeparatorComponent={() => <View style={styles.sep} />}
               />
             </View>
           )}
@@ -286,28 +283,25 @@ export default function SearchBar({
                     {!!item.address && <Text style={styles.suggestionSub}>{item.address}</Text>}
                   </TouchableOpacity>
                 )}
-                ItemSeparatorComponent={Separator}
+                ItemSeparatorComponent={() => <View style={styles.sep} />}
               />
             </View>
           )}
 
-         {routeActive && onEndRoute && (
-          <TouchableOpacity
-            testID="route.end.button"
-            style={styles.endRouteButton}
-            activeOpacity={0.9}
-            onPress={() => {
-              onEndRoute();
-              setStartText("");
-              setDestText("");
-              setStartFocused(false);
-              setDestFocused(false);
-            }}
-          >
-            <Text style={styles.endRouteButtonText}>End Directions</Text>
-          </TouchableOpacity>
-        )}
-
+          {routeActive && onEndRoute && (
+            <TouchableOpacity
+              testID="route.end.button"
+              style={styles.endRouteButton}
+              activeOpacity={0.9}
+              onPress={() => {
+                onEndRoute();
+                setDestText("");
+                setDestFocused(false);
+              }}
+            >
+              <Text style={styles.endRouteButtonText}>End Directions</Text>
+            </TouchableOpacity>
+          )}
 
           {!routeActive && destination && onStartRoute && (
             <TouchableOpacity
@@ -358,7 +352,7 @@ export default function SearchBar({
             <FlatList
               data={filteredHistory}
               keyExtractor={(b) => b.id}
-              ItemSeparatorComponent={Separator}
+              ItemSeparatorComponent={() => <View style={styles.sep} />}
               renderItem={({ item }) => (
                 <TouchableOpacity style={styles.buildingRow} activeOpacity={0.9} onPress={() => pickDestination(item)}>
                   <View style={styles.buildingIconBox}>
