@@ -1,8 +1,8 @@
 import React, { useMemo, useState, useEffect, useRef } from "react";
 import { View, Text, TextInput, TouchableOpacity, FlatList, SafeAreaView } from "react-native";
 
-import { styles } from "../styles/searchBar.styles";
-import { IconPin, IconSearch, IconBuilding, IconHome, IconLibrary, IconStar } from "../icons/searchBar.icons";
+import { FontAwesome } from "@expo/vector-icons";
+import { styles, MAROON, MUTED } from "../styles/searchBar.styles";
 
 export type BuildingChoice = {
   id: string;
@@ -142,7 +142,7 @@ export default function SearchBar({
           onPress={() => setExpanded(true)}
         >
           <View style={styles.leftIconMini}>
-            <IconSearch size={18} />
+            <FontAwesome name="search" size={16} color={MAROON} accessibilityLabel="Search" />
           </View>
           <Text style={styles.collapsedPlaceholder}>Search buildings, rooms...</Text>
         </TouchableOpacity>
@@ -200,7 +200,7 @@ export default function SearchBar({
 
           <TouchableOpacity style={styles.inputRow} activeOpacity={1} onPress={() => startInputRef.current?.focus()}>
             <View style={styles.leftIconCircle}>
-              <IconPin size={18} />
+              <FontAwesome name="map-marker" size={16} color={MAROON} accessibilityLabel="Location pin" />
             </View>
 
             <TextInput
@@ -246,7 +246,7 @@ export default function SearchBar({
             style={[styles.inputRow, styles.destRow]}
           >
             <View style={styles.leftIconCircleAlt}>
-              <IconSearch size={18} />
+              <FontAwesome name="search" size={16} color={MAROON} accessibilityLabel="Search" />
             </View>
 
             <TextInput
@@ -323,7 +323,12 @@ export default function SearchBar({
                 onPress={() => setQuickFilter(k)}
                 activeOpacity={0.9}
               >
-                {k === "Home" ? <IconHome active={active} /> : k === "Library" ? <IconLibrary active={active} /> : <IconStar active={active} />}
+                <FontAwesome
+                  name={k === "Home" ? "home" : k === "Library" ? "book" : "star"}
+                  size={16}
+                  color={active ? MAROON : MUTED}
+                  accessibilityLabel={k}
+                />
                 <Text style={[styles.filterText, active && styles.filterTextActive]}>{k}</Text>
               </TouchableOpacity>
             );
@@ -353,7 +358,7 @@ export default function SearchBar({
               renderItem={({ item }) => (
                 <TouchableOpacity style={styles.buildingRow} activeOpacity={0.9} onPress={() => pickDestination(item)}>
                   <View style={styles.buildingIconBox}>
-                    <IconBuilding size={18} />
+                    <FontAwesome name="building-o" size={16} color={MAROON} accessibilityLabel="Building" />
                   </View>
 
                   <View style={{ flex: 1 }}>
