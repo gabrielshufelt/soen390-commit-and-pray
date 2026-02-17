@@ -171,13 +171,12 @@ export default function SearchBar({
           >
             <Text style={styles.headerBack}>‹</Text>
           </TouchableOpacity>
-
+        
           <Text style={styles.headerTitle}>Route</Text>
-
-          <TouchableOpacity style={styles.headerRightBtn} activeOpacity={0.85}>
-            <Text style={styles.headerDots}>⋮</Text>
-          </TouchableOpacity>
+        
+          <View style={styles.headerRightBtn} />
         </View>
+
 
         {/* campus */}
         <View style={styles.segmentOuter}>
