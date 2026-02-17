@@ -37,7 +37,7 @@ export const styles = StyleSheet.create({
     justifyContent: "center",
     marginRight: 10,
   },
-  collapsedPlaceholder: { flex: 1, fontWeight: "800", color: "rgba(17,24,39,0.45)" },
+  collapsedPlaceholder: { flex: 1, fontWeight: "800", color: "#6B7280" },
 
   fullscreenOverlay: {
     position: "absolute",
@@ -88,10 +88,10 @@ export const styles = StyleSheet.create({
   },
 
   sectionLabel: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: "900",
     letterSpacing: 0.6,
-    color: MUTED,
+    color: "#4B5563",
     marginBottom: 8,
   },
 
@@ -225,7 +225,7 @@ export const styles = StyleSheet.create({
   buildingName: { fontSize: 14, fontWeight: "900", color: TEXT },
   buildingSub: { marginTop: 3, fontSize: 12, fontWeight: "700", color: MUTED },
 
-  chevBtn: { paddingLeft: 10, paddingVertical: 6 },
+  chevBtn: { minWidth: 44, minHeight: 44, alignItems: "center", justifyContent: "center" },
   rowChev: { fontSize: 22, opacity: 0.6 },
 
   sep: { height: 1, backgroundColor: BORDER, marginLeft: 14, marginRight: 14 },

@@ -140,9 +140,11 @@ export default function SearchBar({
           activeOpacity={0.9}
           style={styles.collapsedBar}
           onPress={() => setExpanded(true)}
+          accessibilityRole="button"
+          accessibilityLabel="Search buildings, rooms"
         >
           <View style={styles.leftIconMini}>
-            <FontAwesome name="search" size={16} color={MAROON} accessibilityLabel="Search" />
+            <FontAwesome name="search" size={16} color={MAROON} aria-hidden />
           </View>
           <Text style={styles.collapsedPlaceholder}>Search buildings, rooms...</Text>
         </TouchableOpacity>
@@ -165,6 +167,8 @@ export default function SearchBar({
               setStartFocused(false);
             }}
             activeOpacity={0.85}
+            accessibilityRole="button"
+            accessibilityLabel="Go back"
           >
             <Text style={styles.headerBack}>‹</Text>
           </TouchableOpacity>
@@ -178,6 +182,9 @@ export default function SearchBar({
             style={[styles.segmentBtn, campus === "SGW" && styles.segmentBtnActive]}
             onPress={() => setCampus("SGW")}
             activeOpacity={0.9}
+            accessibilityRole="button"
+            accessibilityState={{ selected: campus === "SGW" }}
+            accessibilityLabel="SGW Campus"
           >
             <Text style={[styles.segmentText, campus === "SGW" && styles.segmentTextActive]}>SGW Campus</Text>
           </TouchableOpacity>
@@ -186,6 +193,9 @@ export default function SearchBar({
             style={[styles.segmentBtn, campus === "Loyola" && styles.segmentBtnActive]}
             onPress={() => setCampus("Loyola")}
             activeOpacity={0.9}
+            accessibilityRole="button"
+            accessibilityState={{ selected: campus === "Loyola" }}
+            accessibilityLabel="Loyola Campus"
           >
             <Text
               style={[styles.segmentText, campus === "Loyola" && styles.segmentTextActive]}
@@ -198,9 +208,9 @@ export default function SearchBar({
         <View style={styles.routeCard}>
           <Text style={styles.sectionLabel}>START POINT</Text>
 
-          <TouchableOpacity style={styles.inputRow} activeOpacity={1} onPress={() => startInputRef.current?.focus()}>
+          <TouchableOpacity style={styles.inputRow} activeOpacity={1} onPress={() => startInputRef.current?.focus()} accessibilityRole="button">
             <View style={styles.leftIconCircle}>
-              <FontAwesome name="map-marker" size={16} color={MAROON} accessibilityLabel="Location pin" />
+              <FontAwesome name="map-marker" size={16} color={MAROON} aria-hidden />
             </View>
 
             <TextInput
@@ -210,7 +220,7 @@ export default function SearchBar({
               value={startText}
               editable={!routeActive}
               placeholder="Current Location"
-              placeholderTextColor="rgba(17,24,39,0.35)"
+              placeholderTextColor="#9CA3AF"
               onFocus={() => setStartFocused(true)}
               onBlur={() => setStartFocused(false)}
               onChangeText={(t) => {
@@ -228,7 +238,7 @@ export default function SearchBar({
                 data={startSuggestions}
                 keyExtractor={(b) => b.id}
                 renderItem={({ item }) => (
-                  <TouchableOpacity style={styles.suggestionItem} onPress={() => pickStart(item)} activeOpacity={0.85}>
+                  <TouchableOpacity style={styles.suggestionItem} onPress={() => pickStart(item)} activeOpacity={0.85} accessibilityRole="button" accessibilityLabel={`Select ${displayName(item)}`}>
                     <Text style={styles.suggestionTitle}>{displayName(item)}</Text>
                     {!!item.address && <Text style={styles.suggestionSub}>{item.address}</Text>}
                   </TouchableOpacity>
@@ -244,9 +254,10 @@ export default function SearchBar({
             activeOpacity={1}
             onPress={() => destInputRef.current?.focus()}
             style={[styles.inputRow, styles.destRow]}
+            accessibilityRole="button"
           >
             <View style={styles.leftIconCircleAlt}>
-              <FontAwesome name="search" size={16} color={MAROON} accessibilityLabel="Search" />
+              <FontAwesome name="search" size={16} color={MAROON} aria-hidden />
             </View>
 
             <TextInput
@@ -256,7 +267,7 @@ export default function SearchBar({
               value={destText}
               editable={!routeActive}
               placeholder="Where to?"
-              placeholderTextColor="rgba(17,24,39,0.35)"
+              placeholderTextColor="#9CA3AF"
               onFocus={() => setDestFocused(true)}
               onBlur={() => setDestFocused(false)}
               onChangeText={(t) => {
@@ -274,7 +285,7 @@ export default function SearchBar({
                 data={suggestions}
                 keyExtractor={(b) => b.id}
                 renderItem={({ item }) => (
-                  <TouchableOpacity style={styles.suggestionItem} onPress={() => pickDestination(item)} activeOpacity={0.85}>
+                  <TouchableOpacity style={styles.suggestionItem} onPress={() => pickDestination(item)} activeOpacity={0.85} accessibilityRole="button" accessibilityLabel={`Select ${displayName(item)}`}>
                     <Text style={styles.suggestionTitle}>{displayName(item)}</Text>
                     {!!item.address && <Text style={styles.suggestionSub}>{item.address}</Text>}
                   </TouchableOpacity>
@@ -289,6 +300,7 @@ export default function SearchBar({
               testID="route.end.button"
               style={styles.endRouteButton}
               activeOpacity={0.9}
+              accessibilityRole="button"
               onPress={() => {
                 onEndRoute();
                 setStartText("");
@@ -306,6 +318,7 @@ export default function SearchBar({
               style={styles.startRouteButton}
               activeOpacity={0.9}
               onPress={onStartRoute}
+              accessibilityRole="button"
             >
               <Text style={styles.startRouteButtonText}>Start Directions</Text>
             </TouchableOpacity>
@@ -322,12 +335,15 @@ export default function SearchBar({
                 style={[styles.filterChip, active && styles.filterChipActive]}
                 onPress={() => setQuickFilter(k)}
                 activeOpacity={0.9}
+                accessibilityRole="button"
+                accessibilityState={{ selected: active }}
+                accessibilityLabel={`${k} filter`}
               >
                 <FontAwesome
                   name={k === "Home" ? "home" : k === "Library" ? "book" : "star"}
                   size={16}
                   color={active ? MAROON : MUTED}
-                  accessibilityLabel={k}
+                  aria-hidden
                 />
                 <Text style={[styles.filterText, active && styles.filterTextActive]}>{k}</Text>
               </TouchableOpacity>
@@ -338,7 +354,7 @@ export default function SearchBar({
         {/* header */}
         <View style={styles.listHeader}>
           <Text style={styles.listTitle}>Suggested Buildings</Text>
-          <TouchableOpacity activeOpacity={0.85}>
+          <TouchableOpacity activeOpacity={0.85} accessibilityRole="button" accessibilityLabel="See all suggested buildings">
             <Text style={styles.seeAll}>See All</Text>
           </TouchableOpacity>
         </View>
@@ -356,9 +372,9 @@ export default function SearchBar({
               keyExtractor={(b) => b.id}
               ItemSeparatorComponent={Separator}
               renderItem={({ item }) => (
-                <TouchableOpacity style={styles.buildingRow} activeOpacity={0.9} onPress={() => pickDestination(item)}>
+                <TouchableOpacity style={styles.buildingRow} activeOpacity={0.9} onPress={() => pickDestination(item)} accessibilityRole="button" accessibilityLabel={`Select ${displayName(item)}`}>
                   <View style={styles.buildingIconBox}>
-                    <FontAwesome name="building-o" size={16} color={MAROON} accessibilityLabel="Building" />
+                    <FontAwesome name="building-o" size={16} color={MAROON} aria-hidden />
                   </View>
 
                   <View style={{ flex: 1 }}>
@@ -366,8 +382,8 @@ export default function SearchBar({
                     {!!item.address && <Text style={styles.buildingSub}>{item.address}</Text>}
                   </View>
 
-                  <TouchableOpacity style={styles.chevBtn} activeOpacity={0.85} onPress={() => onOpenBuilding?.(item)}>
-                    <Text style={styles.rowChev}>›</Text>
+                  <TouchableOpacity style={styles.chevBtn} activeOpacity={0.85} onPress={() => onOpenBuilding?.(item)} accessibilityRole="button" accessibilityLabel={`View details for ${displayName(item)}`}>
+                    <Text style={styles.rowChev} aria-hidden>›</Text>
                   </TouchableOpacity>
                 </TouchableOpacity>
               )}
