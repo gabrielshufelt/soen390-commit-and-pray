@@ -176,12 +176,12 @@ export default function Index() {
               tappable
               onPress={() => handleBuildingSelect(building.id, building)}
             />
+            <Marker key={`label-${building.id}`} coordinate={centroid} anchor={ANCHOR_OFFSET} tracksViewChanges={false}>
+              <View style={styles.labelContainer}>
+                <Text style={styles.buildingLabel}>{code}</Text>
+              </View>
+            </Marker>
           </React.Fragment>
-          <Marker key={`label-${building.id}`} coordinate={centroid} anchor={ANCHOR_OFFSET} tracksViewChanges={false}>
-            <View style={styles.labelContainer}>
-              <Text style={styles.buildingLabel}>{code}</Text>
-            </View>
-          </Marker>
         );
       });
   }, [campusBuildingsData]);
