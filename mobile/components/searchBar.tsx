@@ -318,7 +318,10 @@ export default function SearchBar({
               testID="route.start.button"
               style={styles.startRouteButton}
               activeOpacity={0.9}
-              onPress={onStartRoute}
+              onPress={() => {
+                onStartRoute();
+                setExpanded(false);
+              }}
               accessibilityRole="button"
             >
               <Text style={styles.startRouteButtonText}>Start Directions</Text>

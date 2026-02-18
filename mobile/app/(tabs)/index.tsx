@@ -15,6 +15,7 @@ import BuildingModal from "../../components/buildingModal";
 import { useDirections } from "../../hooks/useDirections";
 import MapViewDirections from "react-native-maps-directions";
 import SearchBar, { BuildingChoice } from "../../components/searchBar";
+import NavigationSteps from "../../components/NavigationSteps";
 
 // Constants for colors
 const HIGHLIGHT_COLOR = "rgba(33, 150, 243, 0.4)";
@@ -53,6 +54,8 @@ export default function Index() {
     startDirectionsToBuilding,
     onRouteReady,
     endDirections,
+    nextStep,
+    prevStep,
   } = useDirections();
 
   const [showLabels, setShowLabels] = useState(
@@ -259,6 +262,18 @@ export default function Index() {
       </View>
 
       <CampusToggle selectedCampus={campusKey} onCampusChange={setCampusKey} />
+
+      {directionsState.isActive && directionsState.steps.length > 0 && (
+        <NavigationSteps
+          steps={directionsState.steps}
+          currentStepIndex={directionsState.currentStepIndex}
+          totalDistance={directionsState.routeInfo.distanceText ?? ""}
+          totalDuration={directionsState.routeInfo.durationText ?? ""}
+          onEndNavigation={handleEndDirections}
+          onNextStep={nextStep}
+          onPrevStep={prevStep}
+        />
+      )}
 
       <BuildingModal
         visible={!!selectedBuilding}
