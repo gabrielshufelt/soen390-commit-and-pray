@@ -1,13 +1,15 @@
 import React, { useEffect, useState } from "react";
 import { View, Text, TouchableOpacity, Animated } from "react-native";
 import { FontAwesome } from "@expo/vector-icons";
-import { styles, WHITE, MUTED, DISABLED, MAROON } from "../styles/navigationSteps.styles";
+import { styles, WHITE, MUTED, DISABLED, MAROON, WARNING } from "../styles/navigationSteps.styles";
 
 export type NavigationStep = {
   instruction: string;
   distance: string;
   duration: string;
   maneuver?: string;
+  startLocation: { latitude: number; longitude: number };
+  endLocation: { latitude: number; longitude: number };
 };
 
 type Props = {
@@ -15,6 +17,7 @@ type Props = {
   currentStepIndex: number;
   totalDistance: string;
   totalDuration: string;
+  isOffRoute?: boolean;
   onEndNavigation: () => void;
   onNextStep?: () => void;
   onPrevStep?: () => void;
@@ -56,6 +59,7 @@ export default function NavigationSteps({
   currentStepIndex,
   totalDistance,
   totalDuration,
+  isOffRoute = false,
   onEndNavigation,
   onNextStep,
   onPrevStep,
@@ -83,6 +87,14 @@ export default function NavigationSteps({
 
   return (
     <View style={styles.container}>
+      {/* Off-route warning banner */}
+      {isOffRoute && (
+        <View style={styles.offRouteBanner}>
+          <FontAwesome name="exclamation-triangle" size={16} color={WARNING} />
+          <Text style={styles.offRouteText}>You are off route. Head back to the path.</Text>
+        </View>
+      )}
+
       {/* Current Step Card */}
       <Animated.View style={[styles.currentStepCard, { opacity: fadeAnim }]}>
         <View style={styles.iconContainer}>

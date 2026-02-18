@@ -11,6 +11,8 @@ export const SURFACE = "#F3F4F6";
 export const SURFACE_LIGHT = "#F9FAFB";
 export const ICON_BG = "rgba(255, 255, 255, 0.2)";
 export const TEXT_LIGHT = "rgba(255, 255, 255, 0.9)";
+export const WARNING = "#D97706";
+export const WARNING_BG = "#FEF3C7";
 
 export const styles = StyleSheet.create({
   container: {
@@ -141,5 +143,24 @@ export const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
     color: WHITE,
+  },
+  offRouteBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: WARNING_BG,
+    borderRadius: 12,
+    padding: 12,
+    gap: 10,
+    shadowColor: BLACK,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  offRouteText: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: "600",
+    color: WARNING,
   },
 });

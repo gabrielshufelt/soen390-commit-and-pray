@@ -56,6 +56,7 @@ export default function Index() {
     endDirections,
     nextStep,
     prevStep,
+    checkProgress,
   } = useDirections();
 
   const [showLabels, setShowLabels] = useState(
@@ -124,6 +125,16 @@ export default function Index() {
   useEffect(() => {
     mapRef.current?.animateToRegion(selectedCampus.initialRegion, ANIMATION_DURATION);
   }, [selectedCampus]);
+
+  // GPS-based step progression
+  useEffect(() => {
+    if (directionsState.isActive && location) {
+      checkProgress({
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude,
+      });
+    }
+  }, [location, directionsState.isActive, checkProgress]);
 
   const buildingPolygons = useMemo(() => {
     return campusBuildingsData.map((building: any) => {
@@ -269,6 +280,7 @@ export default function Index() {
           currentStepIndex={directionsState.currentStepIndex}
           totalDistance={directionsState.routeInfo.distanceText ?? ""}
           totalDuration={directionsState.routeInfo.durationText ?? ""}
+          isOffRoute={directionsState.isOffRoute}
           onEndNavigation={handleEndDirections}
           onNextStep={nextStep}
           onPrevStep={prevStep}
