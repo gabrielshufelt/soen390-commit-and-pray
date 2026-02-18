@@ -95,3 +95,6 @@ All detailed documentation for this project can be found in the GitHub Wiki whic
 - Accessibility Considerations
 - UI Mockups
 - Sprint planning and retrospectives
+
+## Code Quality Review
+The SonarQube Portal containing our project and all the analytics can be found here: [SonarQube](https://sonarcloud.io/project/overview?id=soen390-commit-and-pray_commit-and-pray)
