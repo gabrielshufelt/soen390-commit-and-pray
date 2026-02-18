@@ -153,6 +153,30 @@ export default function Index() {
         const code = (building.properties as { code: string }).code;
 
         return (
+          <React.Fragment key={building.id}>
+            <Polygon
+              testID={`building-${building.id}`}
+              coordinates={building.geometry.coordinates[0].map(
+                ([longitude, latitude]) => ({
+                  latitude,
+                  longitude,
+                })
+              )}
+              fillColor={
+                selectedBuilding === building.id
+                  ? HIGHLIGHT_COLOR
+                  : BUILDING_POLYGON_COLORS.fillColor
+              }
+              strokeColor={
+                selectedBuilding === building.id
+                  ? STROKE_COLOR
+                  : BUILDING_POLYGON_COLORS.strokeColor
+              }
+              strokeWidth={BUILDING_POLYGON_COLORS.strokeWidth}
+              tappable
+              onPress={() => handleBuildingSelect(building.id, building)}
+            />
+          </React.Fragment>
           <Marker key={`label-${building.id}`} coordinate={centroid} anchor={ANCHOR_OFFSET} tracksViewChanges={false}>
             <View style={styles.labelContainer}>
               <Text style={styles.buildingLabel}>{code}</Text>

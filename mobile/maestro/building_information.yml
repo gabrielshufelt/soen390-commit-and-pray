@@ -1,0 +1,33 @@
+appId: com.anonymous.mobile
+---
+# Test that tapping a building shows the building modal with correct information
+
+- tapOn: "Select SGW campus"
+
+- tapOn:
+    point: 53%,53%
+    #tap ev building on SGW campus
+
+
+- waitForAnimationToEnd:
+    timeout: 5000
+
+- tapOn:
+    point: 88%,48%
+
+
+- tapOn:
+    point: 92%, 54%
+    delay: 1000
+    #VA building on SGW campus
+
+- waitForAnimationToEnd:
+    timeout: 5000
+
+- tapOn:
+    point: 50%,25%
+    #tap outside of card to close pop up
+
+- waitForAnimationToEnd:
+    timeout: 5000
+

@@ -1,0 +1,6 @@
+appId: com.anonymous.mobile
+---
+- assertVisible: '.*Loyola.*'
+- tapOn: "Select Loyola campus"
+- assertVisible: '.*SGW.*'
+- tapOn: "Select SGW campus"
