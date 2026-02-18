@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useEffect, useRef } from "react";
-import { View, Text, TextInput, TouchableOpacity, FlatList, SafeAreaView } from "react-native";
+import { View, Text, TextInput, TouchableOpacity, FlatList, SafeAreaView, Keyboard, TouchableWithoutFeedback } from "react-native";
 
 import { FontAwesome } from "@expo/vector-icons";
 import { styles, MAROON, MUTED } from "../styles/searchBar.styles";
@@ -155,8 +155,9 @@ export default function SearchBar({
   const Separator = () => <View style={styles.sep} />
 
   return (
-    <View style={styles.fullscreenOverlay} pointerEvents="auto">
-      <SafeAreaView style={styles.sheet}>
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+      <View style={styles.fullscreenOverlay} pointerEvents="auto">
+        <SafeAreaView style={styles.sheet}>
         {/* header */}
         <View style={styles.header}>
           <TouchableOpacity
@@ -392,5 +393,6 @@ export default function SearchBar({
         </View>
       </SafeAreaView>
     </View>
+  </TouchableWithoutFeedback>
   );
 }
