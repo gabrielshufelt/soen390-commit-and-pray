@@ -66,7 +66,13 @@ describe('useDirections', () => {
         routeInfo: {
           distance: null,
           duration: null,
+          distanceText: null,
+          durationText: null,
         },
+        steps: [],
+        currentStepIndex: 0,
+        routeCoordinates: [],
+        isOffRoute: false,
       });
     });
 
@@ -130,6 +136,8 @@ describe('useDirections', () => {
       expect(result.current.state.routeInfo).toEqual({
         distance: 2.5,
         duration: 15,
+        distanceText: null,
+        durationText: null,
       });
       // Other state should remain unchanged
       expect(result.current.state.isActive).toBe(true);
@@ -163,7 +171,13 @@ describe('endDirections', () => {
         routeInfo: {
           distance: null,
           duration: null,
+          distanceText: null,
+          durationText: null,
         },
+        steps: [],
+        currentStepIndex: 0,
+        routeCoordinates: [],
+        isOffRoute: false,
       });
     });
   });
