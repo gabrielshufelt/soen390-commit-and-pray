@@ -12,9 +12,10 @@ const BLUE = '#0A84FF';
 interface ShuttleScheduleModalProps {
   visible: boolean;
   onClose: () => void;
+  onShowRoute?: () => void;
 }
 
-export default function ShuttleScheduleModal({ visible, onClose }: ShuttleScheduleModalProps) {
+export default function ShuttleScheduleModal({ visible, onClose, onShowRoute }: ShuttleScheduleModalProps) {
   const { colorScheme } = useTheme();
   const isDark = colorScheme === 'dark';
   const screenHeight = Dimensions.get('window').height;
@@ -78,6 +79,33 @@ export default function ShuttleScheduleModal({ visible, onClose }: ShuttleSchedu
             <Text style={[styles.disclaimer, { color: GRAY }]}>
               ⚠️ {shuttleData.disclaimer}
             </Text>
+          </View>
+
+          <View style={styles.busStopsContainer}>
+            <Text style={[styles.busStopsTitle, { color: isDark ? WHITE : BLACK }]}>Bus Stops</Text>
+            <View style={styles.busStopRow}>
+              <View style={styles.busStopItem}>
+                <Text style={[styles.busStopLabel, { color: RED }]}>Loyola</Text>
+                <Text style={[styles.busStopName, { color: isDark ? WHITE : BLACK }]}>{shuttleData.busStops.loyola.name}</Text>
+                <Text style={[styles.busStopAddress, { color: GRAY }]}>{shuttleData.busStops.loyola.address}</Text>
+              </View>
+              <View style={styles.busStopItem}>
+                <Text style={[styles.busStopLabel, { color: RED }]}>SGW</Text>
+                <Text style={[styles.busStopName, { color: isDark ? WHITE : BLACK }]}>{shuttleData.busStops.sgw.name}</Text>
+                <Text style={[styles.busStopAddress, { color: GRAY }]}>{shuttleData.busStops.sgw.address}</Text>
+              </View>
+            </View>
+            {onShowRoute && (
+              <TouchableOpacity
+                style={[styles.routeButton, { backgroundColor: BLUE }]}
+                onPress={() => {
+                  onShowRoute();
+                  onClose();
+                }}
+              >
+                <Text style={styles.routeButtonText}>🗺️ Show Shuttle Route on Map</Text>
+              </TouchableOpacity>
+            )}
           </View>
 
           <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
@@ -222,5 +250,52 @@ const styles = StyleSheet.create({
     fontSize: 13,
     marginVertical: 2,
     fontStyle: 'italic',
+  },
+  busStopsContainer: {
+    backgroundColor: 'rgba(10, 132, 255, 0.08)',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 16,
+  },
+  busStopsTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  busStopRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
+  busStopItem: {
+    flex: 1,
+    paddingHorizontal: 8,
+  },
+  busStopLabel: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    marginBottom: 4,
+  },
+  busStopName: {
+    fontSize: 13,
+    fontWeight: '600',
+    marginBottom: 2,
+  },
+  busStopAddress: {
+    fontSize: 11,
+    lineHeight: 16,
+  },
+  routeButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  routeButtonText: {
+    color: WHITE,
+    fontSize: 15,
+    fontWeight: '600',
   },
 });
