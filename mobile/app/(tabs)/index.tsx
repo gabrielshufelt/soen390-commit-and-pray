@@ -1,6 +1,6 @@
 import React, { useMemo, useRef, useEffect, useState } from "react";
 import MapView, { Marker, Polygon, Region } from "react-native-maps";
-import { StyleSheet, View, Text } from "react-native";
+import { StyleSheet, View, Text, TouchableOpacity } from "react-native";
 import { useTheme } from "../../context/ThemeContext";
 import { CAMPUSES, DEFAULT_CAMPUS, findCampusForCoordinate } from "../../constants/campusLocations";
 import { BUILDING_POLYGON_COLORS } from "../../constants/mapColors";
@@ -12,6 +12,7 @@ import sgwBuildingsData from "../../data/buildings/sgw.json";
 import loyolaBuildingsData from "../../data/buildings/loyola.json";
 import CampusToggle from "../../components/campusToggle";
 import BuildingModal from "../../components/buildingModal";
+import ShuttleScheduleModal from "../../components/shuttleScheduleModal";
 import { useDirections } from "../../hooks/useDirections";
 import MapViewDirections from "react-native-maps-directions";
 import SearchBar, { BuildingChoice } from "../../components/searchBar";
@@ -64,6 +65,7 @@ export default function Index() {
 
   const [startChoice, setStartChoice] = useState<BuildingChoice | null>(null);
   const [destChoice, setDestChoice] = useState<BuildingChoice | null>(null);
+  const [showShuttleModal, setShowShuttleModal] = useState(false);
 
   const handleEndDirections = () => {
     endDirections();
@@ -260,12 +262,25 @@ export default function Index() {
 
       <CampusToggle selectedCampus={campusKey} onCampusChange={setCampusKey} />
 
+      <TouchableOpacity
+        style={styles.shuttleButton}
+        onPress={() => setShowShuttleModal(true)}
+        activeOpacity={0.8}
+      >
+        <Text style={styles.shuttleButtonText}>🚌</Text>
+      </TouchableOpacity>
+
       <BuildingModal
         visible={!!selectedBuilding}
         building={selectedBuildingData}
         onClose={handleCloseModal}
         location={location}
         onGetDirections={startDirectionsToBuilding}
+      />
+
+      <ShuttleScheduleModal
+        visible={showShuttleModal}
+        onClose={() => setShowShuttleModal(false)}
       />
     </View>
   );
@@ -312,6 +327,28 @@ const styles = StyleSheet.create({
     textShadowColor: BLACK,
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 2,
+  },
+
+  shuttleButton: {
+    position: "absolute",
+    top: 140,
+    left: 16,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: "rgba(0, 0, 0, 0.75)",
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+    zIndex: 1000,
+  },
+
+  shuttleButtonText: {
+    fontSize: 28,
   },
 
   _unusedGrey: { color: GREY },
