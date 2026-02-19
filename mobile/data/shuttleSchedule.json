@@ -1,5 +1,25 @@
 {
   "disclaimer": "The following departure times are approximate and may vary due to unexpected circumstances, traffic and weather.",
+  "busStops": {
+    "loyola": {
+      "name": "Loyola Chapel",
+      "address": "7137 Sherbrooke St. W.",
+      "fullAddress": "7137 Sherbrooke St. W., Montreal, QC",
+      "coordinate": {
+        "latitude": 45.45842893081927,
+        "longitude": -73.63831097652933
+      }
+    },
+    "sgw": {
+      "name": "Henry F. Hall Building",
+      "address": "1455 De Maisonneuve Blvd. W.",
+      "fullAddress": "1455 De Maisonneuve Blvd. W., Montreal, QC",
+      "coordinate": {
+        "latitude": 45.49719659339046,
+        "longitude": -73.57842520759019
+      }
+    }
+  },
   "schedules": {
     "mondayToThursday": {
       "name": "Monday — Thursday",

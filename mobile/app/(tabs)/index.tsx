@@ -10,6 +10,7 @@ import { useUserBuilding } from "../../hooks/useUserBuilding";
 import { getInteriorPoint } from "../../utils/geometry";
 import sgwBuildingsData from "../../data/buildings/sgw.json";
 import loyolaBuildingsData from "../../data/buildings/loyola.json";
+import shuttleData from "../../data/shuttleSchedule.json";
 import CampusToggle from "../../components/campusToggle";
 import BuildingModal from "../../components/buildingModal";
 import ShuttleScheduleModal from "../../components/shuttleScheduleModal";
@@ -85,6 +86,13 @@ export default function Index() {
     if (!origin) return;
 
     startDirections(origin, destChoice.coordinate);
+  };
+
+  const handleShowShuttleRoute = () => {
+    const loyolaStop = shuttleData.busStops.loyola.coordinate;
+    const sgwStop = shuttleData.busStops.sgw.coordinate;
+    
+    startDirections(loyolaStop, sgwStop);
   };
 
 
@@ -214,6 +222,33 @@ export default function Index() {
         {buildingPolygons}
         {showLabels && buildingLabels}
 
+        {/* Shuttle Bus Stops */}
+        <Marker
+          coordinate={shuttleData.busStops.loyola.coordinate}
+          title="Loyola Shuttle Stop"
+          description={shuttleData.busStops.loyola.address}
+          anchor={ANCHOR_OFFSET}
+          tracksViewChanges={false}
+          zIndex={1000}
+        >
+          <View style={styles.busStopMarker}>
+            <Text style={styles.busStopIcon}>🚏</Text>
+          </View>
+        </Marker>
+
+        <Marker
+          coordinate={shuttleData.busStops.sgw.coordinate}
+          title="SGW Shuttle Stop"
+          description={shuttleData.busStops.sgw.address}
+          anchor={ANCHOR_OFFSET}
+          tracksViewChanges={false}
+          zIndex={1000}
+        >
+          <View style={styles.busStopMarker}>
+            <Text style={styles.busStopIcon}>🚏</Text>
+          </View>
+        </Marker>
+
         {directionsState.isActive && directionsState.origin && directionsState.destination && (
           <MapViewDirections
             key={`${campusKey}-${directionsState.origin?.latitude ?? "x"}-${directionsState.destination?.latitude ?? "y"}`}
@@ -235,6 +270,33 @@ export default function Index() {
             onError={(error) => console.error("[Index] MapViewDirections ERROR:", error)}
           />
         )}
+
+        {/* Render bus stops again after directions to ensure they're on top */}
+        <Marker
+          coordinate={shuttleData.busStops.loyola.coordinate}
+          title="Loyola Shuttle Stop"
+          description={shuttleData.busStops.loyola.address}
+          anchor={ANCHOR_OFFSET}
+          tracksViewChanges={false}
+          zIndex={1001}
+        >
+          <View style={styles.busStopMarker}>
+            <Text style={styles.busStopIcon}>🚏</Text>
+          </View>
+        </Marker>
+
+        <Marker
+          coordinate={shuttleData.busStops.sgw.coordinate}
+          title="SGW Shuttle Stop"
+          description={shuttleData.busStops.sgw.address}
+          anchor={ANCHOR_OFFSET}
+          tracksViewChanges={false}
+          zIndex={1001}
+        >
+          <View style={styles.busStopMarker}>
+            <Text style={styles.busStopIcon}>🚏</Text>
+          </View>
+        </Marker>
       </MapView>
 
 
@@ -281,6 +343,7 @@ export default function Index() {
       <ShuttleScheduleModal
         visible={showShuttleModal}
         onClose={() => setShowShuttleModal(false)}
+        onShowRoute={handleShowShuttleRoute}
       />
     </View>
   );
@@ -349,6 +412,21 @@ const styles = StyleSheet.create({
 
   shuttleButtonText: {
     fontSize: 28,
+  },
+
+  busStopMarker: {
+    backgroundColor: "white",
+    borderRadius: 20,
+    padding: 6,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+    elevation: 5,
+  },
+
+  busStopIcon: {
+    fontSize: 24,
   },
 
   _unusedGrey: { color: GREY },
