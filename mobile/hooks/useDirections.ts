@@ -79,6 +79,7 @@ interface DirectionsResult {
   state: DirectionsState;
   apiKey: string;
   startDirections: (origin: Coordinates, destination: Coordinates) => void;
+  previewDirections: (origin: Coordinates, destination: Coordinates) => void;
   startDirectionsToBuilding: (
     origin: Location.LocationObject,
     buildingPolygon: number[][]
@@ -123,6 +124,18 @@ export function useDirections(): DirectionsResult {
         origin,
         destination,
         isActive: true,
+      });
+    },
+    []
+  );
+
+  const previewDirections = useCallback(
+    (origin: Coordinates, destination: Coordinates) => {
+      setState({
+        ...initialState,
+        origin,
+        destination,
+        isActive: false,
       });
     },
     []
@@ -218,5 +231,5 @@ export function useDirections(): DirectionsResult {
     });
   }, []);
 
-  return { state, apiKey, startDirections, startDirectionsToBuilding, endDirections, onRouteReady, nextStep, prevStep, checkProgress };
+  return { state, apiKey, startDirections, previewDirections, startDirectionsToBuilding, endDirections, onRouteReady, nextStep, prevStep, checkProgress };
 }

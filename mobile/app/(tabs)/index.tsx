@@ -51,6 +51,7 @@ export default function Index() {
     state: directionsState,
     apiKey,
     startDirections,
+    previewDirections,
     startDirectionsToBuilding,
     onRouteReady,
     endDirections,
@@ -76,19 +77,16 @@ export default function Index() {
   };
 
   const handleStartRoute = () => {
-    if (!destChoice) return;
+    if (!destChoice || !location) return;
 
-    const origin = startChoice?.coordinate
-      ? startChoice.coordinate
-      : location
-        ? { latitude: location.coords.latitude, longitude: location.coords.longitude }
-        : null;
-
-    if (!origin) return;
-
-    startDirections(origin, destChoice.coordinate);
+    startDirections({ latitude: location.coords.latitude, longitude: location.coords.longitude }, destChoice.coordinate);
   };
 
+  const handlePreviewRoute = () => {
+    if (!destChoice || !startChoice) return;
+
+    previewDirections(startChoice?.coordinate, destChoice?.coordinate);
+  }
 
   const handleRegionChange = (region: Region) => {
     setShowLabels(region.latitudeDelta <= LABEL_ZOOM_THRESHOLD);
@@ -125,6 +123,18 @@ export default function Index() {
   useEffect(() => {
     mapRef.current?.animateToRegion(selectedCampus.initialRegion, ANIMATION_DURATION);
   }, [selectedCampus]);
+
+  // Map centers around user's location during navigation
+  useEffect(() => {
+    if (directionsState.isActive && location) {
+      mapRef.current?.animateToRegion({
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude,
+        latitudeDelta: 0.005,
+        longitudeDelta: 0.005,
+      }, ANIMATION_DURATION);
+    }
+  }, [directionsState.isActive, location]);
 
   // GPS-based step progression
   useEffect(() => {
@@ -226,7 +236,7 @@ export default function Index() {
         {buildingPolygons}
         {showLabels && buildingLabels}
 
-        {directionsState.isActive && directionsState.origin && directionsState.destination && (
+        {directionsState.origin && directionsState.destination && (
           <MapViewDirections
             key={`${campusKey}-${directionsState.origin?.latitude ?? "x"}-${directionsState.destination?.latitude ?? "y"}`}
             origin={directionsState.origin}
@@ -236,7 +246,13 @@ export default function Index() {
             strokeColor="#0A84FF"
             onReady={(result) => {
               onRouteReady(result);
-              if (shouldFitRoute && result?.coordinates?.length) {
+              if (!directionsState.isActive && result?.coordinates?.length) {
+                // Preview mode: zoom out to show the full route
+                mapRef.current?.fitToCoordinates(result.coordinates, {
+                  edgePadding: { top: 80, right: 50, bottom: 80, left: 50 },
+                  animated: true,
+                });
+              } else if (shouldFitRoute && result?.coordinates?.length) {
                 mapRef.current?.fitToCoordinates(result.coordinates, {
                   edgePadding: { top: 160, right: 50, bottom: 220, left: 50 },
                   animated: true,
@@ -251,16 +267,21 @@ export default function Index() {
 
 
 
-      <SearchBar
-        buildings={buildingChoices}
-        start={startChoice}
-        destination={destChoice}
-        onChangeStart={setStartChoice}
-        onChangeDestination={setDestChoice}
-        routeActive={directionsState.isActive}
-        onEndRoute={handleEndDirections}
-        onStartRoute={handleStartRoute}
-      />
+      {!directionsState.isActive && (
+        <SearchBar
+          buildings={buildingChoices}
+          start={startChoice}
+          destination={destChoice}
+          onChangeStart={setStartChoice}
+          onChangeDestination={setDestChoice}
+          routeActive={directionsState.isActive}
+          previewActive={!directionsState.isActive && !!directionsState.origin}
+          onEndRoute={handleEndDirections}
+          onStartRoute={handleStartRoute}
+          onPreviewRoute={handlePreviewRoute}
+          onExitPreview={handleEndDirections}
+        />
+      )}
 
 
       <View style={styles.overlay}>
@@ -272,7 +293,9 @@ export default function Index() {
         {userBuilding && <Text style={styles.overlayBuilding}>📍 Inside: {userBuilding.name}</Text>}
       </View>
 
-      <CampusToggle selectedCampus={campusKey} onCampusChange={setCampusKey} />
+      {!directionsState.isActive && (
+        <CampusToggle selectedCampus={campusKey} onCampusChange={setCampusKey} />
+      )}
 
       {directionsState.isActive && directionsState.steps.length > 0 && (
         <NavigationSteps
