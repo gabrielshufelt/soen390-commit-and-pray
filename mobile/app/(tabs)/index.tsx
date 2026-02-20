@@ -1,4 +1,5 @@
-import React, { useMemo, useRef, useEffect, useState } from "react";
+import React, { useMemo, useState } from "react";
+import { useNavigationCamera } from "../../hooks/useNavigationCamera";
 import MapView, { Marker, Polygon, Region } from "react-native-maps";
 import { View, Text } from "react-native";
 import { useTheme } from "../../context/ThemeContext";
@@ -20,7 +21,6 @@ import { styles, HIGHLIGHT_COLOR, STROKE_COLOR } from "@/styles/index.styles";
 
 const LABEL_ZOOM_THRESHOLD = 0.015;
 const ANCHOR_OFFSET = { x: 0.5, y: 0.5 };
-const ANIMATION_DURATION = 600;
 
 export default function Index() {
   const { colorScheme } = useTheme();
@@ -101,45 +101,13 @@ export default function Index() {
     return CAMPUSES[campusKey] ?? CAMPUSES[DEFAULT_CAMPUS];
   }, [campusKey]);
 
-  const mapRef = useRef<MapView>(null);
-  const previousDirectionsActiveRef = useRef(false);
-  const [shouldFitRoute, setShouldFitRoute] = useState(directionsState.isActive);
-
-  useEffect(() => {
-    if (directionsState.isActive && !previousDirectionsActiveRef.current) {
-      setShouldFitRoute(true);
-    }
-    if (!directionsState.isActive) {
-      setShouldFitRoute(false);
-    }
-    previousDirectionsActiveRef.current = directionsState.isActive;
-  }, [directionsState.isActive]);
-
-  useEffect(() => {
-    mapRef.current?.animateToRegion(selectedCampus.initialRegion, ANIMATION_DURATION);
-  }, [selectedCampus]);
-
-  // Map centers around user's location during navigation
-  useEffect(() => {
-    if (directionsState.isActive && location) {
-      mapRef.current?.animateToRegion({
-        latitude: location.coords.latitude,
-        longitude: location.coords.longitude,
-        latitudeDelta: 0.005,
-        longitudeDelta: 0.005,
-      }, ANIMATION_DURATION);
-    }
-  }, [directionsState.isActive, location]);
-
-  // GPS-based step progression
-  useEffect(() => {
-    if (directionsState.isActive && location) {
-      checkProgress({
-        latitude: location.coords.latitude,
-        longitude: location.coords.longitude,
-      });
-    }
-  }, [location, directionsState.isActive, checkProgress]);
+  const { mapRef, handleRouteReady } = useNavigationCamera({
+    directionsState,
+    location,
+    selectedCampus,
+    onRouteReady,
+    checkProgress,
+  });
 
   const buildingPolygons = useMemo(() => {
     return campusBuildingsData.map((building: any) => {
@@ -239,28 +207,11 @@ export default function Index() {
             apikey={apiKey}
             strokeWidth={5}
             strokeColor="#0A84FF"
-            onReady={(result) => {
-              onRouteReady(result);
-              if (!directionsState.isActive && result?.coordinates?.length) {
-                // Preview mode: zoom out to show the full route
-                mapRef.current?.fitToCoordinates(result.coordinates, {
-                  edgePadding: { top: 80, right: 50, bottom: 80, left: 50 },
-                  animated: true,
-                });
-              } else if (shouldFitRoute && result?.coordinates?.length) {
-                mapRef.current?.fitToCoordinates(result.coordinates, {
-                  edgePadding: { top: 160, right: 50, bottom: 220, left: 50 },
-                  animated: true,
-                });
-                setShouldFitRoute(false);
-              }
-            }}
+            onReady={handleRouteReady}
             onError={(error) => console.error("[Index] MapViewDirections ERROR:", error)}
           />
         )}
       </MapView>
-
-
 
       {!directionsState.isActive && (
         <SearchBar
