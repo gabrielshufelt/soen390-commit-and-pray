@@ -1,6 +1,6 @@
 import React, { useMemo, useRef, useEffect, useState } from "react";
 import MapView, { Marker, Polygon, Region } from "react-native-maps";
-import { StyleSheet, View, Text } from "react-native";
+import { View, Text } from "react-native";
 import { useTheme } from "../../context/ThemeContext";
 import { CAMPUSES, DEFAULT_CAMPUS, findCampusForCoordinate } from "../../constants/campusLocations";
 import { BUILDING_POLYGON_COLORS } from "../../constants/mapColors";
@@ -16,12 +16,7 @@ import { useDirections } from "../../hooks/useDirections";
 import MapViewDirections from "react-native-maps-directions";
 import SearchBar, { BuildingChoice } from "../../components/searchBar";
 import NavigationSteps from "../../components/NavigationSteps";
-
-// Constants for colors
-const HIGHLIGHT_COLOR = "rgba(33, 150, 243, 0.4)";
-const STROKE_COLOR = "#2196F3";
-const BLACK = "rgba(0, 0, 0, 0.75)";
-const GREY = "#666";
+import { styles, HIGHLIGHT_COLOR, STROKE_COLOR } from "@/styles/index.styles";
 
 const LABEL_ZOOM_THRESHOLD = 0.015;
 const ANCHOR_OFFSET = { x: 0.5, y: 0.5 };
@@ -320,49 +315,3 @@ export default function Index() {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, position: "relative" },
-  map: { width: "100%", height: "100%" },
-
-  overlay: {
-    position: "absolute",
-    bottom: 24,
-    left: 16,
-    right: 16,
-    backgroundColor: "rgba(0,0,0,0.75)",
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 12,
-  },
-  overlayTitle: {
-    color: "#9ca3af",
-    fontSize: 12,
-    textTransform: "uppercase",
-    letterSpacing: 0.8,
-    marginBottom: 4,
-  },
-  overlayBuilding: {
-    color: "#60a5fa",
-    fontSize: 14,
-    fontWeight: "500",
-    marginTop: 4,
-  },
-  overlayValue: {
-    color: "#ffffff",
-    fontSize: 18,
-    fontWeight: "600",
-  },
-
-  labelContainer: { backgroundColor: "transparent" },
-  buildingLabel: {
-    color: "white",
-    fontWeight: "bold",
-    fontSize: 12,
-    textShadowColor: BLACK,
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 2,
-  },
-
-  _unusedGrey: { color: GREY },
-});
