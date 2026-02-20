@@ -1,6 +1,7 @@
-import React, { useMemo, useRef, useEffect, useState } from "react";
+import React, { useMemo, useState } from "react";
+import { useNavigationCamera } from "../../hooks/useNavigationCamera";
 import MapView, { Marker, Polygon, Region } from "react-native-maps";
-import { StyleSheet, View, Text } from "react-native";
+import { View, Text } from "react-native";
 import { useTheme } from "../../context/ThemeContext";
 import { CAMPUSES, DEFAULT_CAMPUS, findCampusForCoordinate } from "../../constants/campusLocations";
 import { BUILDING_POLYGON_COLORS } from "../../constants/mapColors";
@@ -15,16 +16,11 @@ import BuildingModal from "../../components/buildingModal";
 import { useDirections } from "../../hooks/useDirections";
 import MapViewDirections from "react-native-maps-directions";
 import SearchBar, { BuildingChoice } from "../../components/searchBar";
-
-// Constants for colors
-const HIGHLIGHT_COLOR = "rgba(33, 150, 243, 0.4)";
-const STROKE_COLOR = "#2196F3";
-const BLACK = "rgba(0, 0, 0, 0.75)";
-const GREY = "#666";
+import NavigationSteps from "../../components/NavigationSteps";
+import { styles, HIGHLIGHT_COLOR, STROKE_COLOR } from "@/styles/index.styles";
 
 const LABEL_ZOOM_THRESHOLD = 0.015;
 const ANCHOR_OFFSET = { x: 0.5, y: 0.5 };
-const ANIMATION_DURATION = 600;
 
 export default function Index() {
   const { colorScheme } = useTheme();
@@ -50,9 +46,13 @@ export default function Index() {
     state: directionsState,
     apiKey,
     startDirections,
+    previewDirections,
     startDirectionsToBuilding,
     onRouteReady,
     endDirections,
+    nextStep,
+    prevStep,
+    checkProgress,
   } = useDirections();
 
   const [showLabels, setShowLabels] = useState(
@@ -72,19 +72,16 @@ export default function Index() {
   };
 
   const handleStartRoute = () => {
-    if (!destChoice) return;
+    if (!destChoice || !location) return;
 
-    const origin = startChoice?.coordinate
-      ? startChoice.coordinate
-      : location
-        ? { latitude: location.coords.latitude, longitude: location.coords.longitude }
-        : null;
-
-    if (!origin) return;
-
-    startDirections(origin, destChoice.coordinate);
+    startDirections({ latitude: location.coords.latitude, longitude: location.coords.longitude }, destChoice.coordinate);
   };
 
+  const handlePreviewRoute = () => {
+    if (!destChoice || !startChoice) return;
+
+    previewDirections(startChoice?.coordinate, destChoice?.coordinate);
+  }
 
   const handleRegionChange = (region: Region) => {
     setShowLabels(region.latitudeDelta <= LABEL_ZOOM_THRESHOLD);
@@ -104,23 +101,13 @@ export default function Index() {
     return CAMPUSES[campusKey] ?? CAMPUSES[DEFAULT_CAMPUS];
   }, [campusKey]);
 
-  const mapRef = useRef<MapView>(null);
-  const previousDirectionsActiveRef = useRef(false);
-  const [shouldFitRoute, setShouldFitRoute] = useState(directionsState.isActive);
-
-  useEffect(() => {
-    if (directionsState.isActive && !previousDirectionsActiveRef.current) {
-      setShouldFitRoute(true);
-    }
-    if (!directionsState.isActive) {
-      setShouldFitRoute(false);
-    }
-    previousDirectionsActiveRef.current = directionsState.isActive;
-  }, [directionsState.isActive]);
-
-  useEffect(() => {
-    mapRef.current?.animateToRegion(selectedCampus.initialRegion, ANIMATION_DURATION);
-  }, [selectedCampus]);
+  const { mapRef, handleRouteReady } = useNavigationCamera({
+    directionsState,
+    location,
+    selectedCampus,
+    onRouteReady,
+    checkProgress,
+  });
 
   const buildingPolygons = useMemo(() => {
     return campusBuildingsData.map((building: any) => {
@@ -212,7 +199,7 @@ export default function Index() {
         {buildingPolygons}
         {showLabels && buildingLabels}
 
-        {directionsState.isActive && directionsState.origin && directionsState.destination && (
+        {directionsState.origin && directionsState.destination && (
           <MapViewDirections
             key={`${campusKey}-${directionsState.origin?.latitude ?? "x"}-${directionsState.destination?.latitude ?? "y"}`}
             origin={directionsState.origin}
@@ -220,33 +207,27 @@ export default function Index() {
             apikey={apiKey}
             strokeWidth={5}
             strokeColor="#0A84FF"
-            onReady={(result) => {
-              onRouteReady(result);
-              if (shouldFitRoute && result?.coordinates?.length) {
-                mapRef.current?.fitToCoordinates(result.coordinates, {
-                  edgePadding: { top: 160, right: 50, bottom: 220, left: 50 },
-                  animated: true,
-                });
-                setShouldFitRoute(false);
-              }
-            }}
+            onReady={handleRouteReady}
             onError={(error) => console.error("[Index] MapViewDirections ERROR:", error)}
           />
         )}
       </MapView>
 
-
-
-      <SearchBar
-        buildings={buildingChoices}
-        start={startChoice}
-        destination={destChoice}
-        onChangeStart={setStartChoice}
-        onChangeDestination={setDestChoice}
-        routeActive={directionsState.isActive}
-        onEndRoute={handleEndDirections}
-        onStartRoute={handleStartRoute}
-      />
+      {!directionsState.isActive && (
+        <SearchBar
+          buildings={buildingChoices}
+          start={startChoice}
+          destination={destChoice}
+          onChangeStart={setStartChoice}
+          onChangeDestination={setDestChoice}
+          routeActive={directionsState.isActive}
+          previewActive={!directionsState.isActive && !!directionsState.origin}
+          onEndRoute={handleEndDirections}
+          onStartRoute={handleStartRoute}
+          onPreviewRoute={handlePreviewRoute}
+          onExitPreview={handleEndDirections}
+        />
+      )}
 
 
       <View style={styles.overlay}>
@@ -258,7 +239,22 @@ export default function Index() {
         {userBuilding && <Text style={styles.overlayBuilding}>📍 Inside: {userBuilding.name}</Text>}
       </View>
 
-      <CampusToggle selectedCampus={campusKey} onCampusChange={setCampusKey} />
+      {!directionsState.isActive && (
+        <CampusToggle selectedCampus={campusKey} onCampusChange={setCampusKey} />
+      )}
+
+      {directionsState.isActive && directionsState.steps.length > 0 && (
+        <NavigationSteps
+          steps={directionsState.steps}
+          currentStepIndex={directionsState.currentStepIndex}
+          totalDistance={directionsState.routeInfo.distanceText ?? ""}
+          totalDuration={directionsState.routeInfo.durationText ?? ""}
+          isOffRoute={directionsState.isOffRoute}
+          onEndNavigation={handleEndDirections}
+          onNextStep={nextStep}
+          onPrevStep={prevStep}
+        />
+      )}
 
       <BuildingModal
         visible={!!selectedBuilding}
@@ -270,49 +266,3 @@ export default function Index() {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, position: "relative" },
-  map: { width: "100%", height: "100%" },
-
-  overlay: {
-    position: "absolute",
-    bottom: 24,
-    left: 16,
-    right: 16,
-    backgroundColor: "rgba(0,0,0,0.75)",
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 12,
-  },
-  overlayTitle: {
-    color: "#9ca3af",
-    fontSize: 12,
-    textTransform: "uppercase",
-    letterSpacing: 0.8,
-    marginBottom: 4,
-  },
-  overlayBuilding: {
-    color: "#60a5fa",
-    fontSize: 14,
-    fontWeight: "500",
-    marginTop: 4,
-  },
-  overlayValue: {
-    color: "#ffffff",
-    fontSize: 18,
-    fontWeight: "600",
-  },
-
-  labelContainer: { backgroundColor: "transparent" },
-  buildingLabel: {
-    color: "white",
-    fontWeight: "bold",
-    fontSize: 12,
-    textShadowColor: BLACK,
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 2,
-  },
-
-  _unusedGrey: { color: GREY },
-});
