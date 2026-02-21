@@ -1,0 +1,11 @@
+appId: com.anonymous.mobile
+---
+- launchApp
+- setLocation: 45.49726, -73.57888
+- assertVisible: ".*Henry F. Hall Building.*"
+- tapOn: "Where to?"
+- inputText: "Richard J Renaud Science Complex"
+- tapOn: "Richard J Renaud Science Complex (SP)"
+- assertVisible: "Preview Route"
+- tapOn: "Preview Route"
+- assertVisible: "Exit Preview"

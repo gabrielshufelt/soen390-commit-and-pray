@@ -80,6 +80,11 @@ export default function Index() {
   const handlePreviewRoute = () => {
     if (!destChoice || !startChoice) return;
 
+    if (startChoice.id == destChoice.id) {
+      alert("Start and destination cannot be the same building.");
+      return;
+    }
+
     previewDirections(startChoice?.coordinate, destChoice?.coordinate);
   }
 
@@ -108,6 +113,32 @@ export default function Index() {
     onRouteReady,
     checkProgress,
   });
+ 
+  React.useEffect(() => {
+    // this will only auto-populate if the user didn't manually select a start yet
+    if (!startChoice && location) {
+      if (userBuilding) {
+        setStartChoice({
+          id: userBuilding.id,
+          name: userBuilding.name,
+          code: userBuilding.code,
+          coordinate: getInteriorPoint(userBuilding.coordinates),
+          campus: campusKey as "SGW" | "Loyola",
+        });
+      } else { 
+        setStartChoice({
+          id: "current-location",
+          name: "My Current Location",
+          coordinate: {
+            latitude: location.coords.latitude,
+            longitude: location.coords.longitude,
+          },
+          campus: (currentCampus?.campus.name as any) ?? campusKey,
+        });
+      }
+    }
+  }, [location, userBuilding, startChoice]);
+
 
   const buildingPolygons = useMemo(() => {
     return campusBuildingsData.map((building: any) => {
