@@ -2,10 +2,11 @@ import { useState, useCallback } from 'react';
 import Constants from 'expo-constants';
 import * as Location from 'expo-location';
 import { getInteriorPoint } from '../utils/geometry';
+
 import type { NavigationStep } from '../components/NavigationSteps';
+import type { MapViewDirectionsMode } from 'react-native-maps-directions';
 
 export type Coordinates = { latitude: number; longitude: number };
-export type TransportMode = 'driving' | 'walking' | 'bicycling' | 'transit';
 
 export interface DirectionsState {
   origin: Coordinates | null;
@@ -13,7 +14,7 @@ export interface DirectionsState {
   isActive: boolean;
   loading: boolean;
   error: string | null;
-  transportMode: TransportMode;
+  transportMode: MapViewDirectionsMode;
   routeInfo: {
     distance: number | null;
     duration: number | null;
@@ -91,7 +92,7 @@ interface DirectionsResult {
   nextStep: () => void;
   prevStep: () => void;
   checkProgress: (userLocation: Coordinates) => void;
-  setTransportMode: (mode: TransportMode) => void;
+  setTransportMode: (mode: MapViewDirectionsMode) => void;
 }
 
 const initialState: DirectionsState = {
@@ -100,7 +101,7 @@ const initialState: DirectionsState = {
   isActive: false,
   loading: false,
   error: null,
-  transportMode: 'driving',
+  transportMode: 'DRIVING',
   routeInfo: {
     distance: null,
     duration: null,
@@ -196,7 +197,7 @@ export function useDirections(): DirectionsResult {
     []
   );
 
-  const setTransportMode = useCallback((mode: TransportMode) => {
+  const setTransportMode = useCallback((mode: MapViewDirectionsMode) => {
     setState((prev) => ({ ...prev, transportMode: mode }));
   }, []);
 

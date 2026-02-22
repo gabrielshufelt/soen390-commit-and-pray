@@ -1,5 +1,7 @@
 import React from "react";
 import { render, fireEvent, waitFor } from "@testing-library/react-native";
+
+import type { MapViewDirectionsMode } from 'react-native-maps-directions';
 import SearchBar, { BuildingChoice } from "../components/searchBar";
 
 const mockBuildings: BuildingChoice[] = [
@@ -30,14 +32,17 @@ const mockBuildings: BuildingChoice[] = [
 ];
 
 const defaultProps = {
-  buildings: mockBuildings,
-  start: null,
-  destination: null,
-  onChangeStart: jest.fn(),
-  onChangeDestination: jest.fn(),
-  routeActive: false,
-  onStartRoute: jest.fn(),
-  onEndRoute: jest.fn()
+    buildings: mockBuildings,
+    start: null,
+    destination: null,
+    onChangeStart: jest.fn(),
+    onChangeDestination: jest.fn(),
+    routeActive: false,
+    onStartRoute: jest.fn(),
+    onEndRoute: jest.fn(),
+    onChangeTransportMode: jest.fn(),
+    transportMode: 'WALKING' as MapViewDirectionsMode,
+    previewActive: false,
 };
 
 describe("<SearchBar />", () => {

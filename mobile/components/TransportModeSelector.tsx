@@ -1,20 +1,21 @@
+import type { MapViewDirectionsMode } from 'react-native-maps-directions';
 import React from 'react';
 import { View, TouchableOpacity, Text } from 'react-native';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { styles, MAROON } from '../styles/searchBar.styles';
-import type { TransportMode } from '../hooks/useDirections';
+
 
 type Props = {
-  selectedMode: TransportMode;
-  onModeSelect: (mode: TransportMode) => void;
+  selectedMode: MapViewDirectionsMode;
+  onModeSelect: (mode: MapViewDirectionsMode) => void;
   disabled?: boolean;
 };
 
-const MODES: { mode: TransportMode; label: string; icon: string }[] = [
-  { mode: 'driving', label: 'Driving', icon: 'car' },
-  { mode: 'walking', label: 'Walking', icon: 'walking' },
-  { mode: 'bicycling', label: 'Cycling', icon: 'bicycle' },
-  { mode: 'transit', label: 'Transit', icon: 'bus' },
+const MODES: { mode: MapViewDirectionsMode; label: string; icon: string }[] = [
+  { mode: 'DRIVING', label: 'Driving', icon: 'car' },
+  { mode: 'WALKING', label: 'Walking', icon: 'walking' },
+  { mode: 'BICYCLING', label: 'Cycling', icon: 'bicycle' },
+  { mode: 'TRANSIT', label: 'Transit', icon: 'bus' },
 ];
 
 export default function TransportModeSelector({
@@ -23,7 +24,7 @@ export default function TransportModeSelector({
   disabled = false,
 }: Props) {
   return (
-    <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
+    <View style={styles.transportModeSelectorRow}>
       {MODES.map((modeOption) => {
         const isSelected = selectedMode === modeOption.mode;
         return (
@@ -33,9 +34,9 @@ export default function TransportModeSelector({
               styles.transportModeButton,
               isSelected && styles.transportModeButtonActive,
               disabled && styles.transportModeButtonDisabled,
-              { flex: 1, marginHorizontal: 4 }
+              styles.transportModeButtonFlex
             ]}
-            onPress={() => !disabled && onModeSelect(modeOption.mode)}
+            onPress={() => onModeSelect(modeOption.mode)}
             activeOpacity={0.85}
             disabled={disabled}
             accessibilityRole="button"

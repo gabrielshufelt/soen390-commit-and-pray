@@ -1,10 +1,11 @@
+import type { MapViewDirectionsMode } from 'react-native-maps-directions';
 import React, { useMemo, useState, useEffect, useRef } from "react";
 import { View, Text, TextInput, TouchableOpacity, FlatList, SafeAreaView, Keyboard, TouchableWithoutFeedback } from "react-native";
 
 import { FontAwesome } from "@expo/vector-icons";
 import { styles, MAROON, MUTED } from "../styles/searchBar.styles";
 import TransportModeSelector from "./TransportModeSelector";
-import type { TransportMode } from "../hooks/useDirections";
+
 
 export type BuildingChoice = {
   id: string;
@@ -25,8 +26,8 @@ type Props = {
   onChangeStart: (b: BuildingChoice | null) => void;
   onChangeDestination: (b: BuildingChoice | null) => void;
 
-  transportMode: TransportMode;
-  onChangeTransportMode: (mode: TransportMode) => void;
+  transportMode: MapViewDirectionsMode;
+  onChangeTransportMode: (mode: MapViewDirectionsMode) => void;
 
   routeActive: boolean;
   defaultExpanded?: boolean;

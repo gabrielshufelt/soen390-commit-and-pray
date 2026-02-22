@@ -1,3 +1,4 @@
+
 import { StyleSheet, Platform } from "react-native";
 
 export const MAROON = "#912338";
@@ -9,6 +10,15 @@ export const SHEET_BG = "#F7F3F1";
 export const CARD_BG = "#FFFFFF";
 
 export const styles = StyleSheet.create({
+  transportModeSelectorRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  transportModeButtonFlex: {
+    flex: 1,
+    marginHorizontal: 4,
+  },
   transportModeButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -30,7 +40,7 @@ export const styles = StyleSheet.create({
   },
   transportModeText: {
     marginLeft: 6,
-    fontWeight: '800',
+    fontWeight: '600',
     color: TEXT,
     fontSize: 14,
   },

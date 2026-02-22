@@ -63,7 +63,7 @@ describe('useDirections', () => {
         isActive: false,
         loading: false,
         error: null,
-        transportMode: 'driving',
+        transportMode: 'DRIVING',
         routeInfo: {
           distance: null,
           duration: null,
@@ -205,7 +205,7 @@ describe('endDirections', () => {
         isActive: false,
         loading: false,
         error: null,
-        transportMode: 'driving',
+        transportMode: 'DRIVING',
         routeInfo: {
           distance: null,
           duration: null,
