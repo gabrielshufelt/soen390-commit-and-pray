@@ -1,7 +1,9 @@
 import React from 'react';
+import { Alert } from 'react-native';
 import { render, waitFor, fireEvent, act } from '@testing-library/react-native';
 import Index from '../app/(tabs)/index';
 import { ThemeProvider } from '../context/ThemeContext';
+
 
 jest.mock('@react-native-async-storage/async-storage', () => ({
   getItem: jest.fn(() => Promise.resolve(null)),
@@ -488,5 +490,34 @@ describe('<Index />', () => {
         expect(mockSearchBarProperties.destination).toBeNull();
       });
     });
+  });
+
+  // --- Same Building Alert ---
+  it('shows an alert and blocks routing when start and destination are the same building', async () => {
+    const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+    
+    renderWithTheme(<Index />);
+    await waitFor(() => expect(mockSearchBarProperties.onPreviewRoute).toBeDefined());
+
+    const sameBuilding = {
+      id: 'H',
+      name: 'Hall Building',
+      coordinate: { latitude: 45.497, longitude: -73.579 }
+    };
+
+    await act(async () => {
+      mockSearchBarProperties.onChangeStart(sameBuilding);
+      mockSearchBarProperties.onChangeDestination(sameBuilding);
+    });
+
+    await act(async () => {
+      mockSearchBarProperties.onPreviewRoute();
+    });
+
+    expect(alertSpy).toHaveBeenCalledWith("Start and destination cannot be the same building.");
+    
+    expect(mockPreviewDirections).not.toHaveBeenCalled();
+
+    alertSpy.mockRestore();
   });
 });
