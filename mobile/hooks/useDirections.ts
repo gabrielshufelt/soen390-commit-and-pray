@@ -5,6 +5,7 @@ import { getInteriorPoint } from '../utils/geometry';
 import type { NavigationStep } from '../components/NavigationSteps';
 
 export type Coordinates = { latitude: number; longitude: number };
+export type TransportMode = 'driving' | 'walking' | 'bicycling' | 'transit';
 
 export interface DirectionsState {
   origin: Coordinates | null;
@@ -12,6 +13,7 @@ export interface DirectionsState {
   isActive: boolean;
   loading: boolean;
   error: string | null;
+  transportMode: TransportMode;
   routeInfo: {
     distance: number | null;
     duration: number | null;
@@ -89,6 +91,7 @@ interface DirectionsResult {
   nextStep: () => void;
   prevStep: () => void;
   checkProgress: (userLocation: Coordinates) => void;
+  setTransportMode: (mode: TransportMode) => void;
 }
 
 const initialState: DirectionsState = {
@@ -97,6 +100,7 @@ const initialState: DirectionsState = {
   isActive: false,
   loading: false,
   error: null,
+  transportMode: 'driving',
   routeInfo: {
     distance: null,
     duration: null,
@@ -119,24 +123,26 @@ export function useDirections(): DirectionsResult {
 
   const startDirections = useCallback(
     (origin: Coordinates, destination: Coordinates) => {
-      setState({
+      setState((prev) => ({
         ...initialState,
         origin,
         destination,
         isActive: true,
-      });
+        transportMode: prev.transportMode,
+      }));
     },
     []
   );
 
   const previewDirections = useCallback(
     (origin: Coordinates, destination: Coordinates) => {
-      setState({
+      setState((prev) => ({
         ...initialState,
         origin,
         destination,
         isActive: false,
-      });
+        transportMode: prev.transportMode,
+      }));
     },
     []
   );
@@ -146,12 +152,13 @@ export function useDirections(): DirectionsResult {
       const originCoords = locationToCoordinates(origin);
       const destinationCoords = getInteriorPoint(buildingPolygon);
 
-      setState({
+      setState((prev) => ({
         ...initialState,
         origin: originCoords,
         destination: destinationCoords,
         isActive: true,
-      });
+        transportMode: prev.transportMode,
+      }));
     },
     []
   );
@@ -188,6 +195,10 @@ export function useDirections(): DirectionsResult {
     },
     []
   );
+
+  const setTransportMode = useCallback((mode: TransportMode) => {
+    setState((prev) => ({ ...prev, transportMode: mode }));
+  }, []);
 
   const nextStep = useCallback(() => {
     setState((prev) => ({
@@ -231,5 +242,5 @@ export function useDirections(): DirectionsResult {
     });
   }, []);
 
-  return { state, apiKey, startDirections, previewDirections, startDirectionsToBuilding, endDirections, onRouteReady, nextStep, prevStep, checkProgress };
+  return { state, apiKey, startDirections, previewDirections, startDirectionsToBuilding, endDirections, onRouteReady, nextStep, prevStep, checkProgress, setTransportMode };
 }
