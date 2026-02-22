@@ -54,6 +54,8 @@ export default function Index() {
     prevStep,
     checkProgress,
     setTransportMode,
+    previewRouteInfo,
+    setPreviewRouteInfo,
   } = useDirections();
 
   const [showLabels, setShowLabels] = useState(
@@ -70,6 +72,12 @@ export default function Index() {
     endDirections();
     setStartChoice(null);
     setDestChoice(null);
+    setPreviewRouteInfo({
+      distance: null,
+      duration: null,
+      distanceText: null,
+      durationText: null,
+    });
   };
 
   const handleStartRoute = () => {
@@ -230,6 +238,7 @@ export default function Index() {
           onStartRoute={handleStartRoute}
           onPreviewRoute={handlePreviewRoute}
           onExitPreview={handleEndDirections}
+          previewRouteInfo={previewRouteInfo}
         />
       )}
 

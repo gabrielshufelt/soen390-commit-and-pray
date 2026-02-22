@@ -93,6 +93,13 @@ interface DirectionsResult {
   prevStep: () => void;
   checkProgress: (userLocation: Coordinates) => void;
   setTransportMode: (mode: MapViewDirectionsMode) => void;
+  previewRouteInfo: {
+    distance: number | null;
+    duration: number | null;
+    distanceText: string | null;
+    durationText: string | null;
+  };
+  setPreviewRouteInfo: (info: { distance: number | null; duration: number | null; distanceText: string | null; durationText: string | null }) => void;
 }
 
 const initialState: DirectionsState = {
@@ -119,6 +126,17 @@ const OFF_ROUTE_THRESHOLD_METERS = 50;
 
 export function useDirections(): DirectionsResult {
   const [state, setState] = useState<DirectionsState>(initialState);
+  const [previewRouteInfo, setPreviewRouteInfo] = useState<{
+    distance: number | null;
+    duration: number | null;
+    distanceText: string | null;
+    durationText: string | null;
+  }>({
+    distance: null,
+    duration: null,
+    distanceText: null,
+    durationText: null,
+  });
 
   const apiKey = Constants.expoConfig?.extra?.googleMapsApiKey ?? '';
 
@@ -243,5 +261,5 @@ export function useDirections(): DirectionsResult {
     });
   }, []);
 
-  return { state, apiKey, startDirections, previewDirections, startDirectionsToBuilding, endDirections, onRouteReady, nextStep, prevStep, checkProgress, setTransportMode };
+  return { state, apiKey, startDirections, previewDirections, startDirectionsToBuilding, endDirections, onRouteReady, nextStep, prevStep, checkProgress, setTransportMode, previewRouteInfo, setPreviewRouteInfo };
 }

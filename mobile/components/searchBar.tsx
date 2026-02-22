@@ -38,6 +38,10 @@ type Props = {
   onPreviewRoute?: () => void;
   onExitPreview?: () => void;
   previewActive?: boolean;
+  previewRouteInfo?: {
+    distanceText: string | null;
+    durationText: string | null;
+  };
 };
 
 function stripCodePrefix(name: string, code?: string) {
@@ -72,6 +76,7 @@ export default function SearchBar({
   onPreviewRoute,
   onExitPreview,
   previewActive = false,
+  previewRouteInfo,
 }: Props) {
   const [expanded, setExpanded] = useState(defaultExpanded);
   const [campus, setCampus] = useState<"SGW" | "Loyola">("SGW");
@@ -316,6 +321,18 @@ export default function SearchBar({
               onModeSelect={onChangeTransportMode}
               disabled={routeActive}
             />
+
+            {!routeActive && destination && previewRouteInfo?.durationText && (
+              <View style={styles.timeEstimateCard}>
+                <Text style={styles.timeEstimateLabel}>Estimated Time</Text>
+                <Text style={styles.timeEstimateValue}>
+                  {previewRouteInfo.durationText}
+                  {previewRouteInfo.distanceText && (
+                    <Text style={styles.timeEstimateDistance}> • {previewRouteInfo.distanceText}</Text>
+                  )}
+                </Text>
+              </View>
+            )}
 
             {routeActive && onEndRoute && (
               <TouchableOpacity
