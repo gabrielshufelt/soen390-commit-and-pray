@@ -3,6 +3,8 @@ import { View, Text, TextInput, TouchableOpacity, FlatList, SafeAreaView, Keyboa
 
 import { FontAwesome } from "@expo/vector-icons";
 import { styles, MAROON, MUTED } from "../styles/searchBar.styles";
+import TransportModeSelector from "./TransportModeSelector";
+import type { TransportMode } from "../hooks/useDirections";
 
 export type BuildingChoice = {
   id: string;
@@ -22,6 +24,9 @@ type Props = {
 
   onChangeStart: (b: BuildingChoice | null) => void;
   onChangeDestination: (b: BuildingChoice | null) => void;
+
+  transportMode: TransportMode;
+  onChangeTransportMode: (mode: TransportMode) => void;
 
   routeActive: boolean;
   defaultExpanded?: boolean;
@@ -56,6 +61,8 @@ export default function SearchBar({
   destination,
   onChangeStart,
   onChangeDestination,
+  transportMode,
+  onChangeTransportMode,
   routeActive,
   defaultExpanded = false,
   onOpenBuilding,
@@ -301,6 +308,13 @@ export default function SearchBar({
                 />
               </View>
             )}
+
+            <Text style={[styles.sectionLabel, { marginTop: 14 }]}>MODE OF TRANSPORT</Text>
+            <TransportModeSelector
+              selectedMode={transportMode}
+              onModeSelect={onChangeTransportMode}
+              disabled={routeActive}
+            />
 
             {routeActive && onEndRoute && (
               <TouchableOpacity

@@ -53,6 +53,7 @@ export default function Index() {
     nextStep,
     prevStep,
     checkProgress,
+    setTransportMode,
   } = useDirections();
 
   const [showLabels, setShowLabels] = useState(
@@ -201,10 +202,11 @@ export default function Index() {
 
         {directionsState.origin && directionsState.destination && (
           <MapViewDirections
-            key={`${campusKey}-${directionsState.origin?.latitude ?? "x"}-${directionsState.destination?.latitude ?? "y"}`}
+            key={`${campusKey}-${directionsState.origin?.latitude ?? "x"}-${directionsState.destination?.latitude ?? "y"}-${directionsState.transportMode}`}
             origin={directionsState.origin}
             destination={directionsState.destination}
             apikey={apiKey}
+            mode={directionsState.transportMode}
             strokeWidth={5}
             strokeColor="#0A84FF"
             onReady={handleRouteReady}
@@ -220,6 +222,8 @@ export default function Index() {
           destination={destChoice}
           onChangeStart={setStartChoice}
           onChangeDestination={setDestChoice}
+          transportMode={directionsState.transportMode}
+          onChangeTransportMode={setTransportMode}
           routeActive={directionsState.isActive}
           previewActive={!directionsState.isActive && !!directionsState.origin}
           onEndRoute={handleEndDirections}
