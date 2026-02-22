@@ -173,6 +173,13 @@ const defaultDirections = {
   nextStep: mockNextStep,
   prevStep: mockPrevStep,
   checkProgress: mockCheckProgress,
+  previewRouteInfo: {
+    distance: null,
+    duration: null,
+    distanceText: null,
+    durationText: null,
+  },
+  setPreviewRouteInfo: jest.fn(),
 };
 
 const activeDirections = {
