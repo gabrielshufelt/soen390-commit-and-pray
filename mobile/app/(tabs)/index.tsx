@@ -18,6 +18,7 @@ import MapViewDirections from "react-native-maps-directions";
 import SearchBar, { BuildingChoice } from "../../components/searchBar";
 import NavigationSteps from "../../components/NavigationSteps";
 import { styles, HIGHLIGHT_COLOR, STROKE_COLOR } from "@/styles/index.styles";
+import { Alert } from 'react-native';
 
 const LABEL_ZOOM_THRESHOLD = 0.015;
 const ANCHOR_OFFSET = { x: 0.5, y: 0.5 };
@@ -80,6 +81,11 @@ export default function Index() {
   const handlePreviewRoute = () => {
     if (!destChoice || !startChoice) return;
 
+    if (startChoice.id == destChoice.id) {
+      Alert.alert("Start and destination cannot be the same building.");
+      return;
+    }
+
     previewDirections(startChoice?.coordinate, destChoice?.coordinate);
   }
 
@@ -108,6 +114,31 @@ export default function Index() {
     onRouteReady,
     checkProgress,
   });
+ 
+  React.useEffect(() => {
+    if (!startChoice && location) {
+      if (userBuilding) {
+        setStartChoice({
+          id: userBuilding.id,
+          name: userBuilding.name || userBuilding.code || "Unknown Building",
+          code: userBuilding.code,
+          coordinate: getInteriorPoint(userBuilding.coordinates),
+          campus: campusKey as "SGW" | "Loyola",
+        });
+      } else { 
+        setStartChoice({
+          id: "current-location",
+          name: "My Current Location",
+          coordinate: {
+            latitude: location.coords.latitude,
+            longitude: location.coords.longitude,
+          },
+          campus: (currentCampus?.campus.name as any) ?? campusKey,
+        });
+      }
+    }
+  }, [location, userBuilding, startChoice, campusKey]); 
+
 
   const buildingPolygons = useMemo(() => {
     return campusBuildingsData.map((building: any) => {

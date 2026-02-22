@@ -33,6 +33,13 @@ describe('findBuildingForLocation', () => {
     expect(result!.code).toBe('');
     expect(result!.name).toBe('Concordia Vanier Library');
   });
+
+  it('returns a Loyola building when point is inside (Richard J Renaud Science Complex - SP)', () => {
+    const result = findBuildingForLocation(45.4579, -73.6415); 
+    expect(result).not.toBeNull();
+    expect(result!.code).toBe('SP');
+    expect(result!.name).toContain('Science Complex');
+  });
 });
 
 describe('useUserBuilding', () => {
