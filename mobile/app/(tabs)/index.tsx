@@ -18,6 +18,7 @@ import MapViewDirections from "react-native-maps-directions";
 import SearchBar, { BuildingChoice } from "../../components/searchBar";
 import NavigationSteps from "../../components/NavigationSteps";
 import { styles, HIGHLIGHT_COLOR, STROKE_COLOR } from "@/styles/index.styles";
+import { Alert } from 'react-native';
 
 const LABEL_ZOOM_THRESHOLD = 0.015;
 const ANCHOR_OFFSET = { x: 0.5, y: 0.5 };
@@ -81,7 +82,7 @@ export default function Index() {
     if (!destChoice || !startChoice) return;
 
     if (startChoice.id == destChoice.id) {
-      alert("Start and destination cannot be the same building.");
+      Alert.alert("Start and destination cannot be the same building.");
       return;
     }
 
