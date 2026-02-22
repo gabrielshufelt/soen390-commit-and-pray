@@ -54,6 +54,9 @@ export default function Index() {
     nextStep,
     prevStep,
     checkProgress,
+    setTransportMode,
+    previewRouteInfo,
+    setPreviewRouteInfo,
   } = useDirections();
 
   const [showLabels, setShowLabels] = useState(
@@ -70,6 +73,12 @@ export default function Index() {
     endDirections();
     setStartChoice(null);
     setDestChoice(null);
+    setPreviewRouteInfo({
+      distance: null,
+      duration: null,
+      distanceText: null,
+      durationText: null,
+    });
   };
 
   const handleStartRoute = () => {
@@ -88,6 +97,15 @@ export default function Index() {
 
     previewDirections(startChoice?.coordinate, destChoice?.coordinate);
   }
+
+  const handleRoutePreviewReady = (result: any) => {
+    setPreviewRouteInfo({
+      distance: result.distance,
+      duration: result.duration,
+      distanceText: result.distance ? `${result.distance.toFixed(1)} km` : null,
+      durationText: result.duration ? `${Math.round(result.duration)} min` : null,
+    });
+  };
 
   const handleRegionChange = (region: Region) => {
     setShowLabels(region.latitudeDelta <= LABEL_ZOOM_THRESHOLD);
@@ -230,16 +248,30 @@ export default function Index() {
         {buildingPolygons}
         {showLabels && buildingLabels}
 
-        {directionsState.origin && directionsState.destination && (
+        {directionsState.origin && directionsState.destination && directionsState.isActive && (
           <MapViewDirections
-            key={`${campusKey}-${directionsState.origin?.latitude ?? "x"}-${directionsState.destination?.latitude ?? "y"}`}
+            key={`${campusKey}-${directionsState.origin?.latitude ?? "x"}-${directionsState.destination?.latitude ?? "y"}-${directionsState.transportMode}`}
             origin={directionsState.origin}
             destination={directionsState.destination}
             apikey={apiKey}
+            mode={directionsState.transportMode}
             strokeWidth={5}
             strokeColor="#0A84FF"
             onReady={handleRouteReady}
             onError={(error) => console.error("[Index] MapViewDirections ERROR:", error)}
+          />
+        )}
+
+        {!directionsState.isActive && destChoice && (startChoice || (location && !startChoice)) && (
+          <MapViewDirections
+            key={`preview-${(startChoice?.coordinate.latitude || location?.coords.latitude) ?? "x"}-${destChoice.coordinate.latitude}-${directionsState.transportMode}`}
+            origin={startChoice?.coordinate || { latitude: location!.coords.latitude, longitude: location!.coords.longitude }}
+            destination={destChoice.coordinate}
+            apikey={apiKey}
+            mode={directionsState.transportMode}
+            strokeWidth={3}
+            strokeColor="#FFFFFFFF"
+            onReady={handleRoutePreviewReady}
           />
         )}
       </MapView>
@@ -251,12 +283,15 @@ export default function Index() {
           destination={destChoice}
           onChangeStart={setStartChoice}
           onChangeDestination={setDestChoice}
+          transportMode={directionsState.transportMode}
+          onChangeTransportMode={setTransportMode}
           routeActive={directionsState.isActive}
           previewActive={!directionsState.isActive && !!directionsState.origin}
           onEndRoute={handleEndDirections}
           onStartRoute={handleStartRoute}
           onPreviewRoute={handlePreviewRoute}
           onExitPreview={handleEndDirections}
+          previewRouteInfo={previewRouteInfo}
         />
       )}
 

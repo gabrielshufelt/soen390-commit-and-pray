@@ -2,7 +2,9 @@ import { useState, useCallback } from 'react';
 import Constants from 'expo-constants';
 import * as Location from 'expo-location';
 import { getInteriorPoint } from '../utils/geometry';
+
 import type { NavigationStep } from '../components/NavigationSteps';
+import type { MapViewDirectionsMode } from 'react-native-maps-directions';
 
 export type Coordinates = { latitude: number; longitude: number };
 
@@ -12,6 +14,7 @@ export interface DirectionsState {
   isActive: boolean;
   loading: boolean;
   error: string | null;
+  transportMode: MapViewDirectionsMode;
   routeInfo: {
     distance: number | null;
     duration: number | null;
@@ -89,6 +92,14 @@ interface DirectionsResult {
   nextStep: () => void;
   prevStep: () => void;
   checkProgress: (userLocation: Coordinates) => void;
+  setTransportMode: (mode: MapViewDirectionsMode) => void;
+  previewRouteInfo: {
+    distance: number | null;
+    duration: number | null;
+    distanceText: string | null;
+    durationText: string | null;
+  };
+  setPreviewRouteInfo: (info: { distance: number | null; duration: number | null; distanceText: string | null; durationText: string | null }) => void;
 }
 
 const initialState: DirectionsState = {
@@ -97,6 +108,7 @@ const initialState: DirectionsState = {
   isActive: false,
   loading: false,
   error: null,
+  transportMode: 'DRIVING',
   routeInfo: {
     distance: null,
     duration: null,
@@ -114,29 +126,42 @@ const OFF_ROUTE_THRESHOLD_METERS = 50;
 
 export function useDirections(): DirectionsResult {
   const [state, setState] = useState<DirectionsState>(initialState);
+  const [previewRouteInfo, setPreviewRouteInfo] = useState<{
+    distance: number | null;
+    duration: number | null;
+    distanceText: string | null;
+    durationText: string | null;
+  }>({
+    distance: null,
+    duration: null,
+    distanceText: null,
+    durationText: null,
+  });
 
   const apiKey = Constants.expoConfig?.extra?.googleMapsApiKey ?? '';
 
   const startDirections = useCallback(
     (origin: Coordinates, destination: Coordinates) => {
-      setState({
+      setState((prev) => ({
         ...initialState,
         origin,
         destination,
         isActive: true,
-      });
+        transportMode: prev.transportMode,
+      }));
     },
     []
   );
 
   const previewDirections = useCallback(
     (origin: Coordinates, destination: Coordinates) => {
-      setState({
+      setState((prev) => ({
         ...initialState,
         origin,
         destination,
         isActive: false,
-      });
+        transportMode: prev.transportMode,
+      }));
     },
     []
   );
@@ -146,12 +171,13 @@ export function useDirections(): DirectionsResult {
       const originCoords = locationToCoordinates(origin);
       const destinationCoords = getInteriorPoint(buildingPolygon);
 
-      setState({
+      setState((prev) => ({
         ...initialState,
         origin: originCoords,
         destination: destinationCoords,
         isActive: true,
-      });
+        transportMode: prev.transportMode,
+      }));
     },
     []
   );
@@ -188,6 +214,10 @@ export function useDirections(): DirectionsResult {
     },
     []
   );
+
+  const setTransportMode = useCallback((mode: MapViewDirectionsMode) => {
+    setState((prev) => ({ ...prev, transportMode: mode }));
+  }, []);
 
   const nextStep = useCallback(() => {
     setState((prev) => ({
@@ -231,5 +261,5 @@ export function useDirections(): DirectionsResult {
     });
   }, []);
 
-  return { state, apiKey, startDirections, previewDirections, startDirectionsToBuilding, endDirections, onRouteReady, nextStep, prevStep, checkProgress };
+  return { state, apiKey, startDirections, previewDirections, startDirectionsToBuilding, endDirections, onRouteReady, nextStep, prevStep, checkProgress, setTransportMode, previewRouteInfo, setPreviewRouteInfo };
 }

@@ -1,8 +1,11 @@
+import type { MapViewDirectionsMode } from 'react-native-maps-directions';
 import React, { useMemo, useState, useEffect, useRef } from "react";
 import { View, Text, TextInput, TouchableOpacity, FlatList, SafeAreaView, Keyboard, TouchableWithoutFeedback } from "react-native";
 
 import { FontAwesome } from "@expo/vector-icons";
 import { styles, MAROON, MUTED } from "../styles/searchBar.styles";
+import TransportModeSelector from "./TransportModeSelector";
+
 
 export type BuildingChoice = {
   id: string;
@@ -23,6 +26,9 @@ type Props = {
   onChangeStart: (b: BuildingChoice | null) => void;
   onChangeDestination: (b: BuildingChoice | null) => void;
 
+  transportMode: MapViewDirectionsMode;
+  onChangeTransportMode: (mode: MapViewDirectionsMode) => void;
+
   routeActive: boolean;
   defaultExpanded?: boolean;
 
@@ -32,6 +38,10 @@ type Props = {
   onPreviewRoute?: () => void;
   onExitPreview?: () => void;
   previewActive?: boolean;
+  previewRouteInfo?: {
+    distanceText: string | null;
+    durationText: string | null;
+  };
 };
 
 function stripCodePrefix(name: string, code?: string) {
@@ -56,6 +66,8 @@ export default function SearchBar({
   destination,
   onChangeStart,
   onChangeDestination,
+  transportMode,
+  onChangeTransportMode,
   routeActive,
   defaultExpanded = false,
   onOpenBuilding,
@@ -64,6 +76,7 @@ export default function SearchBar({
   onPreviewRoute,
   onExitPreview,
   previewActive = false,
+  previewRouteInfo,
 }: Props) {
   const [expanded, setExpanded] = useState(defaultExpanded);
   const [campus, setCampus] = useState<"SGW" | "Loyola">("SGW");
@@ -299,6 +312,25 @@ export default function SearchBar({
                   )}
                   ItemSeparatorComponent={Separator}
                 />
+              </View>
+            )}
+
+            <Text style={[styles.sectionLabel, { marginTop: 14 }]}>MODE OF TRANSPORT</Text>
+            <TransportModeSelector
+              selectedMode={transportMode}
+              onModeSelect={onChangeTransportMode}
+              disabled={routeActive}
+            />
+
+            {!routeActive && destination && previewRouteInfo?.durationText && (
+              <View style={styles.timeEstimateCard}>
+                <Text style={styles.timeEstimateLabel}>Estimated Time</Text>
+                <Text style={styles.timeEstimateValue}>
+                  {previewRouteInfo.durationText}
+                  {previewRouteInfo.distanceText && (
+                    <Text style={styles.timeEstimateDistance}> • {previewRouteInfo.distanceText}</Text>
+                  )}
+                </Text>
               </View>
             )}
 

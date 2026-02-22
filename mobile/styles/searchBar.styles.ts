@@ -1,3 +1,4 @@
+
 import { StyleSheet, Platform } from "react-native";
 
 export const MAROON = "#912338";
@@ -9,6 +10,43 @@ export const SHEET_BG = "#F7F3F1";
 export const CARD_BG = "#FFFFFF";
 
 export const styles = StyleSheet.create({
+  transportModeSelectorRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  transportModeButtonFlex: {
+    flex: 1,
+    marginHorizontal: 4,
+  },
+  transportModeButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 8,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: BORDER,
+    backgroundColor: CARD_BG,
+    marginVertical: 2,
+  },
+  transportModeButtonActive: {
+    backgroundColor: 'rgba(145,35,56,0.08)',
+    borderColor: MAROON,
+  },
+  transportModeButtonDisabled: {
+    opacity: 0.5,
+  },
+  transportModeText: {
+    marginLeft: 6,
+    fontWeight: '600',
+    color: TEXT,
+    fontSize: 14,
+  },
+  transportModeTextActive: {
+    color: MAROON,
+  },
   wrapperCollapsed: {
     position: "absolute",
     top: Platform.OS === "ios" ? 62 : 48,
@@ -179,6 +217,35 @@ export const styles = StyleSheet.create({
     fontWeight: "900",
     color: MAROON,
     letterSpacing: 0.3,
+  },
+  timeEstimateCard: {
+    marginTop: 10,
+    marginBottom: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderRadius: 14,
+    backgroundColor: "rgba(145,35,56,0.08)",
+    borderWidth: 1,
+    borderColor: "rgba(145,35,56,0.2)",
+  },
+  timeEstimateLabel: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: MUTED,
+    letterSpacing: 0.3,
+    textTransform: "uppercase",
+    marginBottom: 6,
+  },
+  timeEstimateValue: {
+    fontSize: 20,
+    fontWeight: "900",
+    color: MAROON,
+    lineHeight: 28,
+  },
+  timeEstimateDistance: {
+    fontSize: 13,
+    fontWeight: "500",
+    color: MUTED,
   },
   suggestionItem: { paddingHorizontal: 14, paddingVertical: 12 },
   suggestionTitle: { fontWeight: "900", color: TEXT },
