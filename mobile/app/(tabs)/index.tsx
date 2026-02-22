@@ -92,6 +92,15 @@ export default function Index() {
     previewDirections(startChoice?.coordinate, destChoice?.coordinate);
   }
 
+  const handleRoutePreviewReady = (result: any) => {
+    setPreviewRouteInfo({
+      distance: result.distance,
+      duration: result.duration,
+      distanceText: result.distance ? `${result.distance.toFixed(1)} km` : null,
+      durationText: result.duration ? `${Math.round(result.duration)} min` : null,
+    });
+  };
+
   const handleRegionChange = (region: Region) => {
     setShowLabels(region.latitudeDelta <= LABEL_ZOOM_THRESHOLD);
   };
@@ -208,7 +217,7 @@ export default function Index() {
         {buildingPolygons}
         {showLabels && buildingLabels}
 
-        {directionsState.origin && directionsState.destination && (
+        {directionsState.origin && directionsState.destination && directionsState.isActive && (
           <MapViewDirections
             key={`${campusKey}-${directionsState.origin?.latitude ?? "x"}-${directionsState.destination?.latitude ?? "y"}-${directionsState.transportMode}`}
             origin={directionsState.origin}
@@ -219,6 +228,19 @@ export default function Index() {
             strokeColor="#0A84FF"
             onReady={handleRouteReady}
             onError={(error) => console.error("[Index] MapViewDirections ERROR:", error)}
+          />
+        )}
+
+        {!directionsState.isActive && destChoice && (startChoice || (location && !startChoice)) && (
+          <MapViewDirections
+            key={`preview-${(startChoice?.coordinate.latitude || location?.coords.latitude) ?? "x"}-${destChoice.coordinate.latitude}-${directionsState.transportMode}`}
+            origin={startChoice?.coordinate || { latitude: location!.coords.latitude, longitude: location!.coords.longitude }}
+            destination={destChoice.coordinate}
+            apikey={apiKey}
+            mode={directionsState.transportMode}
+            strokeWidth={3}
+            strokeColor="#FFFFFFFF"
+            onReady={handleRoutePreviewReady}
           />
         )}
       </MapView>
