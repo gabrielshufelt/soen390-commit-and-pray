@@ -115,12 +115,11 @@ export default function Index() {
   });
  
   React.useEffect(() => {
-    // this will only auto-populate if the user didn't manually select a start yet
     if (!startChoice && location) {
       if (userBuilding) {
         setStartChoice({
           id: userBuilding.id,
-          name: userBuilding.name,
+          name: userBuilding.name || userBuilding.code || "Unknown Building",
           code: userBuilding.code,
           coordinate: getInteriorPoint(userBuilding.coordinates),
           campus: campusKey as "SGW" | "Loyola",
@@ -137,7 +136,7 @@ export default function Index() {
         });
       }
     }
-  }, [location, userBuilding, startChoice]);
+  }, [location, userBuilding, startChoice, campusKey]); 
 
 
   const buildingPolygons = useMemo(() => {
