@@ -19,29 +19,24 @@ GoogleSignin.configure({
 export default function SignInGoogle() {
   const signIn = async () => {
     try {
-      await GoogleSignin.hasPlayServices();
+      console.log("Checking Play Services...");
+      await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+      console.log("Play Services OK, opening sign-in...");
+
       const response = await GoogleSignin.signIn();
+      console.log("Response:", JSON.stringify(response));
 
       if (isSuccessResponse(response)) {
-        const { user, idToken } = response.data;
-        console.log("Signed in as:", user.email);
-        // Send idToken to your backend for verification
+        console.log("Success:", response.data.user.email);
+      } else {
+        console.log("Non-success response:", response);
       }
     } catch (error) {
       if (isErrorWithCode(error)) {
-        switch (error.code) {
-          case statusCodes.SIGN_IN_CANCELLED:
-            console.log("User cancelled sign-in");
-            break;
-          case statusCodes.IN_PROGRESS:
-            console.log("Sign-in already in progress");
-            break;
-          case statusCodes.PLAY_SERVICES_NOT_AVAILABLE:
-            console.log("Play Services not available");
-            break;
-          default:
-            console.error("Unknown error", error);
-        }
+        console.log("Error code:", error.code);
+        console.log("Error message:", error.message);
+      } else {
+        console.log("Unknown error:", error);
       }
     }
   };
