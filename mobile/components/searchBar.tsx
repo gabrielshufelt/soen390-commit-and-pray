@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useEffect, useRef } from "react";
-import { View, Text, TextInput, TouchableOpacity, FlatList, SafeAreaView } from "react-native";
+import { View, Text, TextInput, TouchableOpacity, FlatList, SafeAreaView, Keyboard, TouchableWithoutFeedback } from "react-native";
 
 import { FontAwesome } from "@expo/vector-icons";
 import { styles, MAROON, MUTED } from "../styles/searchBar.styles";
@@ -29,6 +29,9 @@ type Props = {
   onOpenBuilding?: (b: BuildingChoice) => void;
   onEndRoute?: () => void;
   onStartRoute?: () => void;
+  onPreviewRoute?: () => void;
+  onExitPreview?: () => void;
+  previewActive?: boolean;
 };
 
 function stripCodePrefix(name: string, code?: string) {
@@ -58,6 +61,9 @@ export default function SearchBar({
   onOpenBuilding,
   onEndRoute,
   onStartRoute,
+  onPreviewRoute,
+  onExitPreview,
+  previewActive = false,
 }: Props) {
   const [expanded, setExpanded] = useState(defaultExpanded);
   const [campus, setCampus] = useState<"SGW" | "Loyola">("SGW");
@@ -155,242 +161,279 @@ export default function SearchBar({
   const Separator = () => <View style={styles.sep} />
 
   return (
-    <View style={styles.fullscreenOverlay} pointerEvents="auto">
-      <SafeAreaView style={styles.sheet}>
-        {/* header */}
-        <View style={styles.header}>
-          <TouchableOpacity
-            style={styles.headerBtn}
-            onPress={() => {
-              setExpanded(false);
-              setDestFocused(false);
-              setStartFocused(false);
-            }}
-            activeOpacity={0.85}
-            accessibilityRole="button"
-            accessibilityLabel="Go back"
-          >
-            <Text style={styles.headerBack}>‹</Text>
-          </TouchableOpacity>
-
-          <Text style={styles.headerTitle}>Route</Text>
-        </View>
-
-        {/* campus */}
-        <View style={styles.segmentOuter}>
-          <TouchableOpacity
-            style={[styles.segmentBtn, campus === "SGW" && styles.segmentBtnActive]}
-            onPress={() => setCampus("SGW")}
-            activeOpacity={0.9}
-            accessibilityRole="button"
-            accessibilityState={{ selected: campus === "SGW" }}
-            accessibilityLabel="SGW Campus"
-          >
-            <Text style={[styles.segmentText, campus === "SGW" && styles.segmentTextActive]}>SGW Campus</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.segmentBtn, campus === "Loyola" && styles.segmentBtnActive]}
-            onPress={() => setCampus("Loyola")}
-            activeOpacity={0.9}
-            accessibilityRole="button"
-            accessibilityState={{ selected: campus === "Loyola" }}
-            accessibilityLabel="Loyola Campus"
-          >
-            <Text
-              style={[styles.segmentText, campus === "Loyola" && styles.segmentTextActive]}
-            >
-              Loyola Campus
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.routeCard}>
-          <Text style={styles.sectionLabel}>START POINT</Text>
-
-          <TouchableOpacity style={styles.inputRow} activeOpacity={1} onPress={() => startInputRef.current?.focus()} accessibilityRole="button">
-            <View style={styles.leftIconCircle}>
-              <FontAwesome name="map-marker" size={16} color={MAROON} aria-hidden />
-            </View>
-
-            <TextInput
-              testID="route.start.input"
-              ref={startInputRef}
-              style={styles.destInput}
-              value={startText}
-              editable={!routeActive}
-              placeholder="Current Location"
-              placeholderTextColor="#9CA3AF"
-              onFocus={() => setStartFocused(true)}
-              onBlur={() => setStartFocused(false)}
-              onChangeText={(t) => {
-                setStartText(t);
-                onChangeStart(null);
-              }}
-              returnKeyType="search"
-            />
-          </TouchableOpacity>
-
-          {startSuggestions.length > 0 && (
-            <View testID="route.start.suggestions" style={styles.suggestionsBox}>
-              <FlatList
-                keyboardShouldPersistTaps="handled"
-                data={startSuggestions}
-                keyExtractor={(b) => b.id}
-                renderItem={({ item }) => (
-                  <TouchableOpacity style={styles.suggestionItem} onPress={() => pickStart(item)} activeOpacity={0.85} accessibilityRole="button" accessibilityLabel={`Select ${displayName(item)}`}>
-                    <Text style={styles.suggestionTitle}>{displayName(item)}</Text>
-                    {!!item.address && <Text style={styles.suggestionSub}>{item.address}</Text>}
-                  </TouchableOpacity>
-                )}
-                ItemSeparatorComponent={Separator}
-              />
-            </View>
-          )}
-
-          <Text style={[styles.sectionLabel, { marginTop: 14 }]}>DESTINATION</Text>
-
-          <TouchableOpacity
-            activeOpacity={1}
-            onPress={() => destInputRef.current?.focus()}
-            style={[styles.inputRow, styles.destRow]}
-            accessibilityRole="button"
-          >
-            <View style={styles.leftIconCircleAlt}>
-              <FontAwesome name="search" size={16} color={MAROON} aria-hidden />
-            </View>
-
-            <TextInput
-              testID="route.dest.input"
-              ref={destInputRef}
-              style={styles.destInput}
-              value={destText}
-              editable={!routeActive}
-              placeholder="Where to?"
-              placeholderTextColor="#9CA3AF"
-              onFocus={() => setDestFocused(true)}
-              onBlur={() => setDestFocused(false)}
-              onChangeText={(t) => {
-                setDestText(t);
-                onChangeDestination(null);
-              }}
-              returnKeyType="search"
-            />
-          </TouchableOpacity>
-
-          {suggestions.length > 0 && (
-            <View testID="route.dest.suggestions" style={styles.suggestionsBox}>
-              <FlatList
-                keyboardShouldPersistTaps="handled"
-                data={suggestions}
-                keyExtractor={(b) => b.id}
-                renderItem={({ item }) => (
-                  <TouchableOpacity style={styles.suggestionItem} onPress={() => pickDestination(item)} activeOpacity={0.85} accessibilityRole="button" accessibilityLabel={`Select ${displayName(item)}`}>
-                    <Text style={styles.suggestionTitle}>{displayName(item)}</Text>
-                    {!!item.address && <Text style={styles.suggestionSub}>{item.address}</Text>}
-                  </TouchableOpacity>
-                )}
-                ItemSeparatorComponent={Separator}
-              />
-            </View>
-          )}
-
-          {routeActive && onEndRoute && (
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+      <View style={styles.fullscreenOverlay} pointerEvents="auto">
+        <SafeAreaView style={styles.sheet}>
+          {/* header */}
+          <View style={styles.header}>
             <TouchableOpacity
-              testID="route.end.button"
-              style={styles.endRouteButton}
-              activeOpacity={0.9}
-              accessibilityRole="button"
+              style={styles.headerBtn}
               onPress={() => {
-                onEndRoute();
-                setStartText("");
-                setDestText("");
+                setExpanded(false);
                 setDestFocused(false);
+                setStartFocused(false);
               }}
+              activeOpacity={0.85}
+              accessibilityRole="button"
+              accessibilityLabel="Go back"
             >
-              <Text style={styles.endRouteButtonText}>End Directions</Text>
+              <Text style={styles.headerBack}>‹</Text>
             </TouchableOpacity>
-          )}
 
-          {!routeActive && destination && onStartRoute && (
+            <Text style={styles.headerTitle}>Route</Text>
+          </View>
+
+          {/* campus */}
+          <View style={styles.segmentOuter}>
             <TouchableOpacity
-              testID="route.start.button"
-              style={styles.startRouteButton}
+              style={[styles.segmentBtn, campus === "SGW" && styles.segmentBtnActive]}
+              onPress={() => setCampus("SGW")}
               activeOpacity={0.9}
-              onPress={onStartRoute}
+              accessibilityRole="button"
+              accessibilityState={{ selected: campus === "SGW" }}
+              accessibilityLabel="SGW Campus"
+            >
+              <Text style={[styles.segmentText, campus === "SGW" && styles.segmentTextActive]}>SGW Campus</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.segmentBtn, campus === "Loyola" && styles.segmentBtnActive]}
+              onPress={() => setCampus("Loyola")}
+              activeOpacity={0.9}
+              accessibilityRole="button"
+              accessibilityState={{ selected: campus === "Loyola" }}
+              accessibilityLabel="Loyola Campus"
+            >
+              <Text
+                style={[styles.segmentText, campus === "Loyola" && styles.segmentTextActive]}
+              >
+                Loyola Campus
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.routeCard}>
+            <Text style={styles.sectionLabel}>START POINT</Text>
+
+            <TouchableOpacity style={styles.inputRow} activeOpacity={1} onPress={() => startInputRef.current?.focus()} accessibilityRole="button">
+              <View style={styles.leftIconCircle}>
+                <FontAwesome name="map-marker" size={16} color={MAROON} aria-hidden />
+              </View>
+
+              <TextInput
+                testID="route.start.input"
+                ref={startInputRef}
+                style={styles.destInput}
+                value={startText}
+                editable={!routeActive}
+                placeholder="Current Location"
+                placeholderTextColor="#9CA3AF"
+                onFocus={() => setStartFocused(true)}
+                onBlur={() => setStartFocused(false)}
+                onChangeText={(t) => {
+                  setStartText(t);
+                  onChangeStart(null);
+                }}
+                returnKeyType="search"
+              />
+            </TouchableOpacity>
+
+            {startSuggestions.length > 0 && (
+              <View testID="route.start.suggestions" style={styles.suggestionsBox}>
+                <FlatList
+                  keyboardShouldPersistTaps="handled"
+                  data={startSuggestions}
+                  keyExtractor={(b) => b.id}
+                  renderItem={({ item }) => (
+                    <TouchableOpacity style={styles.suggestionItem} onPress={() => pickStart(item)} activeOpacity={0.85} accessibilityRole="button" accessibilityLabel={`Select ${displayName(item)}`}>
+                      <Text style={styles.suggestionTitle}>{displayName(item)}</Text>
+                      {!!item.address && <Text style={styles.suggestionSub}>{item.address}</Text>}
+                    </TouchableOpacity>
+                  )}
+                  ItemSeparatorComponent={Separator}
+                />
+              </View>
+            )}
+
+            <Text style={[styles.sectionLabel, { marginTop: 14 }]}>DESTINATION</Text>
+
+            <TouchableOpacity
+              activeOpacity={1}
+              onPress={() => destInputRef.current?.focus()}
+              style={[styles.inputRow, styles.destRow]}
               accessibilityRole="button"
             >
-              <Text style={styles.startRouteButtonText}>Start Directions</Text>
-            </TouchableOpacity>
-          )}
-        </View>
+              <View style={styles.leftIconCircleAlt}>
+                <FontAwesome name="search" size={16} color={MAROON} aria-hidden />
+              </View>
 
-        {/* filters */}
-        <View style={styles.filterRow}>
-          {(["Home", "Library", "Favorites"] as const).map((k) => {
-            const active = quickFilter === k;
-            return (
+              <TextInput
+                testID="route.dest.input"
+                ref={destInputRef}
+                style={styles.destInput}
+                value={destText}
+                editable={!routeActive}
+                placeholder="Where to?"
+                placeholderTextColor="#9CA3AF"
+                onFocus={() => setDestFocused(true)}
+                onBlur={() => setDestFocused(false)}
+                onChangeText={(t) => {
+                  setDestText(t);
+                  onChangeDestination(null);
+                }}
+                returnKeyType="search"
+              />
+            </TouchableOpacity>
+
+            {suggestions.length > 0 && (
+              <View testID="route.dest.suggestions" style={styles.suggestionsBox}>
+                <FlatList
+                  keyboardShouldPersistTaps="handled"
+                  data={suggestions}
+                  keyExtractor={(b) => b.id}
+                  renderItem={({ item }) => (
+                    <TouchableOpacity style={styles.suggestionItem} onPress={() => pickDestination(item)} activeOpacity={0.85} accessibilityRole="button" accessibilityLabel={`Select ${displayName(item)}`}>
+                      <Text style={styles.suggestionTitle}>{displayName(item)}</Text>
+                      {!!item.address && <Text style={styles.suggestionSub}>{item.address}</Text>}
+                    </TouchableOpacity>
+                  )}
+                  ItemSeparatorComponent={Separator}
+                />
+              </View>
+            )}
+
+            {routeActive && onEndRoute && (
               <TouchableOpacity
-                key={k}
-                style={[styles.filterChip, active && styles.filterChipActive]}
-                onPress={() => setQuickFilter(k)}
+                testID="route.end.button"
+                style={styles.endRouteButton}
                 activeOpacity={0.9}
                 accessibilityRole="button"
-                accessibilityState={{ selected: active }}
-                accessibilityLabel={`${k} filter`}
+                onPress={() => {
+                  onEndRoute();
+                  setStartText("");
+                  setDestText("");
+                  setDestFocused(false);
+                }}
               >
-                <FontAwesome
-                  name={k === "Home" ? "home" : k === "Library" ? "book" : "star"}
-                  size={16}
-                  color={active ? MAROON : MUTED}
-                  aria-hidden
-                />
-                <Text style={[styles.filterText, active && styles.filterTextActive]}>{k}</Text>
+                <Text style={styles.endRouteButtonText}>End Directions</Text>
               </TouchableOpacity>
-            );
-          })}
-        </View>
+            )}
 
-        {/* header */}
-        <View style={styles.listHeader}>
-          <Text style={styles.listTitle}>Suggested Buildings</Text>
-          <TouchableOpacity activeOpacity={0.85} accessibilityRole="button" accessibilityLabel="See all suggested buildings">
-            <Text style={styles.seeAll}>See All</Text>
-          </TouchableOpacity>
-        </View>
+            {!routeActive && destination && !start && onStartRoute && (
+              <TouchableOpacity
+                testID="route.start.button"
+                style={styles.startRouteButton}
+                activeOpacity={0.9}
+                onPress={() => {
+                  onStartRoute();
+                  setExpanded(false);
+                }}
+                accessibilityRole="button"
+              >
+                <Text style={styles.startRouteButtonText}>Start Directions</Text>
+              </TouchableOpacity>
+            )}
 
-        {/* list */}
-        <View style={styles.listCard}>
-          {filteredHistory.length === 0 ? (
-            <View style={styles.emptyState}>
-              <Text style={styles.emptyTitle}>No recent destinations yet</Text>
-              <Text style={styles.emptySub}>Search a building above and it will show here.</Text>
-            </View>
-          ) : (
-            <FlatList
-              data={filteredHistory}
-              keyExtractor={(b) => b.id}
-              ItemSeparatorComponent={Separator}
-              renderItem={({ item }) => (
-                <TouchableOpacity style={styles.buildingRow} activeOpacity={0.9} onPress={() => pickDestination(item)} accessibilityRole="button" accessibilityLabel={`Select ${displayName(item)}`}>
-                  <View style={styles.buildingIconBox}>
-                    <FontAwesome name="building-o" size={16} color={MAROON} aria-hidden />
-                  </View>
-
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.buildingName}>{displayName(item)}</Text>
-                    {!!item.address && <Text style={styles.buildingSub}>{item.address}</Text>}
-                  </View>
-
-                  <TouchableOpacity style={styles.chevBtn} activeOpacity={0.85} onPress={() => onOpenBuilding?.(item)} accessibilityRole="button" accessibilityLabel={`View details for ${displayName(item)}`}>
-                    <Text style={styles.rowChev} aria-hidden>›</Text>
-                  </TouchableOpacity>
+            {!routeActive && destination && start && (
+              previewActive ? (
+                <TouchableOpacity
+                  testID="route.exit-preview.button"
+                  style={styles.endRouteButton}
+                  activeOpacity={0.9}
+                  onPress={() => {
+                    onExitPreview?.();
+                    setExpanded(false);
+                  }}
+                  accessibilityRole="button"
+                >
+                  <Text style={styles.endRouteButtonText}>Exit Preview</Text>
                 </TouchableOpacity>
-              )}
-            />
-          )}
-        </View>
-      </SafeAreaView>
-    </View>
+              ) : (
+                onPreviewRoute && (
+                  <TouchableOpacity
+                    testID="route.preview.button"
+                    style={styles.previewRouteButton}
+                    activeOpacity={0.9}
+                    onPress={() => {
+                      onPreviewRoute();
+                      setExpanded(false);
+                    }}
+                    accessibilityRole="button"
+                  >
+                    <Text style={styles.previewRouteButtonText}>Preview Route</Text>
+                  </TouchableOpacity>
+                )
+              )
+            )}
+          </View>
+
+          {/* filters */}
+          <View style={styles.filterRow}>
+            {(["Home", "Library", "Favorites"] as const).map((k) => {
+              const active = quickFilter === k;
+              return (
+                <TouchableOpacity
+                  key={k}
+                  style={[styles.filterChip, active && styles.filterChipActive]}
+                  onPress={() => setQuickFilter(k)}
+                  activeOpacity={0.9}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: active }}
+                  accessibilityLabel={`${k} filter`}
+                >
+                  <FontAwesome
+                    name={k === "Home" ? "home" : k === "Library" ? "book" : "star"}
+                    size={16}
+                    color={active ? MAROON : MUTED}
+                    aria-hidden
+                  />
+                  <Text style={[styles.filterText, active && styles.filterTextActive]}>{k}</Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+
+          {/* header */}
+          <View style={styles.listHeader}>
+            <Text style={styles.listTitle}>Suggested Buildings</Text>
+            <TouchableOpacity activeOpacity={0.85} accessibilityRole="button" accessibilityLabel="See all suggested buildings">
+              <Text style={styles.seeAll}>See All</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* list */}
+          <View style={styles.listCard}>
+            {filteredHistory.length === 0 ? (
+              <View style={styles.emptyState}>
+                <Text style={styles.emptyTitle}>No recent destinations yet</Text>
+                <Text style={styles.emptySub}>Search a building above and it will show here.</Text>
+              </View>
+            ) : (
+              <FlatList
+                data={filteredHistory}
+                keyExtractor={(b) => b.id}
+                ItemSeparatorComponent={Separator}
+                renderItem={({ item }) => (
+                  <TouchableOpacity style={styles.buildingRow} activeOpacity={0.9} onPress={() => pickDestination(item)} accessibilityRole="button" accessibilityLabel={`Select ${displayName(item)}`}>
+                    <View style={styles.buildingIconBox}>
+                      <FontAwesome name="building-o" size={16} color={MAROON} aria-hidden />
+                    </View>
+
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.buildingName}>{displayName(item)}</Text>
+                      {!!item.address && <Text style={styles.buildingSub}>{item.address}</Text>}
+                    </View>
+
+                    <TouchableOpacity style={styles.chevBtn} activeOpacity={0.85} onPress={() => onOpenBuilding?.(item)} accessibilityRole="button" accessibilityLabel={`View details for ${displayName(item)}`}>
+                      <Text style={styles.rowChev} aria-hidden>›</Text>
+                    </TouchableOpacity>
+                  </TouchableOpacity>
+                )}
+              />
+            )}
+          </View>
+        </SafeAreaView>
+      </View>
+    </TouchableWithoutFeedback>
   );
 }

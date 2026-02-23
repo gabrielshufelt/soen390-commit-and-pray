@@ -38,6 +38,7 @@ describe("SearchBar end-to-end flow", () => {
     const onChangeStart = jest.fn();
     const onChangeDestination = jest.fn();
     const onStartRoute = jest.fn();
+    const onPreviewRoute = jest.fn();
 
     // 1) render collapsed first (like real app)
     const screen = render(
@@ -100,13 +101,14 @@ describe("SearchBar end-to-end flow", () => {
         onChangeDestination={onChangeDestination}
         routeActive={false}
         onStartRoute={onStartRoute}
+        onPreviewRoute={onPreviewRoute}
         onEndRoute={jest.fn()}
         defaultExpanded={true}
       />
     );
 
-    // 6) start directions
-    fireEvent.press(screen.getByText("Start Directions"));
-    expect(onStartRoute).toHaveBeenCalledTimes(1);
+    // 6) start has a specific building selected, so "Preview Route" is shown instead of "Start Directions"
+    fireEvent.press(screen.getByText("Preview Route"));
+    expect(onPreviewRoute).toHaveBeenCalledTimes(1);
   });
 });
