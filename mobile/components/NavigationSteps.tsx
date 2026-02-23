@@ -143,8 +143,9 @@ export default function NavigationSteps({
             disabled={isFirstStep}
             accessibilityRole="button"
             accessibilityLabel="Previous step"
+            accessibilityState={{ disabled: isFirstStep }}
           >
-            <FontAwesome name="chevron-left" size={16} color={isFirstStep ? DISABLED : MAROON}/>
+            <Text style={{ fontSize: 20, fontWeight: 'bold', color: isFirstStep ? DISABLED : MAROON }}>‹</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -162,8 +163,9 @@ export default function NavigationSteps({
             disabled={isLastStep}
             accessibilityRole="button"
             accessibilityLabel="Next step"
+            accessibilityState={{ disabled: isLastStep }}
           >
-            <FontAwesome name="chevron-right" size={16} color={isLastStep ? DISABLED : MAROON}/>
+            <Text style={{ fontSize: 20, fontWeight: 'bold', color: isLastStep ? DISABLED : MAROON }}>›</Text>
           </TouchableOpacity>
         </View>
       </View>

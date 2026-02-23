@@ -1,8 +1,13 @@
 import React from "react";
-import { render, fireEvent, waitFor } from "@testing-library/react-native";
+import { render, fireEvent, waitFor, act } from "@testing-library/react-native";
 
 import type { MapViewDirectionsMode } from 'react-native-maps-directions';
 import SearchBar, { BuildingChoice } from "../components/searchBar";
+
+const mockShuttleAvailability = jest.fn();
+jest.mock('../hooks/useShuttleAvailability', () => ({
+  useShuttleAvailability: () => mockShuttleAvailability(),
+}));
 
 const mockBuildings: BuildingChoice[] = [
   {
@@ -45,9 +50,13 @@ const defaultProps = {
     previewActive: false,
 };
 
+const shuttleAvailableResult = { available: true, nextDeparture: '10:00' };
+const shuttleUnavailableResult = { available: false, nextDeparture: null };
+
 describe("<SearchBar />", () => {
     beforeEach(() => {
     jest.clearAllMocks();
+    mockShuttleAvailability.mockReturnValue(shuttleUnavailableResult);
     });
 
     describe("Collapsed/Expanded State", () => {
@@ -286,6 +295,367 @@ describe("<SearchBar />", () => {
         });
     });
 
+    describe("Campus change", () => {
+        it("calls onCampusChange when switching to Loyola", () => {
+            const onCampusChange = jest.fn();
+            const { getByText } = render(
+                <SearchBar {...defaultProps} defaultExpanded={true} onCampusChange={onCampusChange} />
+            );
+            fireEvent.press(getByText("Loyola Campus"));
+            expect(onCampusChange).toHaveBeenCalledWith("Loyola");
+        });
 
+        it("calls onCampusChange when switching back to SGW", () => {
+            const onCampusChange = jest.fn();
+            const { getByText } = render(
+                <SearchBar {...defaultProps} defaultExpanded={true} onCampusChange={onCampusChange} />
+            );
+            fireEvent.press(getByText("Loyola Campus"));
+            fireEvent.press(getByText("SGW Campus"));
+            expect(onCampusChange).toHaveBeenLastCalledWith("SGW");
+        });
+
+        it("resets shuttle when campus changes while shuttle is active", () => {
+            const onUseShuttleChange = jest.fn();
+            const { getByText } = render(
+                <SearchBar
+                    {...defaultProps}
+                    defaultExpanded={true}
+                    useShuttle={true}
+                    onUseShuttleChange={onUseShuttleChange}
+                />
+            );
+            fireEvent.press(getByText("Loyola Campus"));
+            expect(onUseShuttleChange).toHaveBeenCalledWith(false);
+        });
+    });
+
+    describe("Start suggestion selection", () => {
+        it("calls onChangeStart when a start suggestion is selected", async () => {
+            const onChangeStart = jest.fn();
+            const { getByPlaceholderText, getByText } = render(
+                <SearchBar {...defaultProps} onChangeStart={onChangeStart} defaultExpanded={true} />
+            );
+            const startInput = getByPlaceholderText("Current Location");
+            fireEvent(startInput, "focus");
+            fireEvent.changeText(startInput, "Administration");
+            await waitFor(() => {
+                expect(getByText(/Administration Building \(AD\)/)).toBeTruthy();
+            });
+            fireEvent.press(getByText(/Administration Building \(AD\)/));
+            expect(onChangeStart).toHaveBeenCalledWith(
+                expect.objectContaining({ id: "3", code: "AD" })
+            );
+        });
+
+        it("clears start choice (calls onChangeStart(null)) when start text is manually edited", () => {
+            const onChangeStart = jest.fn();
+            const { getByPlaceholderText } = render(
+                <SearchBar {...defaultProps} onChangeStart={onChangeStart} defaultExpanded={true} />
+            );
+            const startInput = getByPlaceholderText("Current Location");
+            fireEvent.changeText(startInput, "some text");
+            expect(onChangeStart).toHaveBeenCalledWith(null);
+        });
+
+        it("clears destination choice (calls onChangeDestination(null)) when dest text is manually edited", () => {
+            const onChangeDestination = jest.fn();
+            const { getByPlaceholderText } = render(
+                <SearchBar {...defaultProps} onChangeDestination={onChangeDestination} defaultExpanded={true} />
+            );
+            const destInput = getByPlaceholderText("Where to?");
+            fireEvent.changeText(destInput, "some text");
+            expect(onChangeDestination).toHaveBeenCalledWith(null);
+        });
+    });
+
+    describe("Preview Route button", () => {
+        it("shows Preview Route button when both start and destination are set", () => {
+            const start: BuildingChoice = mockBuildings[0];
+            const destination: BuildingChoice = mockBuildings[1];
+            const { getByText } = render(
+                <SearchBar
+                    {...defaultProps}
+                    start={start}
+                    destination={destination}
+                    onPreviewRoute={jest.fn()}
+                    defaultExpanded={true}
+                />
+            );
+            expect(getByText("Preview Route")).toBeTruthy();
+        });
+
+        it("does NOT show Preview Route button when only destination is set (no start)", () => {
+            const destination: BuildingChoice = mockBuildings[0];
+            const { queryByText } = render(
+                <SearchBar
+                    {...defaultProps}
+                    destination={destination}
+                    onPreviewRoute={jest.fn()}
+                    defaultExpanded={true}
+                />
+            );
+            expect(queryByText("Preview Route")).toBeNull();
+        });
+
+        it("calls onPreviewRoute when Preview Route button is pressed", () => {
+            const onPreviewRoute = jest.fn();
+            const start: BuildingChoice = mockBuildings[0];
+            const destination: BuildingChoice = mockBuildings[1];
+            const { getByText } = render(
+                <SearchBar
+                    {...defaultProps}
+                    start={start}
+                    destination={destination}
+                    onPreviewRoute={onPreviewRoute}
+                    defaultExpanded={true}
+                />
+            );
+            fireEvent.press(getByText("Preview Route"));
+            expect(onPreviewRoute).toHaveBeenCalledTimes(1);
+        });
+    });
+
+    describe("Exit Preview button", () => {
+        it("shows Exit Preview button when previewActive is true and both points are set", () => {
+            const start: BuildingChoice = mockBuildings[0];
+            const destination: BuildingChoice = mockBuildings[1];
+            const { getByText } = render(
+                <SearchBar
+                    {...defaultProps}
+                    start={start}
+                    destination={destination}
+                    previewActive={true}
+                    onExitPreview={jest.fn()}
+                    defaultExpanded={true}
+                />
+            );
+            expect(getByText("Exit Preview")).toBeTruthy();
+        });
+
+        it("calls onExitPreview when Exit Preview button is pressed", () => {
+            const onExitPreview = jest.fn();
+            const start: BuildingChoice = mockBuildings[0];
+            const destination: BuildingChoice = mockBuildings[1];
+            const { getByText } = render(
+                <SearchBar
+                    {...defaultProps}
+                    start={start}
+                    destination={destination}
+                    previewActive={true}
+                    onExitPreview={onExitPreview}
+                    defaultExpanded={true}
+                />
+            );
+            fireEvent.press(getByText("Exit Preview"));
+            expect(onExitPreview).toHaveBeenCalledTimes(1);
+        });
+    });
+
+    describe("Time estimate card", () => {
+        it("shows estimated time when previewRouteInfo has durationText and a destination is set", () => {
+            const destination: BuildingChoice = mockBuildings[0];
+            const { getByText } = render(
+                <SearchBar
+                    {...defaultProps}
+                    destination={destination}
+                    previewRouteInfo={{ durationText: "12 min", distanceText: "1.2 km" }}
+                    defaultExpanded={true}
+                />
+            );
+            expect(getByText(/12 min/)).toBeTruthy();
+            expect(getByText(/1.2 km/)).toBeTruthy();
+        });
+
+        it("does NOT show time estimate without a destination", () => {
+            const { queryByText } = render(
+                <SearchBar
+                    {...defaultProps}
+                    destination={null}
+                    previewRouteInfo={{ durationText: "12 min", distanceText: "1.2 km" }}
+                    defaultExpanded={true}
+                />
+            );
+            expect(queryByText(/12 min/)).toBeNull();
+        });
+    });
+
+    describe("Shuttle checkbox", () => {
+        it("shows shuttle checkbox when transport mode is TRANSIT and shuttle is available", () => {
+            mockShuttleAvailability.mockReturnValue(shuttleAvailableResult);
+            const { getByText } = render(
+                <SearchBar
+                    {...defaultProps}
+                    transportMode="TRANSIT"
+                    defaultExpanded={true}
+                />
+            );
+            expect(getByText("Use Concordia Shuttle")).toBeTruthy();
+        });
+
+        it("does NOT show shuttle checkbox when transport mode is WALKING", () => {
+            const { queryByText } = render(
+                <SearchBar {...defaultProps} transportMode="WALKING" defaultExpanded={true} />
+            );
+            expect(queryByText("Use Concordia Shuttle")).toBeNull();
+        });
+
+        it("does NOT show shuttle checkbox when transport mode is DRIVING", () => {
+            const { queryByText } = render(
+                <SearchBar {...defaultProps} transportMode="DRIVING" defaultExpanded={true} />
+            );
+            expect(queryByText("Use Concordia Shuttle")).toBeNull();
+        });
+
+        it("shows 'No service' when shuttle is not available", () => {
+            mockShuttleAvailability.mockReturnValue(shuttleUnavailableResult);
+            const { getByText } = render(
+                <SearchBar
+                    {...defaultProps}
+                    transportMode="TRANSIT"
+                    defaultExpanded={true}
+                />
+            );
+            expect(getByText("Use Concordia Shuttle")).toBeTruthy();
+            expect(getByText("No service")).toBeTruthy();
+        });
+
+        it("shows next departure time when shuttle is available", () => {
+            mockShuttleAvailability.mockReturnValue(shuttleAvailableResult);
+            const { getByText } = render(
+                <SearchBar
+                    {...defaultProps}
+                    transportMode="TRANSIT"
+                    defaultExpanded={true}
+                />
+            );
+            expect(getByText("Next: 10:00")).toBeTruthy();
+        });
+
+        it("calls onUseShuttleChange(true) when unchecked shuttle checkbox is toggled", () => {
+            mockShuttleAvailability.mockReturnValue(shuttleAvailableResult);
+            const onUseShuttleChange = jest.fn();
+            const { getByTestId } = render(
+                <SearchBar
+                    {...defaultProps}
+                    transportMode="TRANSIT"
+                    useShuttle={false}
+                    onUseShuttleChange={onUseShuttleChange}
+                    defaultExpanded={true}
+                />
+            );
+            fireEvent.press(getByTestId("shuttle.checkbox"));
+            expect(onUseShuttleChange).toHaveBeenCalledWith(true);
+        });
+
+        it("calls onUseShuttleChange(false) when checked shuttle checkbox is toggled", () => {
+            mockShuttleAvailability.mockReturnValue(shuttleAvailableResult);
+            const onUseShuttleChange = jest.fn();
+            const { getByTestId } = render(
+                <SearchBar
+                    {...defaultProps}
+                    transportMode="TRANSIT"
+                    useShuttle={true}
+                    onUseShuttleChange={onUseShuttleChange}
+                    defaultExpanded={true}
+                />
+            );
+            fireEvent.press(getByTestId("shuttle.checkbox"));
+            expect(onUseShuttleChange).toHaveBeenCalledWith(false);
+        });
+
+        it("shows a tick (✓) inside the checkbox when useShuttle is true", () => {
+            mockShuttleAvailability.mockReturnValue(shuttleAvailableResult);
+            const { getByText } = render(
+                <SearchBar
+                    {...defaultProps}
+                    transportMode="TRANSIT"
+                    useShuttle={true}
+                    defaultExpanded={true}
+                />
+            );
+            expect(getByText("✓")).toBeTruthy();
+        });
+    });
+
+    describe("Transport mode selector", () => {
+        it("renders all four transport mode buttons", () => {
+            const { getByText } = render(
+                <SearchBar {...defaultProps} defaultExpanded={true} />
+            );
+            expect(getByText("Driving")).toBeTruthy();
+            expect(getByText("Walking")).toBeTruthy();
+            expect(getByText("Cycling")).toBeTruthy();
+            expect(getByText("Transit")).toBeTruthy();
+        });
+
+        it("calls onChangeTransportMode when a transport mode button is pressed", () => {
+            const onChangeTransportMode = jest.fn();
+            const { getByText } = render(
+                <SearchBar
+                    {...defaultProps}
+                    onChangeTransportMode={onChangeTransportMode}
+                    defaultExpanded={true}
+                />
+            );
+            fireEvent.press(getByText("Driving"));
+            expect(onChangeTransportMode).toHaveBeenCalledWith("DRIVING");
+        });
+
+        it("clears shuttle when switching away from TRANSIT", () => {
+            mockShuttleAvailability.mockReturnValue(shuttleAvailableResult);
+            const onUseShuttleChange = jest.fn();
+            const { getByText } = render(
+                <SearchBar
+                    {...defaultProps}
+                    transportMode="TRANSIT"
+                    useShuttle={true}
+                    onUseShuttleChange={onUseShuttleChange}
+                    defaultExpanded={true}
+                />
+            );
+            fireEvent.press(getByText("Walking"));
+            expect(onUseShuttleChange).toHaveBeenCalledWith(false);
+        });
+    });
+
+    describe("Empty history state", () => {
+        it("shows 'No recent destinations yet' when history is empty", () => {
+            const { getByText } = render(
+                <SearchBar {...defaultProps} defaultExpanded={true} />
+            );
+            expect(getByText("No recent destinations yet")).toBeTruthy();
+        });
+
+        it("shows 'Suggested Buildings' section header", () => {
+            const { getByText } = render(
+                <SearchBar {...defaultProps} defaultExpanded={true} />
+            );
+            expect(getByText("Suggested Buildings")).toBeTruthy();
+        });
+
+        it("shows a building in history after it has been selected as destination", async () => {
+            const onChangeDestination = jest.fn();
+            const { getByPlaceholderText, getByText, queryByText } = render(
+                <SearchBar {...defaultProps} onChangeDestination={onChangeDestination} defaultExpanded={true} />
+            );
+
+            // Initially empty
+            expect(getByText("No recent destinations yet")).toBeTruthy();
+
+            // Search and select
+            const destInput = getByPlaceholderText("Where to?");
+            fireEvent(destInput, "focus");
+            fireEvent.changeText(destInput, "Hall");
+
+            await waitFor(() => expect(getByText(/Henry F. Hall Building \(H\)/)).toBeTruthy());
+            fireEvent.press(getByText(/Henry F. Hall Building \(H\)/));
+
+            // Should now appear in the history list
+            await waitFor(() => {
+                expect(queryByText("No recent destinations yet")).toBeNull();
+            });
+        });
+    });
 
 });

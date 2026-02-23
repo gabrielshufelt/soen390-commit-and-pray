@@ -41,9 +41,10 @@ interface BuildingModalProps {
   onClose: () => void;
   onDirectionsFrom: (building: BuildingData) => void;
   onDirectionsTo: (building: BuildingData) => void;
+  onGetDirections?: (building: BuildingData) => void;
 }
 
-export default function BuildingModal({ visible, building, onClose, onDirectionsFrom, onDirectionsTo }: BuildingModalProps) {
+export default function BuildingModal({ visible, building, onClose, onDirectionsFrom, onDirectionsTo, onGetDirections }: BuildingModalProps) {
   const { colorScheme } = useTheme();
   const isDark = colorScheme === 'dark';
 
@@ -265,6 +266,20 @@ export default function BuildingModal({ visible, building, onClose, onDirections
             )}
 
             <View style={styles.buttonsContainer}>
+              {onGetDirections && (
+                <TouchableOpacity
+                  style={[styles.directionButton, styles.directionButtonTo, { backgroundColor: COLORS.red }]}
+                  onPress={() => {
+                    onGetDirections(building);
+                  }}
+                  activeOpacity={0.7}
+                  testID="get-directions-button"
+                >
+                  <View style={styles.buttonIcon}>{renderIcon(UI_ICONS.route, 16, '#fff')}</View>
+                  <Text style={styles.directionButtonToText}>Get Directions</Text>
+                </TouchableOpacity>
+              )}
+
               <TouchableOpacity
                 style={[styles.directionButton, styles.directionButtonFrom, { borderColor: COLORS.red }]}
                 onPress={() => {
