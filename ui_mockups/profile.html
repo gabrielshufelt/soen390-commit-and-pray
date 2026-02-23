@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html class="" lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+        <title>Profile &amp; Settings Consolidated</title>
+        <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet" />
+        <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet" />
+        <link href="global.css" rel="stylesheet" />
+        <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+        <script id="tailwind-config">
+            tailwind.config = {
+                darkMode: "class",
+                theme: {
+                    extend: {
+                        colors: {
+                            "primary": "#800000",
+                            "background-light": "#f8f5f5",
+                            "background-dark": "#230f0f",
+                        },
+                        fontFamily: {
+                            "display": ["Lexend"]
+                        },
+                        borderRadius: {
+                            "DEFAULT": "0.25rem",
+                            "lg": "0.5rem",
+                            "xl": "0.75rem",
+                            "2xl": "1rem",
+                            "full": "9999px"
+                        },
+                    },
+                },
+            }
+        </script>
+        <style type="text/tailwindcss">
+            @layer base {
+                body {
+                    @apply bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 antialiased;
+                }
+            }
+
+        </style>
+    </head>
+    <body class="flex flex-col h-screen overflow-hidden">
+        <div class="ios-status-bar flex justify-between items-center px-6 pt-4 w-full shrink-0 z-10">
+            <span class="text-[14px] font-semibold">9:41</span>
+            <div class="flex gap-1.5 items-center">
+                <span class="material-symbols-outlined text-[18px]">signal_cellular_4_bar</span>
+                <span class="material-symbols-outlined text-[18px]">wifi</span>
+                <span class="material-symbols-outlined text-[18px]">battery_full</span>
+            </div>
+        </div>
+        <header class="flex items-center justify-between px-4 py-2 shrink-0 z-10">
+            <button class="size-10 flex items-center justify-center text-primary dark:text-primary/90 active:bg-primary/10 rounded-full transition-colors">
+                <span class="material-symbols-outlined">arrow_back</span>
+            </button>
+            <h1 class="text-base font-bold text-slate-900 dark:text-slate-100">Profile &amp; Settings</h1>
+            <div class="size-10"></div>
+        </header>
+        <div class="flex-1 overflow-y-auto hide-scrollbar px-5 pb-6">
+            <section class="flex flex-col items-center py-6">
+                <div class="relative mb-4">
+                    <div class="size-24 rounded-full border-4 border-white dark:border-slate-800 shadow-md bg-center bg-cover" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBlc9zosgjQYpEB0hL3cIImg0peFbDu44n5VTcdxGPC7Auhk6-Rg2tpJZtqg9kiEPTmJ1XDWCcph5N2cV_MOwrtKIEy-iqiUagA9Nz5OM7b3qCUKfiGtPYVCqljV8uanDGWezeNSdy4Gb5y1d3LJYiTunQzTSz7qgk0-KcrpQpeY3Ce5LoS6lwqChBk3df3dNlr_-rgTdudYOPwg--mp_ana8McgChg_-xXo0GvGiSqI8njndYBpdh9LHTKztT-_VK4nMsAVrdDGgl7");'></div>
+                    <button class="absolute bottom-0 right-0 bg-primary text-white size-8 rounded-full border-2 border-background-light dark:border-background-dark flex items-center justify-center shadow-lg active:scale-90 transition-transform">
+                        <span class="material-symbols-outlined text-sm">edit</span>
+                    </button>
+                </div>
+                <h2 class="text-xl font-bold text-slate-900 dark:text-slate-100">Alex River</h2>
+                <p class="text-sm font-medium text-primary/70 dark:text-primary/90"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="2849444d50065a415e4d5a684b47464b475a4c4149064b49">[email&#160;protected]</a></p>
+                <div class="mt-2.5 px-3 py-1 bg-primary/10 rounded-full">
+                    <span class="text-[10px] font-bold text-primary tracking-wide">STUDENT ID: 40123456</span>
+                </div>
+            </section>
+            <section class="mt-4">
+                <div class="flex items-center justify-between mb-3 px-1">
+                    <h3 class="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Integrations</h3>
+                </div>
+                <div class="bg-white dark:bg-slate-800/40 rounded-2xl border border-primary/5 shadow-sm p-4">
+                    <div class="flex items-start gap-3">
+                        <div class="shrink-0 size-10 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 flex items-center justify-center">
+                            <svg fill="none" height="20" viewBox="0 0 24 24" width="20" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"></path>
+                                <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"></path>
+                                <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"></path>
+                                <path d="M12 5.38c1.62 0 3.06.56 4.21 1.66l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"></path>
+                            </svg>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center justify-between">
+                                <h4 class="text-sm font-bold text-slate-900 dark:text-slate-100">Google Calendar</h4>
+                                <span class="flex items-center gap-1 text-[10px] font-bold text-emerald-600 dark:text-emerald-500 uppercase tracking-tighter">
+                                    <span class="size-1.5 bg-emerald-500 rounded-full"></span> Connected
+                                </span>
+                            </div>
+                            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Sync your schedule for navigation.</p>
+                        </div>
+                    </div>
+                    <div class="mt-4 pt-4 border-t border-slate-100 dark:border-slate-700/50 space-y-1">
+                        <label class="flex items-center justify-between p-2 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/60 cursor-pointer group transition-colors">
+                            <div class="flex items-center gap-3">
+                                <div class="size-5 rounded flex items-center justify-center bg-primary text-white">
+                                    <span class="material-symbols-outlined text-sm font-bold">check</span>
+                                </div>
+                                <span class="text-sm font-medium text-slate-700 dark:text-slate-300">University Schedule</span>
+                            </div>
+                            <span class="text-[10px] font-bold text-slate-400 uppercase">Auto</span>
+                        </label>
+                        <label class="flex items-center justify-between p-2 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/60 cursor-pointer group transition-colors">
+                            <div class="flex items-center gap-3">
+                                <div class="size-5 rounded border-2 border-slate-300 dark:border-slate-600 group-hover:border-primary/50 transition-colors"></div>
+                                <span class="text-sm font-medium text-slate-700 dark:text-slate-300">Personal</span>
+                            </div>
+                            <span class="text-[10px] font-bold text-slate-400 uppercase">Manual</span>
+                        </label>
+                        <label class="flex items-center justify-between p-2 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/60 cursor-pointer group transition-colors">
+                            <div class="flex items-center gap-3">
+                                <div class="size-5 rounded border-2 border-slate-300 dark:border-slate-600 group-hover:border-primary/50 transition-colors"></div>
+                                <span class="text-sm font-medium text-slate-700 dark:text-slate-300">Engineering Club</span>
+                            </div>
+                            <span class="text-[10px] font-bold text-slate-400 uppercase">Manual</span>
+                        </label>
+                    </div>
+                </div>
+            </section>
+            <section class="mt-6 space-y-2">
+                <div class="bg-white dark:bg-slate-800/40 rounded-2xl border border-primary/5 shadow-sm overflow-hidden">
+                    <button class="w-full flex items-center justify-between p-4 active:bg-slate-50 dark:active:bg-slate-800 transition-colors border-b border-slate-100 dark:border-slate-700/50">
+                        <div class="flex items-center gap-3">
+                            <span class="material-symbols-outlined text-slate-400">notifications</span>
+                            <span class="text-sm font-medium text-slate-700 dark:text-slate-300">Notifications</span>
+                        </div>
+                        <span class="material-symbols-outlined text-slate-400 text-lg">chevron_right</span>
+                    </button>
+                    <button class="w-full flex items-center justify-between p-4 active:bg-slate-50 dark:active:bg-slate-800 transition-colors border-b border-slate-100 dark:border-slate-700/50">
+                        <div class="flex items-center gap-3">
+                            <span class="material-symbols-outlined text-slate-400">shield</span>
+                            <span class="text-sm font-medium text-slate-700 dark:text-slate-300">Privacy &amp; Data</span>
+                        </div>
+                        <span class="material-symbols-outlined text-slate-400 text-lg">chevron_right</span>
+                    </button>
+                    <button class="w-full flex items-center p-4 active:bg-slate-50 dark:active:bg-slate-800 transition-colors">
+                        <div class="flex items-center gap-3 text-red-600 dark:text-red-400">
+                            <span class="material-symbols-outlined">logout</span>
+                            <span class="text-sm font-bold">Log Out</span>
+                        </div>
+                    </button>
+                </div>
+            </section>
+        </div>
+
+    </body>
+</html>
