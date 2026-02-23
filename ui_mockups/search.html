@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+  <head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+    <link href="global.css" rel="stylesheet"/>
+    <script id="tailwind-config">tailwind.config = {darkMode: "class", theme: {extend: {colors: {primary: "#800000", "accent-yellow": "#F7B500", "background-light": "#f8f5f5", "background-dark": "#230f0f"}, fontFamily: {display: "Lexend"}, borderRadius: {DEFAULT: "0.25rem", lg: "0.5rem", xl: "0.75rem", full: "9999px"}}}};</script>
+  </head>
+<body class="bg-background-light dark:bg-background-dark min-h-screen text-[#101818] dark:text-white">
+  <!-- Top Navigation Bar -->
+  <header class="sticky top-0 z-50 bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-md">
+    <div class="flex items-center p-4 justify-between">
+      <div class="flex items-center gap-3">
+        <div class="text-[#101818] dark:text-white flex size-10 shrink-0 items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer">
+          <span class="material-symbols-outlined">arrow_back_ios_new</span>
+        </div>
+        <h1 class="text-xl font-bold tracking-tight">Route</h1>
+      </div>
+      <button class="flex items-center justify-center size-10 rounded-full hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors">
+        <span class="material-symbols-outlined">more_vert</span>
+      </button>
+    </div>
+  </header>
+  <main class="max-w-[480px] mx-auto pb-10">
+    <!-- Campus Toggle Segmented Buttons -->
+    <div class="px-4 py-2">
+      <div class="flex h-12 items-center justify-center rounded-xl bg-gray-100 dark:bg-zinc-900 p-1.5">
+        <label class="flex cursor-pointer h-full grow items-center justify-center rounded-lg px-2 has-[:checked]:bg-white dark:has-[:checked]:bg-zinc-800 has-[:checked]:shadow-sm transition-all text-[#5e8d89] has-[:checked]:text-primary font-semibold text-sm">
+          <span class="truncate">SGW Campus</span>
+          <input checked="" class="hidden" name="campus" type="radio" value="SGW"/>
+        </label>
+        <label class="flex cursor-pointer h-full grow items-center justify-center rounded-lg px-2 has-[:checked]:bg-white dark:has-[:checked]:bg-zinc-800 has-[:checked]:shadow-sm transition-all text-[#5e8d89] has-[:checked]:text-primary font-semibold text-sm">
+          <span class="truncate">Loyola Campus</span>
+          <input class="hidden" name="campus" type="radio" value="Loyola"/>
+        </label>
+      </div>
+    </div>
+    <!-- Search Selection Card -->
+    <div class="px-4 py-4">
+      <div class="relative bg-white dark:bg-zinc-900 rounded-2xl p-4 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-none border border-gray-100 dark:border-zinc-800">
+        <!-- Vertical Connection Line -->
+        <div class="absolute left-[35px] top-[48px] bottom-[48px] w-0.5 route-line z-0"></div>
+        <!-- Start Point Input -->
+        <div class="relative z-10 flex flex-col gap-2 mb-4">
+          <label class="text-xs font-bold uppercase tracking-wider text-gray-400 ml-11">Start Point</label>
+          <div class="flex items-center gap-3">
+            <div class="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+              <span class="material-symbols-outlined fill-1">location_on</span>
+            </div>
+            <div class="flex-1 bg-gray-50 dark:bg-zinc-800/50 rounded-xl px-4 py-3 border border-transparent focus-within:border-primary/30 transition-all">
+              <span class="text-gray-900 dark:text-gray-100 font-medium">Current Location</span>
+            </div>
+          </div>
+        </div>
+        <!-- Destination Input -->
+        <div class="relative z-10 flex flex-col gap-2">
+          <label class="text-xs font-bold uppercase tracking-wider text-gray-400 ml-11">Destination</label>
+          <div class="flex items-center gap-3">
+            <div class="flex size-10 shrink-0 items-center justify-center rounded-full bg-accent-yellow/10 text-accent-yellow">
+              <span class="material-symbols-outlined">search</span>
+            </div>
+            <div class="flex-1 bg-white dark:bg-zinc-800 rounded-xl border-2 border-primary/50 ring-4 ring-primary/5 transition-all">
+              <input autofocus="" class="w-full bg-transparent border-none focus:ring-0 py-3 px-4 text-gray-900 dark:text-gray-100 font-medium placeholder:text-gray-400" placeholder="Where to?" type="text"/>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Favorites / Quick Actions -->
+    <div class="flex px-4 gap-2 mb-6 overflow-x-auto no-scrollbar">
+      <button class="flex items-center gap-2 px-4 py-2 bg-white dark:bg-zinc-900 rounded-full border border-gray-100 dark:border-zinc-800 shadow-sm shrink-0">
+        <span class="material-symbols-outlined text-primary text-lg">home</span>
+        <span class="text-sm font-semibold">Home</span>
+      </button>
+      <button class="flex items-center gap-2 px-4 py-2 bg-white dark:bg-zinc-900 rounded-full border border-gray-100 dark:border-zinc-800 shadow-sm shrink-0">
+        <span class="material-symbols-outlined text-primary text-lg">school</span>
+        <span class="text-sm font-semibold">Library</span>
+      </button>
+      <button class="flex items-center gap-2 px-4 py-2 bg-white dark:bg-zinc-900 rounded-full border border-gray-100 dark:border-zinc-800 shadow-sm shrink-0">
+        <span class="material-symbols-outlined text-primary text-lg">star</span>
+        <span class="text-sm font-semibold">Favorites</span>
+      </button>
+    </div>
+    <!-- Suggested Buildings Section -->
+    <div class="px-4">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-bold tracking-tight">Suggested Buildings</h3>
+        <button class="text-sm font-bold text-primary">See All</button>
+      </div>
+      <div class="space-y-3">
+        <!-- Hall Building Item -->
+        <div class="group flex items-center gap-4 p-3 bg-white dark:bg-zinc-900 rounded-2xl border border-gray-100 dark:border-zinc-800 hover:border-primary/50 transition-all cursor-pointer">
+          <div class="flex size-14 shrink-0 items-center justify-center rounded-xl bg-gray-50 dark:bg-zinc-800 text-primary group-hover:bg-primary group-hover:text-white transition-colors">
+            <span class="material-symbols-outlined text-3xl">apartment</span>
+          </div>
+          <div class="flex-1">
+            <h4 class="font-bold text-gray-900 dark:text-gray-100">Henry F. Hall Building (H)</h4>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">1455 De Maisonneuve Blvd W</p>
+          </div>
+          <div class="text-gray-300 group-hover:text-primary pr-2">
+            <span class="material-symbols-outlined">chevron_right</span>
+          </div>
+        </div>
+        <!-- EV Building Item -->
+        <div class="group flex items-center gap-4 p-3 bg-white dark:bg-zinc-900 rounded-2xl border border-gray-100 dark:border-zinc-800 hover:border-primary/50 transition-all cursor-pointer">
+          <div class="flex size-14 shrink-0 items-center justify-center rounded-xl bg-gray-50 dark:bg-zinc-800 text-primary group-hover:bg-primary group-hover:text-white transition-colors">
+            <span class="material-symbols-outlined text-3xl">engineering</span>
+          </div>
+          <div class="flex-1">
+            <h4 class="font-bold text-gray-900 dark:text-gray-100 leading-tight">EV Pavillion Building</h4>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">1515 St. Catherine St. W</p>
+          </div>
+          <div class="text-gray-300 group-hover:text-primary pr-2">
+            <span class="material-symbols-outlined">chevron_right</span>
+          </div>
+        </div>
+        <!-- JMSB Building Item -->
+        <div class="group flex items-center gap-4 p-3 bg-white dark:bg-zinc-900 rounded-2xl border border-gray-100 dark:border-zinc-800 hover:border-primary/50 transition-all cursor-pointer">
+          <div class="flex size-14 shrink-0 items-center justify-center rounded-xl bg-gray-50 dark:bg-zinc-800 text-primary group-hover:bg-primary group-hover:text-white transition-colors">
+            <span class="material-symbols-outlined text-3xl">business_center</span>
+          </div>
+          <div class="flex-1">
+            <h4 class="font-bold text-gray-900 dark:text-gray-100">John Molson Building (MB)</h4>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">1450 Guy St</p>
+          </div>
+          <div class="text-gray-300 group-hover:text-primary pr-2">
+            <span class="material-symbols-outlined">chevron_right</span>
+          </div>
+        </div>
+        <!-- LB Building Item -->
+        <div class="group flex items-center gap-4 p-3 bg-white dark:bg-zinc-900 rounded-2xl border border-gray-100 dark:border-zinc-800 hover:border-primary/50 transition-all cursor-pointer">
+          <div class="flex size-14 shrink-0 items-center justify-center rounded-xl bg-gray-50 dark:bg-zinc-800 text-primary group-hover:bg-primary group-hover:text-white transition-colors">
+            <span class="material-symbols-outlined text-3xl">menu_book</span>
+          </div>
+          <div class="flex-1">
+            <h4 class="font-bold text-gray-900 dark:text-gray-100">Webster Library (LB)</h4>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">1400 De Maisonneuve Blvd W</p>
+          </div>
+          <div class="text-gray-300 group-hover:text-primary pr-2">
+            <span class="material-symbols-outlined">chevron_right</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+  <!-- Map Preview Placeholder (Context Specific Visual) -->
+  <div class="fixed bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-gray-200 dark:from-black to-transparent pointer-events-none opacity-20">
+    <!-- Abstract representation of a map -->
+    <div class="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-primary/30 via-transparent to-transparent"></div>
+  </div>
+</body></html>

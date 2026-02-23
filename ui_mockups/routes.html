@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+  <head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+    <link href="global.css" rel="stylesheet"/>
+    <script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              primary: "#800000",
+              secondary: "#005a9c",
+              "accent-yellow": "#F7B500",
+              "background-light": "#f8f5f5",
+              "background-dark": "#1a0b0b"
+            },
+            fontFamily: {
+              display: "Lexend"
+            }
+          }
+        }
+      };
+    </script>
+  </head>
+<body class="bg-background-light dark:bg-background-dark h-screen overflow-hidden flex flex-col text-[#101818] dark:text-white">
+  <header class="bg-white dark:bg-zinc-900 shadow-sm z-30 shrink-0">
+    <div class="flex items-center p-4 gap-4">
+      <button class="flex items-center justify-center size-8 rounded-full hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors">
+        <span class="material-symbols-outlined text-xl">arrow_back_ios_new</span>
+      </button>
+      <div class="flex-1 flex flex-col gap-1">
+        <div class="flex items-center gap-2">
+          <span class="size-2 rounded-full bg-secondary"></span>
+          <span class="text-xs font-medium text-gray-500 truncate">Current Location</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="size-2 rounded-full bg-primary"></span>
+          <span class="text-sm font-bold truncate">Henry F. Hall Building (H)</span>
+        </div>
+      </div>
+      <button class="flex items-center justify-center size-10 bg-gray-50 dark:bg-zinc-800 rounded-xl">
+        <span class="material-symbols-outlined text-primary">swap_vert</span>
+      </button>
+    </div>
+  </header>
+  <main class="flex-1 overflow-hidden flex flex-col">
+    <div class="px-4 py-3 shrink-0">
+      <div class="relative h-28 rounded-2xl overflow-hidden shadow-sm border border-gray-200 dark:border-zinc-800 group">
+        <div class="absolute inset-0 bg-[#e5e7eb] dark:bg-zinc-950">
+          <div class="absolute inset-0 bg-[#d4d4d8] dark:bg-[#1a1a1c] opacity-50">
+            <svg height="100%" width="100%" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <pattern height="20" id="grid-small" patternUnits="userSpaceOnUse" width="20">
+                  <path d="M 20 0 L 0 0 0 20" fill="none" stroke="currentColor" stroke-opacity="0.1" stroke-width="1"></path>
+                </pattern>
+              </defs>
+              <rect fill="url(#grid-small)" height="100%" width="100%"></rect>
+            </svg>
+          </div>
+        </div>
+        <div class="absolute inset-0 flex items-center justify-center bg-black/5">
+          <button class="bg-white/90 dark:bg-zinc-900/90 backdrop-blur-sm px-4 py-1.5 rounded-full text-xs font-bold shadow-lg flex items-center gap-2">
+            <span class="material-symbols-outlined text-sm">open_in_full</span>
+            Expand Map
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="px-4 pb-4 shrink-0">
+      <div class="flex p-1 bg-gray-100 dark:bg-zinc-800 rounded-2xl">
+        <button class="flex-1 flex flex-col items-center gap-1 py-2 bg-white dark:bg-zinc-700 shadow-sm rounded-xl text-primary">
+          <span class="material-symbols-outlined text-xl">directions_walk</span>
+          <span class="text-[10px] font-bold uppercase tracking-tight">Walking</span>
+        </button>
+        <button class="flex-1 flex flex-col items-center gap-1 py-2 text-gray-500 dark:text-gray-400">
+          <span class="material-symbols-outlined text-xl">airport_shuttle</span>
+          <span class="text-[10px] font-bold uppercase tracking-tight">Shuttle</span>
+        </button>
+        <button class="flex-1 flex flex-col items-center gap-1 py-2 text-gray-500 dark:text-gray-400">
+          <span class="material-symbols-outlined text-xl">directions_bus</span>
+          <span class="text-[10px] font-bold uppercase tracking-tight">Transit</span>
+        </button>
+        <button class="flex-1 flex flex-col items-center gap-1 py-2 text-gray-500 dark:text-gray-400">
+          <span class="material-symbols-outlined text-xl">directions_car</span>
+          <span class="text-[10px] font-bold uppercase tracking-tight">Car</span>
+        </button>
+      </div>
+    </div>
+    <div class="flex-1 overflow-y-auto px-4 pb-8 space-y-4 no-scrollbar">
+      <div class="flex items-center justify-between sticky top-0 bg-background-light/95 dark:bg-background-dark/95 backdrop-blur-sm py-2 z-10">
+        <h2 class="text-xl font-bold tracking-tight">Route Suggestions</h2>
+        <button class="size-10 flex items-center justify-center bg-white dark:bg-zinc-800 rounded-xl shadow-sm">
+          <span class="material-symbols-outlined text-gray-600 dark:text-gray-300">tune</span>
+        </button>
+      </div>
+      <div class="flex flex-col gap-4 p-5 bg-white dark:bg-zinc-900 border-2 border-primary/20 rounded-3xl relative shadow-sm">
+        <div class="absolute top-4 right-4">
+          <span class="px-3 py-1 bg-primary text-white text-[10px] font-bold rounded-full uppercase">Fastest</span>
+        </div>
+        <div class="flex items-center gap-4">
+          <div class="flex size-14 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+            <span class="material-symbols-outlined text-4xl">directions_walk</span>
+          </div>
+          <div>
+            <div class="flex items-baseline gap-1">
+              <h3 class="text-3xl font-bold">7</h3>
+              <span class="text-base font-semibold text-gray-500">min</span>
+            </div>
+            <p class="text-sm text-gray-500 font-medium">0.5 km • 650 steps</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl">
+          <span class="material-symbols-outlined text-blue-600 dark:text-blue-400 text-lg">info</span>
+          <p class="text-xs text-blue-700 dark:text-blue-300 font-medium leading-tight">Indoor tunnel route available via LB building.</p>
+        </div>
+        <button class="w-full bg-primary text-white py-4 rounded-2xl font-bold text-lg shadow-lg shadow-primary/20 flex items-center justify-center gap-2">
+          Start Navigation
+          <span class="material-symbols-outlined">navigation</span>
+        </button>
+      </div>
+      <div class="flex flex-col gap-4 p-5 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-3xl shadow-sm transition-all active:scale-[0.98]">
+        <div class="flex items-center gap-4">
+          <div class="flex size-14 shrink-0 items-center justify-center rounded-2xl bg-gray-100 dark:bg-zinc-800 text-gray-600 dark:text-gray-300">
+            <span class="material-symbols-outlined text-4xl">airport_shuttle</span>
+          </div>
+          <div class="flex-1">
+            <div class="flex items-center gap-2 mb-1">
+              <div class="flex items-baseline gap-1">
+                <h3 class="text-3xl font-bold">15</h3>
+                <span class="text-base font-semibold text-gray-500">min</span>
+              </div>
+              <span class="text-[10px] px-2 py-0.5 bg-gray-100 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-md font-bold uppercase text-gray-600 dark:text-gray-400">Every 20 min</span>
+            </div>
+            <p class="text-sm text-gray-500 font-medium">Concordia Shuttle Service (SGW to Loyola)</p>
+          </div>
+          <div class="text-gray-400">
+            <span class="material-symbols-outlined text-3xl">chevron_right</span>
+          </div>
+        </div>
+      </div>
+      <div class="flex flex-col gap-4 p-5 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-3xl shadow-sm transition-all active:scale-[0.98]">
+        <div class="flex items-center gap-4">
+          <div class="flex size-14 shrink-0 items-center justify-center rounded-2xl bg-gray-100 dark:bg-zinc-800 text-gray-600 dark:text-gray-300">
+            <span class="material-symbols-outlined text-4xl">directions_bus</span>
+          </div>
+          <div class="flex-1">
+            <div class="flex items-center gap-2 mb-1">
+              <div class="flex items-baseline gap-1">
+                <h3 class="text-3xl font-bold">22</h3>
+                <span class="text-base font-semibold text-gray-500">min</span>
+              </div>
+            </div>
+            <p class="text-sm text-gray-500 font-medium">STM Green Line + 24 Bus</p>
+          </div>
+          <div class="text-gray-400">
+            <span class="material-symbols-outlined text-3xl">chevron_right</span>
+          </div>
+        </div>
+      </div>
+      <div class="flex flex-col gap-4 p-5 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-3xl shadow-sm transition-all active:scale-[0.98]">
+        <div class="flex items-center gap-4">
+          <div class="flex size-14 shrink-0 items-center justify-center rounded-2xl bg-gray-100 dark:bg-zinc-800 text-gray-600 dark:text-gray-300">
+            <span class="material-symbols-outlined text-4xl">directions_car</span>
+          </div>
+          <div class="flex-1">
+            <div class="flex items-center gap-2 mb-1">
+              <div class="flex items-baseline gap-1">
+                <h3 class="text-3xl font-bold">12</h3>
+                <span class="text-base font-semibold text-gray-500">min</span>
+              </div>
+            </div>
+            <p class="text-sm text-gray-500 font-medium">Driving via Rue Sherbrooke</p>
+          </div>
+          <div class="text-gray-400">
+            <span class="material-symbols-outlined text-3xl">chevron_right</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</body></html>
