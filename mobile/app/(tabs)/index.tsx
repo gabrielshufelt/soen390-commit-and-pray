@@ -121,6 +121,22 @@ export default function Index() {
     setSelectedBuildingData(null);
   };
 
+  const buildingToChoice = (b: any): BuildingChoice => ({
+    id: b.id,
+    name: b.properties?.name ?? b.properties?.code ?? "Unknown building",
+    code: b.properties?.code,
+    coordinate: getInteriorPoint(b.geometry.coordinates[0]),
+    campus: campusKey as "SGW" | "Loyola",
+  });
+
+  const handleDirectionsFrom = (building: any) => {
+    setStartChoice(buildingToChoice(building));
+  };
+
+  const handleDirectionsTo = (building: any) => {
+    setDestChoice(buildingToChoice(building));
+  };
+
   const selectedCampus = useMemo(() => {
     return CAMPUSES[campusKey] ?? CAMPUSES[DEFAULT_CAMPUS];
   }, [campusKey]);
@@ -132,7 +148,7 @@ export default function Index() {
     onRouteReady,
     checkProgress,
   });
- 
+
   React.useEffect(() => {
     if (!startChoice && location) {
       if (userBuilding) {
@@ -143,7 +159,7 @@ export default function Index() {
           coordinate: getInteriorPoint(userBuilding.coordinates),
           campus: campusKey as "SGW" | "Loyola",
         });
-      } else { 
+      } else {
         setStartChoice({
           id: "current-location",
           name: "My Current Location",
@@ -155,7 +171,7 @@ export default function Index() {
         });
       }
     }
-  }, [location, userBuilding, startChoice, campusKey]); 
+  }, [location, userBuilding, startChoice, campusKey]);
 
 
   const buildingPolygons = useMemo(() => {
@@ -193,7 +209,7 @@ export default function Index() {
             <Polygon
               testID={`building-${building.id}`}
               coordinates={building.geometry.coordinates[0].map(
-                ([longitude, latitude]) => ({
+                ([longitude, latitude]: [number, number]) => ({
                   latitude,
                   longitude,
                 })
@@ -326,8 +342,8 @@ export default function Index() {
         visible={!!selectedBuilding}
         building={selectedBuildingData}
         onClose={handleCloseModal}
-        location={location}
-        onGetDirections={startDirectionsToBuilding}
+        onDirectionsFrom={handleDirectionsFrom}
+        onDirectionsTo={handleDirectionsTo}
       />
     </View>
   );
