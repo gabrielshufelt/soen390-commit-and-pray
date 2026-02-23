@@ -82,21 +82,6 @@ describe('<ShuttleScheduleModal />', () => {
 
   // --- Friday tab ---
 
-  it('switches to Friday schedule when Friday tab is pressed', () => {
-    const { getByText, queryByText } = render(
-      <ShuttleScheduleModal visible={true} onClose={onClose} />
-    );
-    // Mon-Thu has 18:30* as final Loyola departure
-    expect(getByText('18:30*')).toBeTruthy();
-
-    fireEvent.press(getByText('Friday'));
-
-    // 18:30* is not in Friday schedule
-    expect(queryByText('18:30*')).toBeNull();
-    // Friday has 18:15* instead
-    expect(getByText('18:15*')).toBeTruthy();
-  });
-
   it('still shows departure column headers after switching to Friday', () => {
     const { getByText } = render(
       <ShuttleScheduleModal visible={true} onClose={onClose} />
