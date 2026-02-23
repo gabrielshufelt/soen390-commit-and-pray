@@ -129,7 +129,7 @@ let mockSearchBarProperties: any = {};
 jest.mock('../components/searchBar', () => {
   const React = require('react');
   const { View } = require('react-native');
-  return{
+  return {
     __esModule: true,
     default: (props: any) => {
       mockSearchBarProperties = props;
@@ -243,17 +243,17 @@ describe('<Index />', () => {
     const polygons = await waitFor(() => getAllByTestId('polygon'));
     fireEvent.press(polygons[0]);
     await waitFor(() => {
-      expect(getByText('Get Directions')).toBeTruthy();
+      expect(getByText('Get Directions To')).toBeTruthy();
     });
   });
 
-  it('closes BuildingModal when X is pressed', async () => {
-    const { getAllByTestId, getByText, queryByText } = renderWithTheme(<Index />);
+  it('closes BuildingModal when close button is pressed', async () => {
+    const { getAllByTestId, getByTestId, queryByText } = renderWithTheme(<Index />);
     const polygons = await waitFor(() => getAllByTestId('polygon'));
     fireEvent.press(polygons[0]);
-    fireEvent.press(getByText('X'));
+    fireEvent.press(getByTestId('close-button'));
     await waitFor(() => {
-      expect(queryByText('Get Directions')).toBeNull();
+      expect(queryByText('Get Directions To')).toBeNull();
     });
   });
 
@@ -406,63 +406,63 @@ describe('<Index />', () => {
   // -- Start and End Directions --
   describe('handleStartRoute', () => {
 
-  it("Starts directions to building of choice with current location as origin", async () => {
-    renderWithTheme(<Index />);
-    await waitFor(() => expect(mockSearchBarProperties.onStartRoute).toBeDefined());
+    it("Starts directions to building of choice with current location as origin", async () => {
+      renderWithTheme(<Index />);
+      await waitFor(() => expect(mockSearchBarProperties.onStartRoute).toBeDefined());
 
-    await act(async () => {
-      mockSearchBarProperties.onChangeDestination({
-      id: 'H',
-      name: 'Hall Building',
-      coordinate: { latitude: 45.497, longitude: -73.579 }
-    });
-  });
-
-
-    await waitFor(() => {
-      expect(mockSearchBarProperties.destination).toBeTruthy();
-    });
-
-    mockSearchBarProperties.onStartRoute();
-
-    expect(mockStartDirections).toHaveBeenCalledWith(
-      { latitude: 45.4972, longitude: -73.579 },
-      { latitude: 45.497, longitude: -73.579 }
-    );
-  });
-
-  it('previews route from selected start building to destination', async () => {
-    renderWithTheme(<Index />);
-    await waitFor(() => expect(mockSearchBarProperties.onPreviewRoute).toBeDefined());
-
-    await act(async () => {
-      mockSearchBarProperties.onChangeStart({
-        id: 'H',
-        name: 'Hall Building',
-        coordinate: { latitude: 45.497, longitude: -73.579 }
+      await act(async () => {
+        mockSearchBarProperties.onChangeDestination({
+          id: 'H',
+          name: 'Hall Building',
+          coordinate: { latitude: 45.497, longitude: -73.579 }
+        });
       });
-    });
 
-    await act(async () => {
-      mockSearchBarProperties.onChangeDestination({
-        id: 'MB',
-        name: 'Molson Building',
-        coordinate: { latitude: 45.495, longitude: -73.578 }
+
+      await waitFor(() => {
+        expect(mockSearchBarProperties.destination).toBeTruthy();
       });
+
+      mockSearchBarProperties.onStartRoute();
+
+      expect(mockStartDirections).toHaveBeenCalledWith(
+        { latitude: 45.4972, longitude: -73.579 },
+        { latitude: 45.497, longitude: -73.579 }
+      );
     });
 
-    await waitFor(() => {
-      expect(mockSearchBarProperties.start).toBeTruthy();
-      expect(mockSearchBarProperties.destination).toBeTruthy();
+    it('previews route from selected start building to destination', async () => {
+      renderWithTheme(<Index />);
+      await waitFor(() => expect(mockSearchBarProperties.onPreviewRoute).toBeDefined());
+
+      await act(async () => {
+        mockSearchBarProperties.onChangeStart({
+          id: 'H',
+          name: 'Hall Building',
+          coordinate: { latitude: 45.497, longitude: -73.579 }
+        });
+      });
+
+      await act(async () => {
+        mockSearchBarProperties.onChangeDestination({
+          id: 'MB',
+          name: 'Molson Building',
+          coordinate: { latitude: 45.495, longitude: -73.578 }
+        });
+      });
+
+      await waitFor(() => {
+        expect(mockSearchBarProperties.start).toBeTruthy();
+        expect(mockSearchBarProperties.destination).toBeTruthy();
+      });
+
+      mockSearchBarProperties.onPreviewRoute();
+
+      expect(mockPreviewDirections).toHaveBeenCalledWith(
+        { latitude: 45.497, longitude: -73.579 }, // start building
+        { latitude: 45.495, longitude: -73.578 }  // destination
+      );
     });
-
-    mockSearchBarProperties.onPreviewRoute();
-
-    expect(mockPreviewDirections).toHaveBeenCalledWith(
-      { latitude: 45.497, longitude: -73.579 }, // start building
-      { latitude: 45.495, longitude: -73.578 }  // destination
-    );
-  });
   });
 
   describe('handleEndDirections', () => {
@@ -471,18 +471,18 @@ describe('<Index />', () => {
       await waitFor(() => expect(mockSearchBarProperties.onEndRoute).toBeDefined());
 
       await act(async () => {
-        mockSearchBarProperties.onChangeStart({ 
-          id: 'H', 
+        mockSearchBarProperties.onChangeStart({
+          id: 'H',
           name: 'Hall Building',
-          coordinate: { latitude: 45.497, longitude: -73.579 } 
+          coordinate: { latitude: 45.497, longitude: -73.579 }
         });
       });
 
       await act(async () => {
-        mockSearchBarProperties.onChangeDestination({ 
-          id: 'MB', 
+        mockSearchBarProperties.onChangeDestination({
+          id: 'MB',
           name: 'Molson Building',
-          coordinate: { latitude: 45.495, longitude: -73.578 } 
+          coordinate: { latitude: 45.495, longitude: -73.578 }
         });
       });
 
@@ -491,7 +491,7 @@ describe('<Index />', () => {
       });
 
       expect(mockEndDirections).toHaveBeenCalled();
-      
+
       await waitFor(() => {
         expect(mockSearchBarProperties.start).toBeNull();
         expect(mockSearchBarProperties.destination).toBeNull();
@@ -501,8 +501,8 @@ describe('<Index />', () => {
 
   // --- Same Building Alert ---
   it('shows an alert and blocks routing when start and destination are the same building', async () => {
-    const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
-    
+    const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => { });
+
     renderWithTheme(<Index />);
     await waitFor(() => expect(mockSearchBarProperties.onPreviewRoute).toBeDefined());
 
@@ -522,7 +522,7 @@ describe('<Index />', () => {
     });
 
     expect(alertSpy).toHaveBeenCalledWith("Start and destination cannot be the same building.");
-    
+
     expect(mockPreviewDirections).not.toHaveBeenCalled();
 
     alertSpy.mockRestore();

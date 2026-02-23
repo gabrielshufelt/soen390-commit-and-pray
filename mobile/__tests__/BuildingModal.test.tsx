@@ -8,10 +8,6 @@ jest.mock('../context/ThemeContext', () => ({
   useTheme: () => mockUseTheme(),
 }));
 
-jest.mock('expo-location', () => ({
-  Accuracy: { Balanced: 3 },
-}));
-
 jest.mock('@expo/vector-icons', () => ({
   FontAwesome5: 'FontAwesome5',
   MaterialCommunityIcons: 'MaterialCommunityIcons',
@@ -58,14 +54,10 @@ const makeBuilding = (overrides: Record<string, any> = {}) => ({
   },
 });
 
-const mockLocation = {
-  coords: { latitude: 45.497, longitude: -73.579 },
-  timestamp: Date.now(),
-} as any;
-
 describe('<BuildingModal />', () => {
   const onClose = jest.fn();
-  const onGetDirections = jest.fn();
+  const onDirectionsFrom = jest.fn();
+  const onDirectionsTo = jest.fn();
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -84,8 +76,8 @@ describe('<BuildingModal />', () => {
         visible={true}
         building={null}
         onClose={onClose}
-        location={mockLocation}
-        onGetDirections={onGetDirections}
+        onDirectionsFrom={onDirectionsFrom}
+        onDirectionsTo={onDirectionsTo}
       />
     );
     expect(toJSON()).toBeNull();
@@ -99,8 +91,8 @@ describe('<BuildingModal />', () => {
         visible={true}
         building={building as any}
         onClose={onClose}
-        location={mockLocation}
-        onGetDirections={onGetDirections}
+        onDirectionsFrom={onDirectionsFrom}
+        onDirectionsTo={onDirectionsTo}
       />
     );
 
@@ -143,8 +135,8 @@ describe('<BuildingModal />', () => {
         visible={true}
         building={building as any}
         onClose={onClose}
-        location={mockLocation}
-        onGetDirections={onGetDirections}
+        onDirectionsFrom={onDirectionsFrom}
+        onDirectionsTo={onDirectionsTo}
       />
     );
     expect(getByText('Hall Building')).toBeTruthy();
@@ -163,8 +155,8 @@ describe('<BuildingModal />', () => {
         visible={true}
         building={building as any}
         onClose={onClose}
-        location={mockLocation}
-        onGetDirections={onGetDirections}
+        onDirectionsFrom={onDirectionsFrom}
+        onDirectionsTo={onDirectionsTo}
       />
     );
     expect(queryByText(/1455/)).toBeNull();
@@ -179,8 +171,8 @@ describe('<BuildingModal />', () => {
         visible={true}
         building={building as any}
         onClose={onClose}
-        location={mockLocation}
-        onGetDirections={onGetDirections}
+        onDirectionsFrom={onDirectionsFrom}
+        onDirectionsTo={onDirectionsTo}
       />
     );
     expect(getByText(/Montreal/)).toBeTruthy();
@@ -194,8 +186,8 @@ describe('<BuildingModal />', () => {
         visible={true}
         building={building as any}
         onClose={onClose}
-        location={mockLocation}
-        onGetDirections={onGetDirections}
+        onDirectionsFrom={onDirectionsFrom}
+        onDirectionsTo={onDirectionsTo}
       />
     );
     expect(getByText(/1455 De Maisonneuve/)).toBeTruthy();
@@ -210,8 +202,8 @@ describe('<BuildingModal />', () => {
         visible={true}
         building={building as any}
         onClose={onClose}
-        location={mockLocation}
-        onGetDirections={onGetDirections}
+        onDirectionsFrom={onDirectionsFrom}
+        onDirectionsTo={onDirectionsTo}
       />
     );
     expect(queryByText('ACCESSIBILITY')).toBeNull();
@@ -225,8 +217,8 @@ describe('<BuildingModal />', () => {
         visible={true}
         building={building as any}
         onClose={onClose}
-        location={mockLocation}
-        onGetDirections={onGetDirections}
+        onDirectionsFrom={onDirectionsFrom}
+        onDirectionsTo={onDirectionsTo}
       />
     );
     expect(queryByText('ACCESSIBILITY')).toBeNull();
@@ -240,8 +232,8 @@ describe('<BuildingModal />', () => {
         visible={true}
         building={building as any}
         onClose={onClose}
-        location={mockLocation}
-        onGetDirections={onGetDirections}
+        onDirectionsFrom={onDirectionsFrom}
+        onDirectionsTo={onDirectionsTo}
       />
     );
     expect(queryByText('SERVICES')).toBeNull();
@@ -255,53 +247,51 @@ describe('<BuildingModal />', () => {
         visible={true}
         building={building as any}
         onClose={onClose}
-        location={mockLocation}
-        onGetDirections={onGetDirections}
+        onDirectionsFrom={onDirectionsFrom}
+        onDirectionsTo={onDirectionsTo}
       />
     );
     expect(queryByText('SERVICES')).toBeNull();
   });
 
-  // --- Branch: Get Directions To with valid location ---
-  it('calls onGetDirections and onClose via Get Directions To', () => {
+  // --- Branch: Get Directions To ---
+  it('calls onDirectionsTo and onClose via Get Directions To', () => {
     const building = makeBuilding();
     const { getByTestId } = render(
       <BuildingModal
         visible={true}
         building={building as any}
         onClose={onClose}
-        location={mockLocation}
-        onGetDirections={onGetDirections}
+        onDirectionsFrom={onDirectionsFrom}
+        onDirectionsTo={onDirectionsTo}
       />
     );
 
     fireEvent.press(getByTestId('directions-to-button'));
     act(() => { jest.advanceTimersByTime(300); });
 
-    expect(onGetDirections).toHaveBeenCalledWith(
-      mockLocation,
-      building.geometry.coordinates[0]
-    );
+    expect(onDirectionsTo).toHaveBeenCalledWith(building);
     expect(onClose).toHaveBeenCalled();
   });
 
-  // --- Branch: Get Directions To with null location ---
-  it('does not call onGetDirections when location is null', () => {
+  // --- Branch: Get Directions From ---
+  it('calls onDirectionsFrom and onClose via Get Directions From', () => {
     const building = makeBuilding();
     const { getByTestId } = render(
       <BuildingModal
         visible={true}
         building={building as any}
         onClose={onClose}
-        location={null}
-        onGetDirections={onGetDirections}
+        onDirectionsFrom={onDirectionsFrom}
+        onDirectionsTo={onDirectionsTo}
       />
     );
 
-    fireEvent.press(getByTestId('directions-to-button'));
+    fireEvent.press(getByTestId('directions-from-button'));
     act(() => { jest.advanceTimersByTime(300); });
 
-    expect(onGetDirections).not.toHaveBeenCalled();
+    expect(onDirectionsFrom).toHaveBeenCalledWith(building);
+    expect(onClose).toHaveBeenCalled();
   });
 
   // --- Close button ---
@@ -312,8 +302,8 @@ describe('<BuildingModal />', () => {
         visible={true}
         building={building as any}
         onClose={onClose}
-        location={mockLocation}
-        onGetDirections={onGetDirections}
+        onDirectionsFrom={onDirectionsFrom}
+        onDirectionsTo={onDirectionsTo}
       />
     );
 
@@ -331,8 +321,8 @@ describe('<BuildingModal />', () => {
         visible={true}
         building={building as any}
         onClose={onClose}
-        location={mockLocation}
-        onGetDirections={onGetDirections}
+        onDirectionsFrom={onDirectionsFrom}
+        onDirectionsTo={onDirectionsTo}
       />
     );
 
@@ -350,8 +340,8 @@ describe('<BuildingModal />', () => {
         visible={true}
         building={building as any}
         onClose={onClose}
-        location={mockLocation}
-        onGetDirections={onGetDirections}
+        onDirectionsFrom={onDirectionsFrom}
+        onDirectionsTo={onDirectionsTo}
       />
     );
     expect(getByTestId('drag-handle')).toBeTruthy();
@@ -365,8 +355,8 @@ describe('<BuildingModal />', () => {
         visible={true}
         building={building as any}
         onClose={onClose}
-        location={mockLocation}
-        onGetDirections={onGetDirections}
+        onDirectionsFrom={onDirectionsFrom}
+        onDirectionsTo={onDirectionsTo}
       />
     );
     expect(getByTestId('directions-from-button')).toBeTruthy();
@@ -380,8 +370,8 @@ describe('<BuildingModal />', () => {
         visible={true}
         building={building as any}
         onClose={onClose}
-        location={mockLocation}
-        onGetDirections={onGetDirections}
+        onDirectionsFrom={onDirectionsFrom}
+        onDirectionsTo={onDirectionsTo}
       />
     );
     expect(queryByTestId('building-image')).toBeNull();
@@ -398,8 +388,8 @@ describe('<BuildingModal />', () => {
         visible={true}
         building={building as any}
         onClose={onClose}
-        location={mockLocation}
-        onGetDirections={onGetDirections}
+        onDirectionsFrom={onDirectionsFrom}
+        onDirectionsTo={onDirectionsTo}
       />
     );
     // No icon labels should render for unknown keys
@@ -417,8 +407,8 @@ describe('<BuildingModal />', () => {
         visible={true}
         building={building as any}
         onClose={onClose}
-        location={mockLocation}
-        onGetDirections={onGetDirections}
+        onDirectionsFrom={onDirectionsFrom}
+        onDirectionsTo={onDirectionsTo}
       />
     );
     expect(queryByText('H')).toBeNull();
