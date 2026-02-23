@@ -54,7 +54,7 @@ export function getDepartureTimes(
   const day = now.getDay(); // 0 = Sunday, 6 = Saturday
 
   // No weekend service
-//   if (day === 0 || day === 6) return [];
+  if (day === 0 || day === 6) return [];
 
   const schedule =
     day === 5
