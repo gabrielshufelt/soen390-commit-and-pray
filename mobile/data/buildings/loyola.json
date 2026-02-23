@@ -885,7 +885,7 @@
         "@id": "way/1362724471",
         "building": "university",
         "name": "Concordia Vanier Library",
-
+        "code": "VL",
         "amenities": [
           "info"
         ],
