@@ -1,6 +1,3 @@
-// ✅ SearchBar.tsx — FINAL (copy-paste whole file)
-// Imports CollapsedSearchBar + ExpandedSearchBar
-
 import type { MapViewDirectionsMode } from "react-native-maps-directions";
 import React, { useState } from "react";
 import CollapsedSearchBar from "./../components/collapsedSearchBar";
