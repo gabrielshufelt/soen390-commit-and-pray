@@ -178,8 +178,8 @@ export default function SearchBar({
 
   const startSuggestions = useMemo(() => {
     if (!expanded || !startFocused || !startQuery || routeActive) return [];
-    return campusFiltered.filter((b) => makeHaystack(b).includes(startQuery)).slice(0, 10);
-  }, [expanded, campusFiltered, startFocused, startQuery, routeActive]);
+    return buildings.filter((b) => makeHaystack(b).includes(startQuery)).slice(0, 10);
+  }, [expanded, buildings, startFocused, startQuery, routeActive]);
 
   function addToHistory(b: BuildingChoice) {
     setHistory((prev) => {
