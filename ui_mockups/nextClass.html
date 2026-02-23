@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="global.css" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#800000",
+                        "background-light": "#f8f5f5",
+                        "background-dark": "#230f0f",
+                    },
+                    fontFamily: {
+                        "display": ["Lexend"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100">
+    <div class="relative flex h-screen w-full flex-col overflow-hidden bg-background-light dark:bg-background-dark">
+        <!-- Campus Toggle & Search Bar -->
+        <div class="absolute top-0 left-0 right-0 z-20 flex flex-col gap-3 p-4">
+            <!-- Campus Toggle (Segmented Control) -->
+            <div class="flex h-11 items-center justify-center rounded-xl bg-white/90 dark:bg-slate-900/90 p-1 shadow-lg">
+                <label class="flex cursor-pointer h-full grow items-center justify-center overflow-hidden rounded-lg px-2 has-[:checked]:bg-primary has-[:checked]:text-white text-slate-600 dark:text-slate-400 text-sm font-semibold leading-normal transition-all">
+                    <span class="truncate">SGW</span>
+                    <input class="hidden" name="campus" type="radio" value="SGW"/>
+                </label>
+                <label class="flex cursor-pointer h-full grow items-center justify-center overflow-hidden rounded-lg px-2 has-[:checked]:bg-primary has-[:checked]:text-white text-slate-600 dark:text-slate-400 text-sm font-semibold leading-normal transition-all">
+                    <span class="truncate">Loyola</span>
+                    <input checked="" class="hidden" name="campus" type="radio" value="Loyola"/>
+                </label>
+            </div>
+            
+            <!-- Search Bar -->
+            <div class="flex items-center gap-2">
+                <div class="flex-1 bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 flex items-center px-4 h-12">
+                    <span class="material-symbols-outlined text-slate-400 mr-3">search</span>
+                    <input class="flex-1 bg-transparent border-none focus:ring-0 text-sm font-medium placeholder:text-slate-400" placeholder="Search buildings, rooms..." type="text"/>
+                    <div class="h-6 w-[1px] bg-slate-200 dark:bg-slate-700 mx-2"></div>
+                    <button class="text-primary">
+                        <span class="material-symbols-outlined">tune</span>
+                    </button>
+                </div>
+                <button class="h-12 w-12 bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-700 dark:text-slate-200">
+                    <span class="material-symbols-outlined">Person</span>
+                </button>
+            </div>
+        </div>
+        <!-- Main Map Area -->
+        <div class="relative flex-1 @container">
+            <!-- Map Background -->
+            <div class="absolute inset-0 z-0 bg-slate-200 dark:bg-slate-800 bg-cover bg-center" data-alt="Detailed map of Concordia University downtown Montreal campus with buildings and streets" data-location="Montreal, Canada" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBGD-bLXlGpUEFnWv37_1b5BVLG92vsc_sU3icGrjVut4GQpGAjFNs4EWw2DMegKFogFHxOwzGQTEUU-e0Z4OoU-M0VO3FSb9FkQ-KwVH96hPfG8oXAER2yAAirnpKMrKPkAGzKoI4b8jEFg_954cpJO8G2pI86iOaf-a44ePyytP-iWyI2OH7tHA2eEhhl4gZsssviapOVUHE2ILtWodyn0LJGZRYucUcQeZ3PX5Q6bwakHBYFNGjNJrPUWTXFtszEwlyW1-BHOdNV');">
+                <!-- Current Location Blue Dot -->
+                <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+                    <div class="relative flex size-6 items-center justify-center">
+                        <div class="absolute inset-0 animate-ping rounded-full bg-blue-500/40"></div>
+                        <div class="z-10 size-4 rounded-full border-2 border-white bg-blue-600 shadow-lg"></div>
+                    </div>
+                </div>
+                <!-- Destination Marker (Hall Building) -->
+                <div class="absolute top-[40%] left-[60%] -translate-x-1/2 -translate-y-1/2 flex flex-col items-center">
+                    <div class="rounded-lg bg-primary px-2 py-1 text-[10px] font-bold text-white shadow-lg mb-1">Hall Building</div>
+                    <span class="material-symbols-outlined text-primary fill-1 text-3xl drop-shadow-md">location_on</span>
+                </div>
+            </div>
+
+            <!-- Floating Action Buttons (Right side) -->
+            <div class="absolute right-4 bottom-52 z-10 flex flex-col gap-2 pointer-events-auto">
+                <button class="h-12 w-12 bg-white dark:bg-slate-800 rounded-lg shadow-lg flex items-center justify-center text-slate-700 dark:text-slate-200 border border-slate-100 dark:border-slate-700">
+                    <span class="material-symbols-outlined">layers</span>
+                </button>
+                <button class="h-12 w-12 bg-white dark:bg-slate-800 rounded-lg shadow-lg flex items-center justify-center text-slate-700 dark:text-slate-200 border border-slate-100 dark:border-slate-700">
+                    <span class="material-symbols-outlined text-primary">my_location</span>
+                </button>
+            </div>
+            <!-- Bottom Floating Card: Next Class -->
+            <div class="absolute bottom-6 left-4 right-4 z-10">
+                <div class="flex flex-col overflow-hidden rounded-2xl bg-white/95 dark:bg-slate-900/95 shadow-[0_8px_30px_rgb(0,0,0,0.12)] backdrop-blur-md border border-slate-100 dark:border-slate-800">
+                    <div class="flex items-center gap-4 p-4">
+                        <!-- Thumbnail/Icon -->
+                        <div class="flex size-16 shrink-0 flex-col items-center justify-center rounded-xl bg-primary/10 text-primary">
+                            <span class="text-[10px] font-bold uppercase">Hall</span>
+                            <span class="material-symbols-outlined text-2xl">school</span>
+                            <span class="text-[10px] font-bold">H-820</span>
+                        </div>
+                        <!-- Details -->
+                        <div class="flex flex-1 flex-col gap-0.5">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[10px] font-bold uppercase tracking-widest text-primary">Next Class</span>
+                                <span class="text-[10px] font-medium text-slate-500">In 24 mins</span>
+                            </div>
+                            <h3 class="text-base font-bold text-slate-900 dark:text-white leading-tight">COMP 345</h3>
+                            <div class="flex items-center gap-1 text-slate-500 dark:text-slate-400">
+                                <span class="material-symbols-outlined text-sm">schedule</span>
+                                <p class="text-xs font-medium">2:45 PM – 4:00 PM</p>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Action Area -->
+                    <div class="flex items-center justify-between border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 p-3 px-4">
+                        <div class="flex items-center gap-2">
+                            <span class="material-symbols-outlined text-slate-400 text-sm">directions_walk</span>
+                            <span class="text-xs font-medium text-slate-600 dark:text-slate-400">6 min walk</span>
+                        </div>
+                        <button class="flex items-center gap-2 rounded-full bg-primary px-5 py-2 text-sm font-semibold text-white shadow-md active:scale-95 transition-transform">
+                            <span class="material-symbols-outlined text-sm">navigation</span>
+                            <span>Get Directions</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

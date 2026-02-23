@@ -1,4 +1,10 @@
 /* Global Styles */
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
 body {
   font-family: 'Lexend', sans-serif;
   min-height: max(884px, 100dvh);
@@ -29,6 +35,20 @@ body {
 .no-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* iOS Status Bar */
+.ios-status-bar {
+  height: 44px;
 }
 
 /* Blur Effects */
