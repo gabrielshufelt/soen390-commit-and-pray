@@ -496,4 +496,86 @@ describe('<Index />', () => {
       });
     });
   });
+
+  // --- Shuttle button & ShuttleScheduleModal ---
+  describe('shuttle button', () => {
+    it('renders the shuttle 🚌 button', async () => {
+      const { getByText } = renderWithTheme(<Index />);
+      await waitFor(() => {
+        expect(getByText('🚌')).toBeTruthy();
+      });
+    });
+
+    it('opens ShuttleScheduleModal when shuttle button is pressed', async () => {
+      const { getByText } = renderWithTheme(<Index />);
+      await waitFor(() => expect(getByText('🚌')).toBeTruthy());
+
+      fireEvent.press(getByText('🚌'));
+
+      await waitFor(() => {
+        expect(getByText('🚌 Shuttle Schedule')).toBeTruthy();
+      });
+    });
+
+    it('closes ShuttleScheduleModal when its close button is pressed', async () => {
+      const { getByText, queryByText } = renderWithTheme(<Index />);
+      await waitFor(() => expect(getByText('🚌')).toBeTruthy());
+
+      fireEvent.press(getByText('🚌'));
+      await waitFor(() => expect(getByText('🚌 Shuttle Schedule')).toBeTruthy());
+
+      fireEvent.press(getByText('×'));
+      await waitFor(() => {
+        expect(queryByText('🚌 Shuttle Schedule')).toBeNull();
+      });
+    });
+
+    it('ShuttleScheduleModal is not visible on initial render', async () => {
+      const { queryByText } = renderWithTheme(<Index />);
+      await waitFor(() => expect(queryByText('map-view')).toBeNull());
+      expect(queryByText('🚌 Shuttle Schedule')).toBeNull();
+    });
+
+    it('shows bus stop info inside the modal when opened', async () => {
+      const { getByText } = renderWithTheme(<Index />);
+      await waitFor(() => expect(getByText('🚌')).toBeTruthy());
+
+      fireEvent.press(getByText('🚌'));
+
+      await waitFor(() => {
+        expect(getByText('Bus Stops')).toBeTruthy();
+        expect(getByText('Loyola Chapel')).toBeTruthy();
+        expect(getByText('Henry F. Hall Building')).toBeTruthy();
+      });
+    });
+
+    it('shows "Show Shuttle Route on Map" button inside the modal', async () => {
+      const { getByText } = renderWithTheme(<Index />);
+      await waitFor(() => expect(getByText('🚌')).toBeTruthy());
+
+      fireEvent.press(getByText('🚌'));
+
+      await waitFor(() => {
+        expect(getByText('🗺️ Show Shuttle Route on Map')).toBeTruthy();
+      });
+    });
+
+    it('starts shuttle route directions and closes modal when "Show Shuttle Route on Map" is pressed', async () => {
+      const { getByText, queryByText } = renderWithTheme(<Index />);
+      await waitFor(() => expect(getByText('🚌')).toBeTruthy());
+
+      fireEvent.press(getByText('🚌'));
+      await waitFor(() => expect(getByText('🗺️ Show Shuttle Route on Map')).toBeTruthy());
+
+      fireEvent.press(getByText('🗺️ Show Shuttle Route on Map'));
+
+      expect(mockStartDirections).toHaveBeenCalledWith(
+        expect.objectContaining({ latitude: expect.any(Number), longitude: expect.any(Number) }),
+        expect.objectContaining({ latitude: expect.any(Number), longitude: expect.any(Number) })
+      );
+      await waitFor(() => {
+        expect(queryByText('🚌 Shuttle Schedule')).toBeNull();
+      });
+    });
+  });
 });
