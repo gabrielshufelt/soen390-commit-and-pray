@@ -310,4 +310,54 @@ export const styles = StyleSheet.create({
   rowChev: { fontSize: 22, opacity: 0.6 },
 
   sep: { height: 1, backgroundColor: BORDER, marginLeft: 14, marginRight: 14 },
+
+  // ── Concordia Shuttle checkbox ──────────────────────────────────────────
+  shuttleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(145,35,56,0.20)',
+    backgroundColor: 'rgba(145,35,56,0.05)',
+  },
+  shuttleRowDisabled: {
+    opacity: 0.45,
+  },
+  shuttleCheckbox: {
+    width: 22,
+    height: 22,
+    borderRadius: 6,
+    borderWidth: 2,
+    borderColor: MAROON,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 10,
+    backgroundColor: '#FFFFFF',
+  },
+  shuttleCheckboxChecked: {
+    backgroundColor: MAROON,
+  },
+  shuttleCheckboxTick: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '900',
+    lineHeight: 16,
+  },
+  shuttleLabel: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: '800',
+    color: TEXT,
+  },
+  shuttleLabelDisabled: {
+    color: MUTED,
+  },
+  shuttleNextDep: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: MAROON,
+  },
 });
