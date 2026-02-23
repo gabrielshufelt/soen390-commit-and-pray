@@ -30,6 +30,10 @@ const mockOnRouteReady = jest.fn();
 const mockDirectionsHook = jest.fn();
 const mockEndDirections = jest.fn();
 const mockStartDirections = jest.fn();
+const mockPreviewDirections = jest.fn();
+const mockCheckProgress = jest.fn();
+const mockNextStep = jest.fn();
+const mockPrevStep = jest.fn();
 
 jest.mock('../hooks/useLocationPermissions', () => ({
   useLocationPermissions: () => mockPermissionState(),
@@ -157,14 +161,25 @@ const defaultDirections = {
   state: {
     origin: null, destination: null, isActive: false,
     loading: false, error: null,
-    routeInfo: { distance: null, duration: null },
+    routeInfo: { distance: null, duration: null, distanceText: null, durationText: null },
+    steps: [], currentStepIndex: 0, routeCoordinates: [], isOffRoute: false,
   },
   apiKey: 'test-api-key',
   startDirections: mockStartDirections,
+  previewDirections: mockPreviewDirections,
   startDirectionsToBuilding: mockStartDirectionsToBuilding,
   endDirections: mockEndDirections,
-  clearDirections: jest.fn(),
   onRouteReady: mockOnRouteReady,
+  nextStep: mockNextStep,
+  prevStep: mockPrevStep,
+  checkProgress: mockCheckProgress,
+  previewRouteInfo: {
+    distance: null,
+    duration: null,
+    distanceText: null,
+    durationText: null,
+  },
+  setPreviewRouteInfo: jest.fn(),
 };
 
 const activeDirections = {
@@ -174,26 +189,12 @@ const activeDirections = {
     destination: { latitude: 45.458, longitude: -73.639 },
     isActive: true,
     loading: false, error: null,
-    routeInfo: { distance: null, duration: null },
+    routeInfo: { distance: null, duration: null, distanceText: null, durationText: null },
+    steps: [], currentStepIndex: 0, routeCoordinates: [], isOffRoute: false,
   },
 };
 
 function setupDefaults() {
-  //Remove this it was just for testing
-  const defaultDirections = {
-  state: {
-    origin: null, destination: null, isActive: false,
-    loading: false, error: null,
-    routeInfo: { distance: null, duration: null },
-  },
-  apiKey: 'test-api-key',
-  startDirections: mockStartDirections,
-  startDirectionsToBuilding: mockStartDirectionsToBuilding,
-  endDirections: mockEndDirections,
-  clearDirections: jest.fn(),
-  onRouteReady: mockOnRouteReady,
-};
-
   mockPermissionState.mockReturnValue(defaultPermission);
   mockWatchLocation.mockReturnValue(defaultWatch);
   mockUserBuilding.mockReturnValue(null);
@@ -428,11 +429,10 @@ describe('<Index />', () => {
     );
   });
 
-  it('starts route from selected start building to destination', async () => {
+  it('previews route from selected start building to destination', async () => {
     renderWithTheme(<Index />);
-    await waitFor(() => expect(mockSearchBarProperties.onStartRoute).toBeDefined());
+    await waitFor(() => expect(mockSearchBarProperties.onPreviewRoute).toBeDefined());
 
-  
     await act(async () => {
       mockSearchBarProperties.onChangeStart({
         id: 'H',
@@ -449,15 +449,14 @@ describe('<Index />', () => {
       });
     });
 
-  
     await waitFor(() => {
       expect(mockSearchBarProperties.start).toBeTruthy();
       expect(mockSearchBarProperties.destination).toBeTruthy();
     });
 
-  mockSearchBarProperties.onStartRoute();
+    mockSearchBarProperties.onPreviewRoute();
 
-    expect(mockStartDirections).toHaveBeenCalledWith(
+    expect(mockPreviewDirections).toHaveBeenCalledWith(
       { latitude: 45.497, longitude: -73.579 }, // start building
       { latitude: 45.495, longitude: -73.578 }  // destination
     );

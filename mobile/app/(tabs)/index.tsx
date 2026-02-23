@@ -1,4 +1,5 @@
-import React, { useMemo, useRef, useEffect, useState } from "react";
+import React, { useMemo, useState } from "react";
+import { useNavigationCamera } from "../../hooks/useNavigationCamera";
 import MapView, { Marker, Polygon, Region } from "react-native-maps";
 import { StyleSheet, View, Text, TouchableOpacity } from "react-native";
 import { useTheme } from "../../context/ThemeContext";
@@ -17,16 +18,11 @@ import ShuttleScheduleModal from "../../components/shuttleScheduleModal";
 import { useDirections } from "../../hooks/useDirections";
 import MapViewDirections from "react-native-maps-directions";
 import SearchBar, { BuildingChoice } from "../../components/searchBar";
-
-// Constants for colors
-const HIGHLIGHT_COLOR = "rgba(33, 150, 243, 0.4)";
-const STROKE_COLOR = "#2196F3";
-const BLACK = "rgba(0, 0, 0, 0.75)";
-const GREY = "#666";
+import NavigationSteps from "../../components/NavigationSteps";
+import { HIGHLIGHT_COLOR, STROKE_COLOR } from "@/styles/index.styles";
 
 const LABEL_ZOOM_THRESHOLD = 0.015;
 const ANCHOR_OFFSET = { x: 0.5, y: 0.5 };
-const ANIMATION_DURATION = 600;
 
 export default function Index() {
   const { colorScheme } = useTheme();
@@ -52,9 +48,16 @@ export default function Index() {
     state: directionsState,
     apiKey,
     startDirections,
+    previewDirections,
     startDirectionsToBuilding,
     onRouteReady,
     endDirections,
+    nextStep,
+    prevStep,
+    checkProgress,
+    setTransportMode,
+    previewRouteInfo,
+    setPreviewRouteInfo,
   } = useDirections();
 
   const [showLabels, setShowLabels] = useState(
@@ -72,22 +75,34 @@ export default function Index() {
     endDirections();
     setStartChoice(null);
     setDestChoice(null);
+    setPreviewRouteInfo({
+      distance: null,
+      duration: null,
+      distanceText: null,
+      durationText: null,
+    });
   };
 
   const handleStartRoute = () => {
-    if (!destChoice) return;
+    if (!destChoice || !location) return;
 
-    const origin = startChoice?.coordinate
-      ? startChoice.coordinate
-      : location
-        ? { latitude: location.coords.latitude, longitude: location.coords.longitude }
-        : null;
-
-    if (!origin) return;
-
-    startDirections(origin, destChoice.coordinate);
+    startDirections({ latitude: location.coords.latitude, longitude: location.coords.longitude }, destChoice.coordinate);
   };
 
+  const handlePreviewRoute = () => {
+    if (!destChoice || !startChoice) return;
+
+    previewDirections(startChoice?.coordinate, destChoice?.coordinate);
+  }
+
+  const handleRoutePreviewReady = (result: any) => {
+    setPreviewRouteInfo({
+      distance: result.distance,
+      duration: result.duration,
+      distanceText: result.distance ? `${result.distance.toFixed(1)} km` : null,
+      durationText: result.duration ? `${Math.round(result.duration)} min` : null,
+    });
+  };
   const handleShowShuttleRoute = () => {
     const loyolaStop = shuttleData.busStops.loyola.coordinate;
     const sgwStop = shuttleData.busStops.sgw.coordinate;
@@ -114,23 +129,13 @@ export default function Index() {
     return CAMPUSES[campusKey] ?? CAMPUSES[DEFAULT_CAMPUS];
   }, [campusKey]);
 
-  const mapRef = useRef<MapView>(null);
-  const previousDirectionsActiveRef = useRef(false);
-  const [shouldFitRoute, setShouldFitRoute] = useState(directionsState.isActive);
-
-  useEffect(() => {
-    if (directionsState.isActive && !previousDirectionsActiveRef.current) {
-      setShouldFitRoute(true);
-    }
-    if (!directionsState.isActive) {
-      setShouldFitRoute(false);
-    }
-    previousDirectionsActiveRef.current = directionsState.isActive;
-  }, [directionsState.isActive]);
-
-  useEffect(() => {
-    mapRef.current?.animateToRegion(selectedCampus.initialRegion, ANIMATION_DURATION);
-  }, [selectedCampus]);
+  const { mapRef, handleRouteReady } = useNavigationCamera({
+    directionsState,
+    location,
+    selectedCampus,
+    onRouteReady,
+    checkProgress,
+  });
 
   const buildingPolygons = useMemo(() => {
     return campusBuildingsData.map((building: any) => {
@@ -251,22 +256,14 @@ export default function Index() {
 
         {directionsState.isActive && directionsState.origin && directionsState.destination && (
           <MapViewDirections
-            key={`${campusKey}-${directionsState.origin?.latitude ?? "x"}-${directionsState.destination?.latitude ?? "y"}`}
+            key={`${campusKey}-${directionsState.origin?.latitude ?? "x"}-${directionsState.destination?.latitude ?? "y"}-${directionsState.transportMode}`}
             origin={directionsState.origin}
             destination={directionsState.destination}
             apikey={apiKey}
+            mode={directionsState.transportMode}
             strokeWidth={5}
             strokeColor="#0A84FF"
-            onReady={(result) => {
-              onRouteReady(result);
-              if (shouldFitRoute && result?.coordinates?.length) {
-                mapRef.current?.fitToCoordinates(result.coordinates, {
-                  edgePadding: { top: 160, right: 50, bottom: 220, left: 50 },
-                  animated: true,
-                });
-                setShouldFitRoute(false);
-              }
-            }}
+            onReady={handleRouteReady}
             onError={(error) => console.error("[Index] MapViewDirections ERROR:", error)}
           />
         )}
@@ -297,20 +294,39 @@ export default function Index() {
             <Text style={styles.busStopIcon}>🚏</Text>
           </View>
         </Marker>
+
+        {!directionsState.isActive && destChoice && (startChoice || (location && !startChoice)) && (
+          <MapViewDirections
+            key={`preview-${(startChoice?.coordinate.latitude || location?.coords.latitude) ?? "x"}-${destChoice.coordinate.latitude}-${directionsState.transportMode}`}
+            origin={startChoice?.coordinate || { latitude: location!.coords.latitude, longitude: location!.coords.longitude }}
+            destination={destChoice.coordinate}
+            apikey={apiKey}
+            mode={directionsState.transportMode}
+            strokeWidth={3}
+            strokeColor="#FFFFFFFF"
+            onReady={handleRoutePreviewReady}
+          />
+        )}
       </MapView>
 
-
-
-      <SearchBar
-        buildings={buildingChoices}
-        start={startChoice}
-        destination={destChoice}
-        onChangeStart={setStartChoice}
-        onChangeDestination={setDestChoice}
-        routeActive={directionsState.isActive}
-        onEndRoute={handleEndDirections}
-        onStartRoute={handleStartRoute}
-      />
+      {!directionsState.isActive && (
+        <SearchBar
+          buildings={buildingChoices}
+          start={startChoice}
+          destination={destChoice}
+          onChangeStart={setStartChoice}
+          onChangeDestination={setDestChoice}
+          transportMode={directionsState.transportMode}
+          onChangeTransportMode={setTransportMode}
+          routeActive={directionsState.isActive}
+          previewActive={!directionsState.isActive && !!directionsState.origin}
+          onEndRoute={handleEndDirections}
+          onStartRoute={handleStartRoute}
+          onPreviewRoute={handlePreviewRoute}
+          onExitPreview={handleEndDirections}
+          previewRouteInfo={previewRouteInfo}
+        />
+      )}
 
 
       <View style={styles.overlay}>
@@ -322,7 +338,9 @@ export default function Index() {
         {userBuilding && <Text style={styles.overlayBuilding}>📍 Inside: {userBuilding.name}</Text>}
       </View>
 
-      <CampusToggle selectedCampus={campusKey} onCampusChange={setCampusKey} />
+      {!directionsState.isActive && (
+        <CampusToggle selectedCampus={campusKey} onCampusChange={setCampusKey} />
+      )}
 
       <TouchableOpacity
         style={styles.shuttleButton}
@@ -331,6 +349,19 @@ export default function Index() {
       >
         <Text style={styles.shuttleButtonText}>🚌</Text>
       </TouchableOpacity>
+
+      {directionsState.isActive && directionsState.steps.length > 0 && (
+        <NavigationSteps
+          steps={directionsState.steps}
+          currentStepIndex={directionsState.currentStepIndex}
+          totalDistance={directionsState.routeInfo.distanceText ?? ""}
+          totalDuration={directionsState.routeInfo.durationText ?? ""}
+          isOffRoute={directionsState.isOffRoute}
+          onEndNavigation={handleEndDirections}
+          onNextStep={nextStep}
+          onPrevStep={prevStep}
+        />
+      )}
 
       <BuildingModal
         visible={!!selectedBuilding}
@@ -387,7 +418,7 @@ const styles = StyleSheet.create({
     color: "white",
     fontWeight: "bold",
     fontSize: 12,
-    textShadowColor: BLACK,
+    textShadowColor: "black",
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 2,
   },
@@ -428,6 +459,4 @@ const styles = StyleSheet.create({
   busStopIcon: {
     fontSize: 24,
   },
-
-  _unusedGrey: { color: GREY },
 });

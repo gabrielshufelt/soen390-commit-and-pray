@@ -1,0 +1,17 @@
+# Maestro acceptance test for Transport Mode Selector
+
+# This test verifies that the user can select different transport modes in the app and that the UI updates accordingly.
+
+appId: com.yourapp.mobile
+
+---
+- tapOn: "Route"
+- tapOn: "Driving"
+- assertVisible: "Driving"
+- tapOn: "Walking"
+- assertVisible: "Walking"
+- tapOn: "Cycling"
+- assertVisible: "Cycling"
+- tapOn: "Transit"
+- assertVisible: "Transit"
+
