@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from "react";
 import { useNavigationCamera } from "../../hooks/useNavigationCamera";
 import MapView, { Marker, Polygon, Region } from "react-native-maps";
-import { StyleSheet, View, Text, TouchableOpacity } from "react-native";
+import { Alert, StyleSheet, View, Text, TouchableOpacity } from "react-native";
 import { useTheme } from "../../context/ThemeContext";
 import { CAMPUSES, DEFAULT_CAMPUS, findCampusForCoordinate } from "../../constants/campusLocations";
 import { BUILDING_POLYGON_COLORS } from "../../constants/mapColors";
@@ -111,7 +111,7 @@ export default function Index() {
   };
 
   const handlePreviewRoute = () => {
-    if (!destChoice || !startChoice) return;
+    if (!destChoice || !startChoice || startChoice.id === "current-location") return;
 
     if (startChoice.id == destChoice.id) {
       Alert.alert("Start and destination cannot be the same building.");
@@ -296,6 +296,7 @@ export default function Index() {
 
         {/* Shuttle Bus Stops */}
         <Marker
+          testID="shuttle-stop-marker"
           coordinate={shuttleData.busStops.loyola.coordinate}
           title="Loyola Shuttle Stop"
           description={shuttleData.busStops.loyola.address}
@@ -309,6 +310,7 @@ export default function Index() {
         </Marker>
 
         <Marker
+          testID="shuttle-stop-marker"
           coordinate={shuttleData.busStops.sgw.coordinate}
           title="SGW Shuttle Stop"
           description={shuttleData.busStops.sgw.address}
@@ -373,33 +375,6 @@ export default function Index() {
             />
           )
         )}
-
-        {/* Render bus stops again after directions to ensure they're on top */}
-        <Marker
-          coordinate={shuttleData.busStops.loyola.coordinate}
-          title="Loyola Shuttle Stop"
-          description={shuttleData.busStops.loyola.address}
-          anchor={ANCHOR_OFFSET}
-          tracksViewChanges={false}
-          zIndex={1001}
-        >
-          <View style={styles.busStopMarker}>
-            <Text style={styles.busStopIcon}>🚏</Text>
-          </View>
-        </Marker>
-
-        <Marker
-          coordinate={shuttleData.busStops.sgw.coordinate}
-          title="SGW Shuttle Stop"
-          description={shuttleData.busStops.sgw.address}
-          anchor={ANCHOR_OFFSET}
-          tracksViewChanges={false}
-          zIndex={1001}
-        >
-          <View style={styles.busStopMarker}>
-            <Text style={styles.busStopIcon}>🚏</Text>
-          </View>
-        </Marker>
 
         {!directionsState.isActive && destChoice && (startChoice || (location && !startChoice)) && (
           useShuttle && shuttleWaypoints ? (
@@ -514,6 +489,10 @@ export default function Index() {
         onClose={handleCloseModal}
         onDirectionsFrom={handleDirectionsFrom}
         onDirectionsTo={handleDirectionsTo}
+        onGetDirections={(building) => {
+          startDirectionsToBuilding(building);
+          handleCloseModal();
+        }}
       />
 
       <ShuttleScheduleModal
