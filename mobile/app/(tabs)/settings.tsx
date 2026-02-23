@@ -1,6 +1,7 @@
 import { Text, View, StyleSheet, Pressable } from 'react-native';
 import React from 'react';
 import { useTheme } from '../../context/ThemeContext';
+import SignInGoogle from '@/components/SignInGoogle';
 
 type ThemeOption = 'light' | 'dark' | 'system';
 
@@ -39,6 +40,7 @@ export default function SettingsScreen() {
           </Pressable>
         ))}
       </View>
+      <SignInGoogle />
     </View>
   );
 }
