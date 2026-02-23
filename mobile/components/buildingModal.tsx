@@ -11,7 +11,6 @@ import {
   Image,
 } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
-import * as Location from 'expo-location';
 import BUILDING_IMAGES from '../constants/buildingImages';
 import { COLORS } from '../constants/modalColors';
 import { SHEET_HEIGHT, DISMISS_THRESHOLD, VELOCITY_THRESHOLD } from '../constants/modalSheet';
@@ -40,11 +39,11 @@ interface BuildingModalProps {
   visible: boolean;
   building: BuildingData | null;
   onClose: () => void;
-  location: Location.LocationObject | null;
-  onGetDirections: (location: Location.LocationObject, buildingPolygon: number[][]) => void;
+  onDirectionsFrom: (building: BuildingData) => void;
+  onDirectionsTo: (building: BuildingData) => void;
 }
 
-export default function BuildingModal({ visible, building, onClose, location, onGetDirections }: BuildingModalProps) {
+export default function BuildingModal({ visible, building, onClose, onDirectionsFrom, onDirectionsTo }: BuildingModalProps) {
   const { colorScheme } = useTheme();
   const isDark = colorScheme === 'dark';
 
@@ -268,6 +267,10 @@ export default function BuildingModal({ visible, building, onClose, location, on
             <View style={styles.buttonsContainer}>
               <TouchableOpacity
                 style={[styles.directionButton, styles.directionButtonFrom, { borderColor: COLORS.red }]}
+                onPress={() => {
+                  onDirectionsFrom(building);
+                  handleClose();
+                }}
                 activeOpacity={0.7}
                 testID="directions-from-button"
               >
@@ -276,17 +279,14 @@ export default function BuildingModal({ visible, building, onClose, location, on
               </TouchableOpacity>
 
               <TouchableOpacity
-                disabled={!location}
                 style={[
                   styles.directionButton,
                   styles.directionButtonTo,
-                  { backgroundColor: !location ? COLORS.gray : COLORS.red },
+                  { backgroundColor: COLORS.red },
                 ]}
                 onPress={() => {
-                  if (location && building.geometry.coordinates[0]) {
-                    onGetDirections(location, building.geometry.coordinates[0]);
-                    handleClose();
-                  }
+                  onDirectionsTo(building);
+                  handleClose();
                 }}
                 activeOpacity={0.7}
                 testID="directions-to-button"
