@@ -1,12 +1,22 @@
-import React from 'react';
-import { Modal, View, Text, TouchableOpacity, ScrollView, StyleSheet, Dimensions } from 'react-native';
+import React, { useRef, useEffect, useCallback } from 'react';
+import {
+  Modal,
+  View,
+  Text,
+  TouchableOpacity,
+  ScrollView,
+  StyleSheet,
+  Animated,
+  PanResponder,
+  Image,
+} from 'react-native';
 import { useTheme } from '../context/ThemeContext';
 import * as Location from 'expo-location';
+import BUILDING_IMAGES from '../constants/buildingImages';
+import { COLORS } from '../constants/modalColors';
+import { SHEET_HEIGHT, DISMISS_THRESHOLD, VELOCITY_THRESHOLD } from '../constants/modalSheet';
+import { AMENITY_ICONS, ACCESSIBILITY_ICONS, UI_ICONS, renderIcon } from '../constants/buildingIcons';
 
-const BLACK = 'rgba(0, 0, 0)';
-const WHITE = 'rgba(255, 255, 255)';
-const RED = '#8B0000';
-const GRAY = '#a0a0a0';
 
 interface BuildingData {
   id: string;
@@ -34,110 +44,259 @@ interface BuildingModalProps {
   onGetDirections: (location: Location.LocationObject, buildingPolygon: number[][]) => void;
 }
 
-const formatAccessibilityName = (name: string): string => {
-  return name
-    .replace(/_/g, ' ')
-    .split(' ')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
-};
-
-const formatAmenityName = (name: string): string => {
-  return name
-    .replace(/_/g, ' ')
-    .split(' ')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
-};
-
 export default function BuildingModal({ visible, building, onClose, location, onGetDirections }: BuildingModalProps) {
   const { colorScheme } = useTheme();
   const isDark = colorScheme === 'dark';
-  const screenHeight = Dimensions.get('window').height;
+
+  const translateY = useRef(new Animated.Value(SHEET_HEIGHT)).current;
+  const currentPosRef = useRef(SHEET_HEIGHT);
+
+  const bgColor = isDark ? COLORS.darkBg : COLORS.lightBg;
+  const textColor = isDark ? COLORS.darkText : COLORS.lightText;
+  const secondaryColor = isDark ? COLORS.darkSecondary : COLORS.lightSecondary;
+  const addressGreen = isDark ? COLORS.addressGreenDark : COLORS.addressGreenLight;
+  const iconTileColor = isDark ? COLORS.darkCard : COLORS.lightCard;
+
+  useEffect(() => {
+    if (visible) {
+      translateY.setValue(SHEET_HEIGHT);
+      currentPosRef.current = 0;
+      Animated.spring(translateY, {
+        toValue: 0,
+        useNativeDriver: true,
+        tension: 65,
+        friction: 11,
+      }).start();
+    }
+  }, [visible]);
+
+  const handleClose = useCallback(() => {
+    Animated.timing(translateY, {
+      toValue: SHEET_HEIGHT,
+      duration: 250,
+      useNativeDriver: true,
+    }).start(() => {
+      currentPosRef.current = SHEET_HEIGHT;
+      onClose();
+    });
+  }, [onClose, translateY]);
+
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: (_, gs) => Math.abs(gs.dy) > 5,
+      onPanResponderMove: (_, gs) => {
+        const newPos = currentPosRef.current + gs.dy;
+        if (newPos >= 0) {
+          translateY.setValue(newPos);
+        }
+      },
+      onPanResponderRelease: (_, gs) => {
+        const finalPos = Math.max(0, currentPosRef.current + gs.dy);
+
+        if (gs.vy > VELOCITY_THRESHOLD) {
+          currentPosRef.current = SHEET_HEIGHT;
+          Animated.timing(translateY, {
+            toValue: SHEET_HEIGHT,
+            duration: 250,
+            useNativeDriver: true,
+          }).start(() => onClose());
+          return;
+        }
+
+        if (gs.vy < -VELOCITY_THRESHOLD) {
+          currentPosRef.current = 0;
+          Animated.spring(translateY, {
+            toValue: 0,
+            useNativeDriver: true,
+            tension: 65,
+            friction: 11,
+          }).start();
+          return;
+        }
+
+        if (finalPos > DISMISS_THRESHOLD) {
+          currentPosRef.current = SHEET_HEIGHT;
+          Animated.timing(translateY, {
+            toValue: SHEET_HEIGHT,
+            duration: 250,
+            useNativeDriver: true,
+          }).start(() => onClose());
+          return;
+        }
+
+        currentPosRef.current = 0;
+        Animated.spring(translateY, {
+          toValue: 0,
+          useNativeDriver: true,
+          tension: 65,
+          friction: 11,
+        }).start();
+      },
+    })
+  ).current;
 
   if (!building) return null;
 
-  const { code, name, 'addr:housenumber': number, 'addr:street': street, 'addr:city': city, 'addr:province': province, accessibility, amenities } = building.properties;
+  const {
+    code,
+    name,
+    'addr:housenumber': number,
+    'addr:street': street,
+    'addr:city': city,
+    accessibility,
+    amenities,
+  } = building.properties;
+
+  const buildingImage = code ? BUILDING_IMAGES[code] : null;
+  const hasAddress = !!(number || street || city);
+
+  const addressParts: string[] = [];
+  if (number && street) addressParts.push(`${number} ${street}`);
+  else if (street) addressParts.push(street);
+  else if (number) addressParts.push(number);
+  if (city) addressParts.push(city);
+  const addressString = addressParts.join(', ');
 
   return (
-    <Modal
-      visible={visible}
-      transparent={true}
-      animationType="fade"
-      onRequestClose={onClose}
-    >
+    <Modal visible={visible} transparent animationType="none" onRequestClose={handleClose}>
       <View style={styles.overlay}>
-        <TouchableOpacity style={styles.backdrop} onPress={onClose} activeOpacity={1} />
-        <View style={[styles.bottomSheet, { backgroundColor: isDark ? BLACK : WHITE, height: screenHeight * 0.55 }]}>
-          <View style={styles.header}>
-            <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-              <Text style={{ color: isDark ? WHITE : BLACK, fontSize: 16 }}>X</Text>
-            </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.backdrop}
+          onPress={handleClose}
+          activeOpacity={1}
+          testID="modal-backdrop"
+        />
+
+        <Animated.View
+          style={[
+            styles.sheet,
+            {
+              backgroundColor: bgColor,
+              height: SHEET_HEIGHT,
+              transform: [{ translateY }],
+            },
+          ]}
+        >
+          <View style={styles.handleArea} {...panResponder.panHandlers} testID="drag-handle">
+            <View style={[styles.handleBar, { backgroundColor: isDark ? '#555' : '#ccc' }]} />
           </View>
 
-          <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-            <View style={styles.section}>
-              <Text style={[styles.buildingCode, { color: RED }]}>{code}</Text>
-              <Text style={[styles.buildingName, { color: isDark ? WHITE : BLACK }]}>{name}</Text>
-            </View>
+          <TouchableOpacity style={styles.closeButton} onPress={handleClose} testID="close-button">
+            {renderIcon(UI_ICONS.close, 18, secondaryColor)}
+          </TouchableOpacity>
 
-            {(number || street || city || province) && (
-              <View style={styles.section}>
-                <Text style={[styles.sectionTitle, { color: isDark ? WHITE : BLACK }]}>Address</Text>
-                <Text style={[styles.sectionContent, { color: isDark ? WHITE : BLACK }]}>
-                  {number} {street}{city ? `,` : ''}
-                </Text>
-                <Text style={[styles.sectionContent, { color: isDark ? WHITE : BLACK }]}>
-                  {city}{province ? `, ${province}` : ''}
-                </Text>
+          <ScrollView
+            style={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.scrollContainer}
+          >
+            {code && (
+              <View style={[styles.codeBadge, { backgroundColor: isDark ? '#3a1a1a' : '#fdf2f2' }]}>
+                <Text style={[styles.codeBadgeText, { color: COLORS.red }]}>{code}</Text>
               </View>
             )}
 
-            {accessibility && accessibility.length > 0 && (
-              <View style={styles.section}>
-                <Text style={[styles.sectionTitle, { color: isDark ? WHITE : BLACK }]}>Accessibility</Text>
-                <View style={styles.itemsList}>
-                  {accessibility.map((item, index) => (
-                    <View key={index} style={styles.listItem}>
-                      <Text style={[styles.listItemText, { color: isDark ? WHITE : BLACK }]}>
-                        • {formatAccessibilityName(item)}
-                      </Text>
-                    </View>
-                  ))}
+            <Text style={[styles.buildingName, { color: textColor }]}>{name}</Text>
+
+            {hasAddress && (
+              <View style={styles.addressRow}>
+                <View style={styles.addressIcon}>
+                  {renderIcon(UI_ICONS.mapMarker, 13, addressGreen)}
                 </View>
+                <Text style={[styles.addressText, { color: addressGreen }]}>{addressString}</Text>
+              </View>
+            )}
+
+            {buildingImage && (
+              <View style={[styles.imageContainer, { backgroundColor: iconTileColor }]}>
+                <Image
+                  source={buildingImage}
+                  style={styles.buildingImage}
+                  resizeMode="cover"
+                  testID="building-image"
+                />
               </View>
             )}
 
             {amenities && amenities.length > 0 && (
               <View style={styles.section}>
-                <Text style={[styles.sectionTitle, { color: isDark ? WHITE : BLACK }]}>Amenities</Text>
-                <View style={styles.itemsList}>
-                  {amenities.map((item, index) => (
-                    <View key={index} style={styles.listItem}>
-                      <Text style={[styles.listItemText, { color: isDark ? WHITE : BLACK }]}>
-                        • {formatAmenityName(item)}
-                      </Text>
-                    </View>
-                  ))}
+                <Text style={[styles.sectionTitle, { color: secondaryColor }]}>SERVICES</Text>
+                <View style={styles.iconsRow}>
+                  {amenities.map((key) => {
+                    const config = AMENITY_ICONS[key];
+                    if (!config) return null;
+                    return (
+                      <View key={key} style={[styles.iconTile, { backgroundColor: iconTileColor }]}>
+                        {renderIcon(config, 20, isDark ? '#e0e0e0' : '#444')}
+                        <Text
+                          style={[styles.iconLabel, { color: secondaryColor }]}
+                          numberOfLines={1}
+                        >
+                          {config.label}
+                        </Text>
+                      </View>
+                    );
+                  })}
                 </View>
               </View>
             )}
 
-            <TouchableOpacity
-              disabled={!location}
-              style={[styles.directionsButton, { backgroundColor: !location ? GRAY : RED }]}
-              onPress={() => {
-                if (location && building.geometry.coordinates[0]) {
-                  onGetDirections(location, building.geometry.coordinates[0]);
-                  onClose();
-                }
-              }}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.directionsButtonText}>Get Directions</Text>
-            </TouchableOpacity>
+            {accessibility && accessibility.length > 0 && (
+              <View style={styles.section}>
+                <Text style={[styles.sectionTitle, { color: secondaryColor }]}>ACCESSIBILITY</Text>
+                <View style={styles.iconsRow}>
+                  {accessibility.map((key) => {
+                    const config = ACCESSIBILITY_ICONS[key];
+                    if (!config) return null;
+                    return (
+                      <View key={key} style={[styles.iconTile, { backgroundColor: iconTileColor }]}>
+                        {renderIcon(config, 20, isDark ? '#e0e0e0' : '#444')}
+                        <Text
+                          style={[styles.iconLabel, { color: secondaryColor }]}
+                          numberOfLines={1}
+                        >
+                          {config.label}
+                        </Text>
+                      </View>
+                    );
+                  })}
+                </View>
+              </View>
+            )}
+
+            <View style={styles.buttonsContainer}>
+              <TouchableOpacity
+                style={[styles.directionButton, styles.directionButtonFrom, { borderColor: COLORS.red }]}
+                activeOpacity={0.7}
+                testID="directions-from-button"
+              >
+                <View style={styles.buttonIcon}>{renderIcon(UI_ICONS.route, 16, COLORS.red)}</View>
+                <Text style={[styles.directionButtonFromText, { color: COLORS.red }]}>Get Directions From</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                disabled={!location}
+                style={[
+                  styles.directionButton,
+                  styles.directionButtonTo,
+                  { backgroundColor: !location ? COLORS.gray : COLORS.red },
+                ]}
+                onPress={() => {
+                  if (location && building.geometry.coordinates[0]) {
+                    onGetDirections(location, building.geometry.coordinates[0]);
+                    handleClose();
+                  }
+                }}
+                activeOpacity={0.7}
+                testID="directions-to-button"
+              >
+                <View style={styles.buttonIcon}>{renderIcon(UI_ICONS.route, 16, '#fff')}</View>
+                <Text style={styles.directionButtonToText}>Get Directions To</Text>
+              </TouchableOpacity>
+            </View>
           </ScrollView>
-        </View>
+        </Animated.View>
       </View>
     </Modal>
   );
@@ -147,77 +306,154 @@ const styles = StyleSheet.create({
   overlay: {
     flex: 1,
     justifyContent: 'flex-end',
-    backgroundColor: 'rgba(0, 0, 0, 0.3)',
   },
   backdrop: {
-    flex: 1,
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.35)',
   },
-  bottomSheet: {
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
-    paddingHorizontal: 20,
-    paddingTop: 12,
-    paddingBottom: 20,
+  sheet: {
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -3 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 16,
   },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
+
+  handleArea: {
     alignItems: 'center',
-    paddingRight: 12,
-    marginBottom: 16,
+    paddingTop: 10,
+    paddingBottom: 6,
   },
+  handleBar: {
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+  },
+
   closeButton: {
+    position: 'absolute',
+    top: 10,
+    right: 16,
+    zIndex: 10,
     padding: 8,
   },
-  content: {
+
+  scrollContent: {
     flex: 1,
   },
-  section: {
-    marginBottom: 20,
+  scrollContainer: {
+    paddingHorizontal: 20,
+    paddingBottom: 30,
   },
-  buildingCode: {
-    fontSize: 12,
-    fontWeight: '600',
-    marginBottom: 5,
+
+  codeBadge: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    borderRadius: 4,
+    marginBottom: 8,
+  },
+  codeBadgeText: {
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 0.8,
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
   },
+
   buildingName: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: 'bold',
-    marginBottom: 10,
+    marginBottom: 6,
+    lineHeight: 28,
+  },
+
+  addressRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  addressIcon: {
+    marginRight: 6,
+  },
+  addressText: {
+    fontSize: 13,
+    fontWeight: '500',
+    flexShrink: 1,
+  },
+
+  imageContainer: {
+    borderRadius: 12,
+    overflow: 'hidden',
+    marginBottom: 18,
+  },
+  buildingImage: {
+    width: '100%',
+    height: 170,
+  },
+
+  section: {
+    marginBottom: 18,
   },
   sectionTitle: {
-    fontSize: 15,
-    fontWeight: 'bold',
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 1,
+    textTransform: 'uppercase',
     marginBottom: 10,
   },
-  sectionContent: {
-    fontSize: 14,
-    lineHeight: 20,
+
+  iconsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
   },
-  itemsList: {
-    gap: 8,
-  },
-  listItem: {
-    marginLeft: 5,
-  },
-  listItemText: {
-    fontSize: 14,
-    lineHeight: 20,
-  },
-  directionsButton: {
-    backgroundColor: RED,
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 6,
-    marginTop: 20,
-    marginBottom: 10,
+  iconTile: {
     alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+    minWidth: 72,
   },
-  directionsButtonText: {
-    color: WHITE,
+  iconLabel: {
+    fontSize: 11,
+    fontWeight: '500',
+    marginTop: 6,
+    textAlign: 'center',
+  },
+
+  buttonsContainer: {
+    marginTop: 6,
+    gap: 10,
+    marginBottom: 10,
+  },
+  directionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 14,
+    borderRadius: 12,
+  },
+  directionButtonFrom: {
+    borderWidth: 1.5,
+    backgroundColor: 'transparent',
+  },
+  directionButtonTo: {
+    borderWidth: 0,
+  },
+  buttonIcon: {
+    marginRight: 8,
+  },
+  directionButtonFromText: {
     fontSize: 15,
     fontWeight: '600',
+  },
+  directionButtonToText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#ffffff',
   },
 });
