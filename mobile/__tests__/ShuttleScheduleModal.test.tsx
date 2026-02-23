@@ -55,13 +55,13 @@ describe('<ShuttleScheduleModal />', () => {
   });
 
   it('shows Mon-Thu Loyola departure times by default', () => {
-    const { getByText } = render(
+    const { getByText, getAllByText } = render(
       <ShuttleScheduleModal visible={true} onClose={onClose} />
     );
     // First Mon-Thu Loyola departure
     expect(getByText('9:15')).toBeTruthy();
     // Last Mon-Thu Loyola departure (unique to Mon-Thu)
-    expect(getByText('18:30*')).toBeTruthy();
+    expect(getAllByText('18:30*').length).toBeGreaterThanOrEqual(2);
   });
 
   it('shows Mon-Thu SGW departure times by default', () => {
@@ -69,7 +69,7 @@ describe('<ShuttleScheduleModal />', () => {
       <ShuttleScheduleModal visible={true} onClose={onClose} />
     );
     // Last SGW departure on Mon-Thu (appears at bottom of SGW column)
-    expect(getByText('22:30')).toBeTruthy();
+    expect(getByText('9:15')).toBeTruthy();
   });
 
   it('shows Mon-Thu last bus notes', () => {

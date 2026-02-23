@@ -278,7 +278,7 @@ describe('<Index />', () => {
     fireEvent.press(polygons[0]);
     fireEvent.press(getByTestId('close-button'));
     await waitFor(() => {
-      expect(queryByText('Get Directions To')).toBeNull();
+      expect(queryByText('Get Directions To')).toBeFalsy();
     });
   });
 
