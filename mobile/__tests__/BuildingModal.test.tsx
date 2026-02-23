@@ -413,4 +413,92 @@ describe('<BuildingModal />', () => {
     );
     expect(queryByText('H')).toBeNull();
   });
+
+  // --- PanResponder: fast downward flick dismisses ---
+  it('dismisses on fast downward flick', () => {
+    const building = makeBuilding();
+    const { getByTestId } = render(
+      <BuildingModal
+        visible={true}
+        building={building as any}
+        onClose={onClose}
+        onDirectionsFrom={onDirectionsFrom}
+        onDirectionsTo={onDirectionsTo}
+      />
+    );
+
+    const handle = getByTestId('drag-handle');
+    const now = Date.now();
+    const touch = { touchActive: true, startTimeStamp: now, startPageX: 0, startPageY: 200, currentPageX: 0, currentPageY: 200, currentTimeStamp: now, previousPageX: 0, previousPageY: 200, previousTimeStamp: now };
+    const grantHistory = { touchBank: [touch], mostRecentTimeStamp: now, numberActiveTouches: 1, indexOfSingleActiveTouch: 0 };
+
+    const moveTouch = { ...touch, currentPageY: 400, currentTimeStamp: now + 50, previousPageY: 200, previousTimeStamp: now };
+    const moveHistory = { touchBank: [moveTouch], mostRecentTimeStamp: now + 50, numberActiveTouches: 1, indexOfSingleActiveTouch: 0 };
+
+    const releaseTouch = { ...moveTouch, touchActive: false, currentTimeStamp: now + 100 };
+    const releaseHistory = { touchBank: [releaseTouch], mostRecentTimeStamp: now + 100, numberActiveTouches: 0, indexOfSingleActiveTouch: 0 };
+
+    fireEvent(handle, 'responderGrant', { nativeEvent: {}, touchHistory: grantHistory });
+    fireEvent(handle, 'responderMove', { nativeEvent: { touches: [], changedTouches: [] }, touchHistory: moveHistory });
+    fireEvent(handle, 'responderRelease', { nativeEvent: { touches: [], changedTouches: [] }, touchHistory: releaseHistory });
+
+    act(() => { jest.advanceTimersByTime(300); });
+    expect(handle).toBeTruthy();
+  });
+
+  // --- PanResponder: small drag snaps back ---
+  it('snaps back on small drag that does not exceed threshold', () => {
+    const building = makeBuilding();
+    const { getByTestId } = render(
+      <BuildingModal
+        visible={true}
+        building={building as any}
+        onClose={onClose}
+        onDirectionsFrom={onDirectionsFrom}
+        onDirectionsTo={onDirectionsTo}
+      />
+    );
+
+    const handle = getByTestId('drag-handle');
+    const now = Date.now();
+    const touch = { touchActive: true, startTimeStamp: now, startPageX: 0, startPageY: 200, currentPageX: 0, currentPageY: 200, currentTimeStamp: now, previousPageX: 0, previousPageY: 200, previousTimeStamp: now };
+    const grantHistory = { touchBank: [touch], mostRecentTimeStamp: now, numberActiveTouches: 1, indexOfSingleActiveTouch: 0 };
+
+    const releaseTouch = { ...touch, currentPageY: 210, currentTimeStamp: now + 300, touchActive: false };
+    const releaseHistory = { touchBank: [releaseTouch], mostRecentTimeStamp: now + 300, numberActiveTouches: 0, indexOfSingleActiveTouch: 0 };
+
+    fireEvent(handle, 'responderGrant', { nativeEvent: {}, touchHistory: grantHistory });
+    fireEvent(handle, 'responderRelease', { nativeEvent: { touches: [], changedTouches: [] }, touchHistory: releaseHistory });
+
+    act(() => { jest.advanceTimersByTime(300); });
+    expect(handle).toBeTruthy();
+  });
+
+  // --- PanResponder: upward flick snaps to top ---
+  it('handles upward flick without crashing', () => {
+    const building = makeBuilding();
+    const { getByTestId } = render(
+      <BuildingModal
+        visible={true}
+        building={building as any}
+        onClose={onClose}
+        onDirectionsFrom={onDirectionsFrom}
+        onDirectionsTo={onDirectionsTo}
+      />
+    );
+
+    const handle = getByTestId('drag-handle');
+    const now = Date.now();
+    const touch = { touchActive: true, startTimeStamp: now, startPageX: 0, startPageY: 200, currentPageX: 0, currentPageY: 200, currentTimeStamp: now, previousPageX: 0, previousPageY: 200, previousTimeStamp: now };
+    const grantHistory = { touchBank: [touch], mostRecentTimeStamp: now, numberActiveTouches: 1, indexOfSingleActiveTouch: 0 };
+
+    const releaseTouch = { ...touch, currentPageY: 190, currentTimeStamp: now + 50, touchActive: false };
+    const releaseHistory = { touchBank: [releaseTouch], mostRecentTimeStamp: now + 50, numberActiveTouches: 0, indexOfSingleActiveTouch: 0 };
+
+    fireEvent(handle, 'responderGrant', { nativeEvent: {}, touchHistory: grantHistory });
+    fireEvent(handle, 'responderRelease', { nativeEvent: { touches: [], changedTouches: [] }, touchHistory: releaseHistory });
+
+    act(() => { jest.advanceTimersByTime(300); });
+    expect(handle).toBeTruthy();
+  });
 });

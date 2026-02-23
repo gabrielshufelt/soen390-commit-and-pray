@@ -527,4 +527,49 @@ describe('<Index />', () => {
 
     alertSpy.mockRestore();
   });
+
+  // --- Directions From/To via BuildingModal ---
+  describe('handleDirectionsFrom / handleDirectionsTo', () => {
+    it('sets start choice when Get Directions From is pressed in modal', async () => {
+      const { getAllByTestId, getByTestId } = renderWithTheme(<Index />);
+      const polygons = await waitFor(() => getAllByTestId('polygon'));
+
+      // Open the modal by pressing a polygon
+      fireEvent.press(polygons[0]);
+
+      // Press "Get Directions From"
+      await waitFor(() => expect(getByTestId('directions-from-button')).toBeTruthy());
+      fireEvent.press(getByTestId('directions-from-button'));
+
+      // The building should now be set as the start choice in SearchBar
+      await waitFor(() => {
+        expect(mockSearchBarProperties.start).toBeTruthy();
+        expect(mockSearchBarProperties.start.name).toBeTruthy();
+        expect(mockSearchBarProperties.start.coordinate).toBeTruthy();
+        expect(mockSearchBarProperties.start.coordinate.latitude).toBeDefined();
+        expect(mockSearchBarProperties.start.coordinate.longitude).toBeDefined();
+      });
+    });
+
+    it('sets destination choice when Get Directions To is pressed in modal', async () => {
+      const { getAllByTestId, getByTestId } = renderWithTheme(<Index />);
+      const polygons = await waitFor(() => getAllByTestId('polygon'));
+
+      // Open the modal by pressing a polygon
+      fireEvent.press(polygons[0]);
+
+      // Press "Get Directions To"
+      await waitFor(() => expect(getByTestId('directions-to-button')).toBeTruthy());
+      fireEvent.press(getByTestId('directions-to-button'));
+
+      // The building should now be set as the destination choice in SearchBar
+      await waitFor(() => {
+        expect(mockSearchBarProperties.destination).toBeTruthy();
+        expect(mockSearchBarProperties.destination.name).toBeTruthy();
+        expect(mockSearchBarProperties.destination.coordinate).toBeTruthy();
+        expect(mockSearchBarProperties.destination.coordinate.latitude).toBeDefined();
+        expect(mockSearchBarProperties.destination.coordinate.longitude).toBeDefined();
+      });
+    });
+  });
 });
