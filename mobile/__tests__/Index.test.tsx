@@ -797,6 +797,10 @@ describe('<Index />', () => {
       );
       await waitFor(() => {
         expect(queryByText('🚌 Shuttle Schedule')).toBeNull();
+      });
+    });
+  });
+
   // --- Same Building Alert ---
   it('shows an alert and blocks routing when start and destination are the same building', async () => {
     const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => { });
