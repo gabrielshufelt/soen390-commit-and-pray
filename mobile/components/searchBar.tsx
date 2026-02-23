@@ -1,6 +1,7 @@
 import type { MapViewDirectionsMode } from 'react-native-maps-directions';
 import React, { useMemo, useState, useEffect, useRef } from "react";
 import { View, Text, TextInput, TouchableOpacity, FlatList, SafeAreaView, Keyboard, TouchableWithoutFeedback } from "react-native";
+import { useShuttleAvailability } from "../hooks/useShuttleAvailability";
 
 import { FontAwesome } from "@expo/vector-icons";
 import { styles, MAROON, MUTED } from "../styles/searchBar.styles";
@@ -42,6 +43,12 @@ type Props = {
     distanceText: string | null;
     durationText: string | null;
   };
+
+  /** Controlled: whether the "Use Concordia Shuttle" option is checked. */
+  useShuttle?: boolean;
+  onUseShuttleChange?: (active: boolean) => void;
+  /** Fires whenever the user switches the campus filter (SGW / Loyola). */
+  onCampusChange?: (campus: "SGW" | "Loyola") => void;
 };
 
 function stripCodePrefix(name: string, code?: string) {
@@ -58,6 +65,44 @@ function displayName(b: { name: string; code?: string }) {
 
 function makeHaystack(b: BuildingChoice) {
   return `${stripCodePrefix(b.name, b.code)} ${b.code ?? ""} ${b.address ?? ""}`.toLowerCase();
+}
+
+// ---------------------------------------------------------------------------
+// Shuttle checkbox (pure UI sub-component)
+// ---------------------------------------------------------------------------
+
+type ShuttleCheckboxProps = {
+  checked: boolean;
+  available: boolean;
+  nextDeparture: string | null;
+  onToggle: () => void;
+};
+
+function ShuttleCheckbox({ checked, available, nextDeparture, onToggle }: ShuttleCheckboxProps) {
+  return (
+    <TouchableOpacity
+      testID="shuttle.checkbox"
+      style={[styles.shuttleRow, !available && styles.shuttleRowDisabled]}
+      onPress={onToggle}
+      disabled={!available}
+      activeOpacity={0.85}
+      accessibilityRole="checkbox"
+      accessibilityState={{ checked, disabled: !available }}
+      accessibilityLabel="Use Concordia Shuttle"
+    >
+      <View style={[styles.shuttleCheckbox, checked && styles.shuttleCheckboxChecked]}>
+        {checked && <Text style={styles.shuttleCheckboxTick}>✓</Text>}
+      </View>
+      <Text style={[styles.shuttleLabel, !available && styles.shuttleLabelDisabled]}>
+        Use Concordia Shuttle
+      </Text>
+      {available && nextDeparture ? (
+        <Text style={styles.shuttleNextDep}>Next: {nextDeparture}</Text>
+      ) : (
+        <Text style={styles.shuttleLabelDisabled}>No service</Text>
+      )}
+    </TouchableOpacity>
+  );
 }
 
 export default function SearchBar({
@@ -77,9 +122,21 @@ export default function SearchBar({
   onExitPreview,
   previewActive = false,
   previewRouteInfo,
+  useShuttle = false,
+  onUseShuttleChange,
+  onCampusChange,
 }: Props) {
   const [expanded, setExpanded] = useState(defaultExpanded);
   const [campus, setCampus] = useState<"SGW" | "Loyola">("SGW");
+
+  const shuttleAvailability = useShuttleAvailability(campus);
+
+  function handleCampusChange(next: "SGW" | "Loyola") {
+    setCampus(next);
+    onCampusChange?.(next);
+    // Reset shuttle when campus changes – availability may differ
+    if (useShuttle) onUseShuttleChange?.(false);
+  }
 
   const [destText, setDestText] = useState("");
   const [destFocused, setDestFocused] = useState(false);
@@ -200,7 +257,7 @@ export default function SearchBar({
           <View style={styles.segmentOuter}>
             <TouchableOpacity
               style={[styles.segmentBtn, campus === "SGW" && styles.segmentBtnActive]}
-              onPress={() => setCampus("SGW")}
+              onPress={() => handleCampusChange("SGW")}
               activeOpacity={0.9}
               accessibilityRole="button"
               accessibilityState={{ selected: campus === "SGW" }}
@@ -211,7 +268,7 @@ export default function SearchBar({
 
             <TouchableOpacity
               style={[styles.segmentBtn, campus === "Loyola" && styles.segmentBtnActive]}
-              onPress={() => setCampus("Loyola")}
+              onPress={() => handleCampusChange("Loyola")}
               activeOpacity={0.9}
               accessibilityRole="button"
               accessibilityState={{ selected: campus === "Loyola" }}
@@ -318,9 +375,22 @@ export default function SearchBar({
             <Text style={[styles.sectionLabel, { marginTop: 14 }]}>MODE OF TRANSPORT</Text>
             <TransportModeSelector
               selectedMode={transportMode}
-              onModeSelect={onChangeTransportMode}
+              onModeSelect={(mode) => {
+                onChangeTransportMode(mode);
+                // Clear shuttle if user switches away from TRANSIT
+                if (mode !== 'TRANSIT' && useShuttle) onUseShuttleChange?.(false);
+              }}
               disabled={routeActive}
             />
+
+            {transportMode === 'TRANSIT' && (
+              <ShuttleCheckbox
+                checked={useShuttle}
+                available={shuttleAvailability.available}
+                nextDeparture={shuttleAvailability.nextDeparture}
+                onToggle={() => onUseShuttleChange?.(!useShuttle)}
+              />
+            )}
 
             {!routeActive && destination && previewRouteInfo?.durationText && (
               <View style={styles.timeEstimateCard}>
