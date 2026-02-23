@@ -34,6 +34,7 @@ const mockPreviewDirections = jest.fn();
 const mockCheckProgress = jest.fn();
 const mockNextStep = jest.fn();
 const mockPrevStep = jest.fn();
+const mockSetTransportMode = jest.fn();
 
 jest.mock('../hooks/useLocationPermissions', () => ({
   useLocationPermissions: () => mockPermissionState(),
@@ -163,6 +164,7 @@ const defaultDirections = {
     loading: false, error: null,
     routeInfo: { distance: null, duration: null, distanceText: null, durationText: null },
     steps: [], currentStepIndex: 0, routeCoordinates: [], isOffRoute: false,
+    transportMode: 'WALKING' as const,
   },
   apiKey: 'test-api-key',
   startDirections: mockStartDirections,
@@ -173,6 +175,7 @@ const defaultDirections = {
   nextStep: mockNextStep,
   prevStep: mockPrevStep,
   checkProgress: mockCheckProgress,
+  setTransportMode: mockSetTransportMode,
   previewRouteInfo: {
     distance: null,
     duration: null,
@@ -191,6 +194,26 @@ const activeDirections = {
     loading: false, error: null,
     routeInfo: { distance: null, duration: null, distanceText: null, durationText: null },
     steps: [], currentStepIndex: 0, routeCoordinates: [], isOffRoute: false,
+    transportMode: 'WALKING' as const,
+  },
+};
+
+const mockStep = {
+  instruction: 'Turn left onto Rue Sainte-Catherine',
+  distance: '200 m',
+  duration: '2 min',
+  maneuver: 'turn-left',
+  startLocation: { latitude: 45.497, longitude: -73.579 },
+  endLocation: { latitude: 45.496, longitude: -73.580 },
+};
+
+const activeDirectionsWithSteps = {
+  ...activeDirections,
+  state: {
+    ...activeDirections.state,
+    steps: [mockStep, { ...mockStep, instruction: 'Continue straight', maneuver: 'straight' }],
+    currentStepIndex: 0,
+    routeInfo: { distance: 1.2, duration: 8, distanceText: '1.2 km', durationText: '8 min' },
   },
 };
 
@@ -494,6 +517,203 @@ describe('<Index />', () => {
         expect(mockSearchBarProperties.start).toBeNull();
         expect(mockSearchBarProperties.destination).toBeNull();
       });
+    });
+  });
+
+  // --- SearchBar & CampusToggle hidden when directions are active ---
+  describe('UI visibility when directions are active', () => {
+    it('hides SearchBar when directions are active', async () => {
+      mockDirectionsHook.mockReturnValue(activeDirections);
+      const { queryByTestId } = renderWithTheme(<Index />);
+      await waitFor(() => {
+        expect(queryByTestId('search-bar')).toBeNull();
+      });
+    });
+
+    it('shows SearchBar when directions are inactive', async () => {
+      const { getByTestId } = renderWithTheme(<Index />);
+      await waitFor(() => {
+        expect(getByTestId('search-bar')).toBeTruthy();
+      });
+    });
+
+    it('hides CampusToggle when directions are active', async () => {
+      mockDirectionsHook.mockReturnValue(activeDirections);
+      const { queryByText } = renderWithTheme(<Index />);
+      await waitFor(() => {
+        // CampusToggle renders 'SGW' and 'Loyola' toggle buttons
+        expect(queryByText('Loyola')).toBeNull();
+      });
+    });
+
+    it('shows CampusToggle when directions are inactive', async () => {
+      const { getByText } = renderWithTheme(<Index />);
+      await waitFor(() => {
+        expect(getByText('Loyola')).toBeTruthy();
+      });
+    });
+  });
+
+  // --- NavigationSteps ---
+  describe('NavigationSteps', () => {
+    it('renders NavigationSteps when active with steps', async () => {
+      mockDirectionsHook.mockReturnValue(activeDirectionsWithSteps);
+      const { getByText } = renderWithTheme(<Index />);
+      await waitFor(() => {
+        expect(getByText(/Turn left onto Rue Sainte-Catherine/)).toBeTruthy();
+      });
+    });
+
+    it('does NOT render NavigationSteps when active but steps are empty', async () => {
+      mockDirectionsHook.mockReturnValue(activeDirections);
+      const { queryByText } = renderWithTheme(<Index />);
+      await waitFor(() => {
+        expect(queryByText(/Turn left/)).toBeNull();
+      });
+    });
+
+    it('does NOT render NavigationSteps when directions are inactive', async () => {
+      const { queryByText } = renderWithTheme(<Index />);
+      await waitFor(() => {
+        expect(queryByText(/Turn left/)).toBeNull();
+      });
+    });
+
+    it('calls nextStep when next-step button is pressed in NavigationSteps', async () => {
+      mockDirectionsHook.mockReturnValue(activeDirectionsWithSteps);
+      const { getByText } = renderWithTheme(<Index />);
+      await waitFor(() => expect(getByText(/Turn left/)).toBeTruthy());
+      // NavigationSteps renders a '›' next button
+      fireEvent.press(getByText('›'));
+      await waitFor(() => expect(mockNextStep).toHaveBeenCalled());
+    });
+
+    it('calls endDirections when end-navigation button is pressed in NavigationSteps', async () => {
+      mockDirectionsHook.mockReturnValue(activeDirectionsWithSteps);
+      const { getByText } = renderWithTheme(<Index />);
+      await waitFor(() => expect(getByText(/Turn left/)).toBeTruthy());
+      fireEvent.press(getByText('End'));
+      await waitFor(() => expect(mockEndDirections).toHaveBeenCalled());
+    });
+  });
+
+  // --- startDirectionsToBuilding from BuildingModal ---
+  describe('BuildingModal Get Directions', () => {
+    it('calls startDirectionsToBuilding when Get Directions is pressed from BuildingModal', async () => {
+      const { getAllByTestId, getByText } = renderWithTheme(<Index />);
+      const polygons = await waitFor(() => getAllByTestId('polygon'));
+      fireEvent.press(polygons[0]);
+      await waitFor(() => expect(getByText('Get Directions')).toBeTruthy());
+      fireEvent.press(getByText('Get Directions'));
+      await waitFor(() => expect(mockStartDirectionsToBuilding).toHaveBeenCalled());
+    });
+  });
+
+  // --- Transport mode & shuttle props passed through SearchBar ---
+  describe('SearchBar prop wiring', () => {
+    it('passes transportMode from directionsState to SearchBar', async () => {
+      const transitDirections = {
+        ...defaultDirections,
+        state: { ...defaultDirections.state, transportMode: 'TRANSIT' as const },
+      };
+      mockDirectionsHook.mockReturnValue(transitDirections);
+      renderWithTheme(<Index />);
+      await waitFor(() => {
+        expect(mockSearchBarProperties.transportMode).toBe('TRANSIT');
+      });
+    });
+
+    it('passes setTransportMode as onChangeTransportMode to SearchBar', async () => {
+      renderWithTheme(<Index />);
+      await waitFor(() => {
+        expect(mockSearchBarProperties.onChangeTransportMode).toBe(mockSetTransportMode);
+      });
+    });
+
+    it('passes useShuttle=false to SearchBar by default', async () => {
+      renderWithTheme(<Index />);
+      await waitFor(() => {
+        expect(mockSearchBarProperties.useShuttle).toBe(false);
+      });
+    });
+
+    it('updates useShuttle prop on SearchBar when toggled via onUseShuttleChange', async () => {
+      renderWithTheme(<Index />);
+      await waitFor(() => expect(mockSearchBarProperties.onUseShuttleChange).toBeDefined());
+
+      act(() => { mockSearchBarProperties.onUseShuttleChange(true); });
+
+      await waitFor(() => {
+        expect(mockSearchBarProperties.useShuttle).toBe(true);
+      });
+    });
+
+    it('passes previewRouteInfo to SearchBar', async () => {
+      renderWithTheme(<Index />);
+      await waitFor(() => {
+        expect(mockSearchBarProperties.previewRouteInfo).toBeDefined();
+      });
+    });
+  });
+
+  // --- handleStartRoute edge case: no location ---
+  describe('handleStartRoute edge cases', () => {
+    it('does not call startDirections when location is null and start route is triggered', async () => {
+      mockWatchLocation.mockReturnValue(noLocationWatch);
+      mockPermissionState.mockReturnValue(deniedPermission);
+
+      renderWithTheme(<Index />);
+      await waitFor(() => expect(mockSearchBarProperties.onStartRoute).toBeDefined());
+
+      await act(async () => {
+        mockSearchBarProperties.onChangeDestination({
+          id: 'H',
+          name: 'Hall Building',
+          coordinate: { latitude: 45.497, longitude: -73.579 },
+        });
+      });
+
+      mockSearchBarProperties.onStartRoute();
+
+      expect(mockStartDirections).not.toHaveBeenCalled();
+    });
+
+    it('does not call previewDirections when destination is null', async () => {
+      renderWithTheme(<Index />);
+      await waitFor(() => expect(mockSearchBarProperties.onPreviewRoute).toBeDefined());
+
+      // No destination set — call preview anyway
+      mockSearchBarProperties.onPreviewRoute();
+
+      expect(mockPreviewDirections).not.toHaveBeenCalled();
+    });
+
+    it('does not call previewDirections when start is null', async () => {
+      renderWithTheme(<Index />);
+      await waitFor(() => expect(mockSearchBarProperties.onPreviewRoute).toBeDefined());
+
+      await act(async () => {
+        mockSearchBarProperties.onChangeDestination({
+          id: 'H',
+          name: 'Hall Building',
+          coordinate: { latitude: 45.497, longitude: -73.579 },
+        });
+      });
+
+      // start is still null
+      mockSearchBarProperties.onPreviewRoute();
+
+      expect(mockPreviewDirections).not.toHaveBeenCalled();
+    });
+  });
+
+  // --- Shuttle bus stop markers ---
+  describe('Shuttle bus stop markers', () => {
+    it('renders bus stop markers on the map', async () => {
+      const { getAllByTestId } = renderWithTheme(<Index />);
+      const markers = await waitFor(() => getAllByTestId('marker'));
+      // At least the two shuttle stop markers should be present (may include label markers)
+      expect(markers.length).toBeGreaterThanOrEqual(2);
     });
   });
 
