@@ -28,4 +28,18 @@ describe('renderIcon', () => {
         const result = renderIcon(unknownConfig, 20, '#000');
         expect(result).toBeNull();
     });
+
+    it('passes accessibilityLabel from config.label for FontAwesome5', () => {
+        const { getByLabelText } = render(
+            <View>{renderIcon(AMENITY_ICONS.info, 20, '#000')}</View>
+        );
+        expect(getByLabelText('Info')).toBeTruthy();
+    });
+
+    it('passes accessibilityLabel from config.label for MaterialCommunityIcons', () => {
+        const { getByLabelText } = render(
+            <View>{renderIcon(ACCESSIBILITY_ICONS.accessibility_ramp, 20, '#000')}</View>
+        );
+        expect(getByLabelText('Ramp')).toBeTruthy();
+    });
 });

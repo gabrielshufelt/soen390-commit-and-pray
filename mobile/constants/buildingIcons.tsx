@@ -31,9 +31,9 @@ export const UI_ICONS = {
 export const renderIcon = (config: IconConfig, size: number, color: string): React.ReactNode => {
     switch (config.lib) {
         case 'FontAwesome5':
-            return <FontAwesome5 name={config.icon} size={size} color={color} />;
+            return <FontAwesome5 name={config.icon} size={size} color={color} accessibilityLabel={config.label} />;
         case 'MaterialCommunityIcons':
-            return <MaterialCommunityIcons name={config.icon as any} size={size} color={color} />;
+            return <MaterialCommunityIcons name={config.icon as any} size={size} color={color} accessibilityLabel={config.label} />;
         default:
             return null;
     }
