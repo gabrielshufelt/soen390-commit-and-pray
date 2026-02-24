@@ -1,4 +1,3 @@
-
 import { StyleSheet, Platform } from "react-native";
 
 export const MAROON = "#912338";
@@ -10,9 +9,12 @@ export const SHEET_BG = "#F7F3F1";
 export const CARD_BG = "#FFFFFF";
 
 export const styles = StyleSheet.create({
+  // ─────────────────────────────────────────────────────────────
+  // Transport mode selector (used by TransportModeSelector)
+  // ─────────────────────────────────────────────────────────────
   transportModeSelectorRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     marginBottom: 8,
   },
   transportModeButtonFlex: {
@@ -20,9 +22,9 @@ export const styles = StyleSheet.create({
     marginHorizontal: 4,
   },
   transportModeButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     paddingVertical: 10,
     paddingHorizontal: 8,
     borderRadius: 10,
@@ -32,7 +34,7 @@ export const styles = StyleSheet.create({
     marginVertical: 2,
   },
   transportModeButtonActive: {
-    backgroundColor: 'rgba(145,35,56,0.08)',
+    backgroundColor: "rgba(145,35,56,0.08)",
     borderColor: MAROON,
   },
   transportModeButtonDisabled: {
@@ -40,13 +42,17 @@ export const styles = StyleSheet.create({
   },
   transportModeText: {
     marginLeft: 6,
-    fontWeight: '600',
+    fontWeight: "600",
     color: TEXT,
     fontSize: 14,
   },
   transportModeTextActive: {
     color: MAROON,
   },
+
+  // ─────────────────────────────────────────────────────────────
+  // Collapsed wrapper
+  // ─────────────────────────────────────────────────────────────
   wrapperCollapsed: {
     position: "absolute",
     top: Platform.OS === "ios" ? 62 : 48,
@@ -55,7 +61,6 @@ export const styles = StyleSheet.create({
     zIndex: 9999,
     elevation: 9999,
   },
-
   collapsedBar: {
     flexDirection: "row",
     alignItems: "center",
@@ -75,8 +80,15 @@ export const styles = StyleSheet.create({
     justifyContent: "center",
     marginRight: 10,
   },
-  collapsedPlaceholder: { flex: 1, fontWeight: "800", color: "#6B7280" },
+  collapsedPlaceholder: {
+    flex: 1,
+    fontWeight: "800",
+    color: MUTED,
+  },
 
+  // ─────────────────────────────────────────────────────────────
+  // Expanded overlay sheet
+  // ─────────────────────────────────────────────────────────────
   fullscreenOverlay: {
     position: "absolute",
     top: 0,
@@ -93,16 +105,40 @@ export const styles = StyleSheet.create({
     paddingTop: Platform.OS === "ios" ? 6 : 10,
   },
 
+  // Header: back + title + right menu
   header: {
     flexDirection: "row",
     alignItems: "center",
     paddingVertical: 6,
     position: "relative",
   },
-  headerBtn: { width: 44, height: 44, alignItems: "center", justifyContent: "center" },
-  headerBack: { fontSize: 26, color: TEXT, opacity: 0.85 },
-  headerTitle: { fontSize: 18, fontWeight: "900", color: TEXT, marginLeft: 6 },
+  headerBtn: {
+    width: 44,
+    height: 44,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  headerBtnRight: {
+    position: "absolute",
+    right: 0,
+    width: 44,
+    height: 44,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  headerBack: {
+    fontSize: 26,
+    color: TEXT,
+    opacity: 0.85,
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: "900",
+    color: TEXT,
+    marginLeft: 6,
+  },
 
+  // Campus segmented control
   segmentOuter: {
     flexDirection: "row",
     backgroundColor: "rgba(255,255,255,0.65)",
@@ -112,11 +148,24 @@ export const styles = StyleSheet.create({
     borderColor: BORDER,
     marginBottom: 12,
   },
-  segmentBtn: { flex: 1, borderRadius: 12, paddingVertical: 10, alignItems: "center" },
-  segmentBtnActive: { backgroundColor: CARD_BG },
-  segmentText: { fontWeight: "800", color: MUTED },
-  segmentTextActive: { color: MAROON },
+  segmentBtn: {
+    flex: 1,
+    borderRadius: 12,
+    paddingVertical: 10,
+    alignItems: "center",
+  },
+  segmentBtnActive: {
+    backgroundColor: CARD_BG,
+  },
+  segmentText: {
+    fontWeight: "800",
+    color: MUTED,
+  },
+  segmentTextActive: {
+    color: MAROON,
+  },
 
+  // Route card
   routeCard: {
     backgroundColor: CARD_BG,
     borderRadius: 16,
@@ -124,7 +173,6 @@ export const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: BORDER,
   },
-
   sectionLabel: {
     fontSize: 12,
     fontWeight: "900",
@@ -132,7 +180,6 @@ export const styles = StyleSheet.create({
     color: "#4B5563",
     marginBottom: 8,
   },
-
   inputRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -143,8 +190,10 @@ export const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "rgba(17,24,39,0.06)",
   },
-  destRow: { borderColor: "rgba(145,35,56,0.25)", backgroundColor: "#FFFFFF" },
-
+  destRow: {
+    borderColor: "rgba(145,35,56,0.25)",
+    backgroundColor: "#FFFFFF",
+  },
   leftIconCircle: {
     width: 34,
     height: 34,
@@ -163,10 +212,15 @@ export const styles = StyleSheet.create({
     justifyContent: "center",
     marginRight: 10,
   },
+  destInput: {
+    flex: 1,
+    fontSize: 15,
+    fontWeight: "800",
+    color: TEXT,
+    paddingVertical: 0,
+  },
 
-  inputTextStrong: { fontSize: 15, fontWeight: "900", color: TEXT },
-  destInput: { flex: 1, fontSize: 15, fontWeight: "800", color: TEXT, paddingVertical: 0 },
-
+  // Suggestions dropdown
   suggestionsBox: {
     marginTop: 10,
     borderRadius: 14,
@@ -176,48 +230,11 @@ export const styles = StyleSheet.create({
     backgroundColor: CARD_BG,
     maxHeight: 220,
   },
-  endRouteButton: {
-    marginTop: 12,
-    borderRadius: 14,
-    paddingVertical: 12,
-    alignItems: "center",
-    backgroundColor: "rgba(145,35,56,0.10)",
-    borderWidth: 1,
-    borderColor: "rgba(145,35,56,0.35)",
-  },
-  endRouteButtonText: {
-    fontWeight: "900",
-    color: MAROON,
-    letterSpacing: 0.3,
-  },
-  startRouteButton: {
-    marginTop: 12,
-    borderRadius: 14,
-    paddingVertical: 12,
-    alignItems: "center",
-    backgroundColor: MAROON,
-    borderWidth: 1,
-    borderColor: MAROON,
-  },
-  startRouteButtonText: {
-    fontWeight: "900",
-    color: "#FFFFFF",
-    letterSpacing: 0.3,
-  },
-  previewRouteButton: {
-    marginTop: 12,
-    borderRadius: 14,
-    paddingVertical: 12,
-    alignItems: "center",
-    backgroundColor: "#FFFFFF",
-    borderWidth: 1.5,
-    borderColor: MAROON,
-  },
-  previewRouteButtonText: {
-    fontWeight: "900",
-    color: MAROON,
-    letterSpacing: 0.3,
-  },
+  suggestionItem: { paddingHorizontal: 14, paddingVertical: 12 },
+  suggestionTitle: { fontWeight: "900", color: TEXT },
+  suggestionSub: { marginTop: 3, color: MUTED, fontSize: 12, fontWeight: "700" },
+
+  // Time estimate card
   timeEstimateCard: {
     marginTop: 10,
     marginBottom: 12,
@@ -247,11 +264,58 @@ export const styles = StyleSheet.create({
     fontWeight: "500",
     color: MUTED,
   },
-  suggestionItem: { paddingHorizontal: 14, paddingVertical: 12 },
-  suggestionTitle: { fontWeight: "900", color: TEXT },
-  suggestionSub: { marginTop: 3, color: MUTED, fontSize: 12, fontWeight: "700" },
 
-  filterRow: { flexDirection: "row", gap: 10, marginTop: 12, marginBottom: 10 },
+  // Primary / secondary buttons
+  startRouteButton: {
+    marginTop: 12,
+    borderRadius: 14,
+    paddingVertical: 12,
+    alignItems: "center",
+    backgroundColor: MAROON,
+    borderWidth: 1,
+    borderColor: MAROON,
+  },
+  startRouteButtonText: {
+    fontWeight: "900",
+    color: "#FFFFFF",
+    letterSpacing: 0.3,
+  },
+  endRouteButton: {
+    marginTop: 12,
+    borderRadius: 14,
+    paddingVertical: 12,
+    alignItems: "center",
+    backgroundColor: "rgba(145,35,56,0.10)",
+    borderWidth: 1,
+    borderColor: "rgba(145,35,56,0.35)",
+  },
+  endRouteButtonText: {
+    fontWeight: "900",
+    color: MAROON,
+    letterSpacing: 0.3,
+  },
+  previewRouteButton: {
+    marginTop: 12,
+    borderRadius: 14,
+    paddingVertical: 12,
+    alignItems: "center",
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1.5,
+    borderColor: MAROON,
+  },
+  previewRouteButtonText: {
+    fontWeight: "900",
+    color: MAROON,
+    letterSpacing: 0.3,
+  },
+
+  // Quick filter chips
+  filterRow: {
+    flexDirection: "row",
+    gap: 10,
+    marginTop: 12,
+    marginBottom: 10,
+  },
   filterChip: {
     flexDirection: "row",
     alignItems: "center",
@@ -267,33 +331,64 @@ export const styles = StyleSheet.create({
     borderColor: "rgba(145,35,56,0.35)",
     backgroundColor: "rgba(145,35,56,0.08)",
   },
-  filterText: { fontWeight: "900", color: TEXT, opacity: 0.85 },
-  filterTextActive: { color: MAROON, opacity: 1 },
+  filterText: {
+    fontWeight: "900",
+    color: TEXT,
+    opacity: 0.85,
+  },
+  filterTextActive: {
+    color: MAROON,
+    opacity: 1,
+  },
 
+  // Suggested Buildings section (padding fix)
+  suggestedSection: {
+    marginTop: 10,
+    paddingHorizontal: 2,
+  },
   listHeader: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     marginTop: 4,
     marginBottom: 8,
+    paddingHorizontal: 14,
   },
-  listTitle: { fontSize: 16, fontWeight: "900", color: TEXT },
-  seeAll: { fontSize: 13, fontWeight: "900", color: MAROON },
+  listTitle: {
+    fontSize: 16,
+    fontWeight: "900",
+    color: TEXT,
+  },
+  seeAll: {
+    fontSize: 13,
+    fontWeight: "900",
+    color: MAROON,
+  },
 
-  listCard: {
-    flex: 1,
+  // Suggested list card layout
+  suggestedListContent: {
+    paddingBottom: 16,
+    gap: 12,
+  },
+  buildingCard: {
     backgroundColor: CARD_BG,
     borderRadius: 16,
-    overflow: "hidden",
     borderWidth: 1,
     borderColor: BORDER,
+    shadowColor: "#000",
+    shadowOpacity: 0.06,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 2,
   },
 
-  emptyState: { padding: 18 },
-  emptyTitle: { fontWeight: "900", color: TEXT, fontSize: 14 },
-  emptySub: { marginTop: 6, color: MUTED, fontWeight: "700", fontSize: 12 },
-
-  buildingRow: { flexDirection: "row", alignItems: "center", paddingHorizontal: 14, paddingVertical: 14 },
+  // Building row (also used in modal list)
+  buildingRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 14,
+    paddingVertical: 14,
+  },
   buildingIconBox: {
     width: 40,
     height: 40,
@@ -303,25 +398,58 @@ export const styles = StyleSheet.create({
     justifyContent: "center",
     marginRight: 12,
   },
-  buildingName: { fontSize: 14, fontWeight: "900", color: TEXT },
-  buildingSub: { marginTop: 3, fontSize: 12, fontWeight: "700", color: MUTED },
-
+  buildingName: {
+    fontSize: 14,
+    fontWeight: "900",
+    color: TEXT,
+  },
+  buildingSub: {
+    marginTop: 3,
+    fontSize: 12,
+    fontWeight: "700",
+    color: MUTED,
+  },
   chevBtn: { minWidth: 44, minHeight: 44, alignItems: "center", justifyContent: "center" },
   rowChev: { fontSize: 22, opacity: 0.6 },
 
-  sep: { height: 1, backgroundColor: BORDER, marginLeft: 14, marginRight: 14 },
+  // Modal list / fallback card
+  listCard: {
+    flex: 1,
+    backgroundColor: CARD_BG,
+    borderRadius: 16,
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: BORDER,
+  },
+  emptyStateCard: {
+    backgroundColor: CARD_BG,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: BORDER,
+    padding: 18,
+  },
+  emptyTitle: { fontWeight: "900", color: TEXT, fontSize: 14 },
+  emptySub: { marginTop: 6, color: MUTED, fontWeight: "700", fontSize: 12 },
 
-  // ── Concordia Shuttle checkbox ──────────────────────────────────────────
+  // Separator (used in some lists)
+  sep: {
+    height: 1,
+    backgroundColor: BORDER,
+    marginLeft: 14,
+    marginRight: 14,
+  },
+
+  // ── Concordia Shuttle checkbox ───────────────────────────────
   shuttleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginTop: 10,
     paddingVertical: 10,
     paddingHorizontal: 12,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: 'rgba(145,35,56,0.20)',
-    backgroundColor: 'rgba(145,35,56,0.05)',
+    borderColor: "rgba(145,35,56,0.20)",
+    backgroundColor: "rgba(145,35,56,0.05)",
   },
   shuttleRowDisabled: {
     opacity: 0.45,
@@ -332,24 +460,24 @@ export const styles = StyleSheet.create({
     borderRadius: 6,
     borderWidth: 2,
     borderColor: MAROON,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     marginRight: 10,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
   },
   shuttleCheckboxChecked: {
     backgroundColor: MAROON,
   },
   shuttleCheckboxTick: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
     fontSize: 13,
-    fontWeight: '900',
+    fontWeight: "900",
     lineHeight: 16,
   },
   shuttleLabel: {
     flex: 1,
     fontSize: 14,
-    fontWeight: '800',
+    fontWeight: "800",
     color: TEXT,
   },
   shuttleLabelDisabled: {
@@ -357,7 +485,7 @@ export const styles = StyleSheet.create({
   },
   shuttleNextDep: {
     fontSize: 12,
-    fontWeight: '700',
+    fontWeight: "700",
     color: MAROON,
   },
 });
