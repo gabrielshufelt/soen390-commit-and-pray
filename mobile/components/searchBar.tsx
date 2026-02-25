@@ -7,7 +7,6 @@ import { FontAwesome } from "@expo/vector-icons";
 import { styles, MAROON, MUTED } from "../styles/searchBar.styles";
 import TransportModeSelector from "./TransportModeSelector";
 
-
 export type BuildingChoice = {
   id: string;
   name: string;
@@ -50,6 +49,14 @@ type Props = {
   /** Fires whenever the user switches the campus filter (SGW / Loyola). */
   onCampusChange?: (campus: "SGW" | "Loyola") => void;
 };
+
+const Separator = () => <View style={styles.sep} />
+
+function getFilterIcon(k: "Home" | "Library" | "Favorites") {
+  if (k === "Home") return "home";
+  if (k === "Library") return "book";
+  return "star";
+}
 
 function stripCodePrefix(name: string, code?: string) {
   if (!code) return name?.trim() ?? "";
@@ -227,8 +234,6 @@ export default function SearchBar({
       </View>
     );
   }
-
-  const Separator = () => <View style={styles.sep} />
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
@@ -484,7 +489,7 @@ export default function SearchBar({
                   accessibilityLabel={`${k} filter`}
                 >
                   <FontAwesome
-                    name={k === "Home" ? "home" : k === "Library" ? "book" : "star"}
+                    name={getFilterIcon(k)}
                     size={16}
                     color={active ? MAROON : MUTED}
                     aria-hidden
