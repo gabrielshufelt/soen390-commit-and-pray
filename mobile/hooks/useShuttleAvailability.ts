@@ -34,9 +34,9 @@ function normalizeTime(raw: string): string {
  */
 export function timeToMinutes(time: string): number {
   const [hStr, mStr] = normalizeTime(time).split(':');
-  const h = parseInt(hStr, 10);
-  const m = parseInt(mStr, 10);
-  if (isNaN(h) || isNaN(m)) return NaN;
+  const h = Number.parseInt(hStr, 10);
+  const m = Number.parseInt(mStr, 10);
+  if (Number.isNaN(h) || Number.isNaN(m)) return Number.NaN;
   return h * 60 + m;
 }
 
@@ -76,7 +76,7 @@ export function findNextDeparture(
 ): string | null {
   for (const raw of departures) {
     const dep = timeToMinutes(raw);
-    if (!isNaN(dep) && dep >= nowMinutes) {
+    if (!Number.isNaN(dep) && dep >= nowMinutes) {
       return normalizeTime(raw);
     }
   }

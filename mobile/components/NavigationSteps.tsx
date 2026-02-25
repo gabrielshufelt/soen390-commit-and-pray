@@ -49,7 +49,7 @@ function getManeuverIcon(maneuver?: string): string {
 
 function stripHtml(html: string): string {
   return html
-    .replace(/<[^>]*>/g, " ")
+    .replace(/<[^>]{0,10000}>/g, " ")
     .replace(/\s+/g, " ")
     .trim();
 }
