@@ -22,6 +22,7 @@
     "@types/jest": "29.5.14",
     "dotenv": "^17.2.4",
     "expo": "~54.0.32",
+    "expo-build-properties": "~1.0.10",
     "expo-constants": "~18.0.13",
     "expo-font": "~14.0.11",
     "expo-haptics": "~15.0.8",

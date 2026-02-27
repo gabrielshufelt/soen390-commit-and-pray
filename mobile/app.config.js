@@ -27,12 +27,7 @@ export default {
         "android.permission.ACCESS_COARSE_LOCATION",
         "android.permission.ACCESS_FINE_LOCATION"
       ],
-      package: "com.commitandpray.soen390project",
-      config: {
-        googleMaps: {
-          apiKey: process.env.GOOGLE_MAPS_API_KEY
-        }
-      }
+      package: "com.commitandpray.soen390project"
     },
     web: {
       output: "static",
@@ -64,6 +59,21 @@ export default {
         {
           "iosUrlScheme": "com.googleusercontent.apps.733685665575-gg22r197trj7907dl9gr2ae0lekqlekk"
         }
+      ],
+      [
+        "expo-build-properties",
+        {
+          android: {
+            signingConfig: {
+              debug: {
+                storeFile: "debug.keystore",
+                storePassword: "android",
+                keyAlias: "androiddebugkey",
+                keyPassword: "android",
+              },
+            }, 
+          },
+        },
       ]
     ],
     experiments: {
