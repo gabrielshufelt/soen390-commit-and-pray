@@ -1,4 +1,4 @@
-import { Text, View, StyleSheet, Pressable, ActivityIndicator } from 'react-native';
+import { Text, View, StyleSheet, Pressable, ActivityIndicator, Image } from 'react-native';
 import React from 'react';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
@@ -63,12 +63,20 @@ export default function SettingsScreen() {
         <View>
           <View style={[styles.optionsContainer, { backgroundColor: isDark ? '#1c1c1e' : '#ffffff' }]}>
             <View style={styles.userInfoContainer}>
+              {user.photo && (
+                <Image 
+                  source={{ uri: user.photo }} 
+                  style={styles.profileImage}
+                />
+              )}
+              <View style={styles.userTextContainer}>
               <Text style={[styles.userName, { color: isDark ? '#ffffff' : '#000000' }]}>
                 {user.name}
               </Text>
               <Text style={[styles.userEmail, { color: isDark ? '#8e8e93' : '#6e6e73' }]}>
                 {user.email}
               </Text>
+              </View>
             </View>
           </View>
           
@@ -129,8 +137,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   userInfoContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingVertical: 12,
     paddingHorizontal: 16,
+    gap: 12,
+  },
+  profileImage: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+  },
+  userTextContainer: {
+    flex: 1,
   },
   userName: {
     fontSize: 17,
