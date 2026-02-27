@@ -12,7 +12,7 @@ export default {
     newArchEnabled: true,
     ios: {
       supportsTablet: true,
-      bundleIdentifier: "com.anonymous.mobile"
+      bundleIdentifier: "com.commitandpray.soen390project"
     },
     android: {
       adaptiveIcon: {
@@ -27,7 +27,7 @@ export default {
         "android.permission.ACCESS_COARSE_LOCATION",
         "android.permission.ACCESS_FINE_LOCATION"
       ],
-      package: "com.anonymous.mobile"
+      package: "com.commitandpray.soen390project"
     },
     web: {
       output: "static",
@@ -53,6 +53,27 @@ export default {
             backgroundColor: "#000000"
           }
         }
+      ],
+      [
+        "@react-native-google-signin/google-signin",
+        {
+          "iosUrlScheme": "com.googleusercontent.apps.733685665575-gg22r197trj7907dl9gr2ae0lekqlekk"
+        }
+      ],
+      [
+        "expo-build-properties",
+        {
+          android: {
+            signingConfig: {
+              debug: {
+                storeFile: "debug.keystore",
+                storePassword: "android",
+                keyAlias: "androiddebugkey",
+                keyPassword: "android",
+              },
+            }, 
+          },
+        },
       ]
     ],
     experiments: {
@@ -61,6 +82,9 @@ export default {
     },
     extra: {
       googleMapsApiKey: process.env.GOOGLE_MAPS_API_KEY,
+      googleIosClientId: process.env.GOOGLE_IOS_CLIENT_ID,
+      googleAndroidClientId: process.env.GOOGLE_ANDROID_CLIENT_ID,
+      googleWebClientId: process.env.GOOGLE_WEB_CLIENT_ID,
       router: {},
       eas: {
         projectId: "1eac18eb-8e25-4ee2-8a61-d0483ce49f82"
