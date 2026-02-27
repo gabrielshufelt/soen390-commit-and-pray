@@ -8,6 +8,7 @@ import {
   statusCodes,
 } from "@react-native-google-signin/google-signin";
 import Constants from "expo-constants";
+import { useAuth } from "../context/AuthContext";
 
 // Call this once at app startup (e.g. in App.tsx or a root layout)
 GoogleSignin.configure({
@@ -17,6 +18,8 @@ GoogleSignin.configure({
 });
 
 export default function SignInGoogle() {
+  const { signIn: saveUser } = useAuth();
+
   const signIn = async () => {
     try {
       console.log("Checking Play Services...");
@@ -28,6 +31,19 @@ export default function SignInGoogle() {
 
       if (isSuccessResponse(response)) {
         console.log("Success:", response.data.user.email);
+        
+        // Get tokens
+        const tokens = await GoogleSignin.getTokens();
+        
+        // Save user data to context
+        await saveUser({
+          id: response.data.user.id,
+          name: response.data.user.name || '',
+          email: response.data.user.email,
+          photo: response.data.user.photo || undefined,
+          accessToken: tokens.accessToken,
+          idToken: tokens.idToken,
+        });
       } else {
         console.log("Non-success response:", response);
       }
