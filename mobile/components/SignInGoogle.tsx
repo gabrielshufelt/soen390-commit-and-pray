@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { View, StyleSheet, Text } from "react-native";
+import { View, StyleSheet, Text, Alert } from "react-native";
 import {
   GoogleSignin,
   GoogleSigninButton,
@@ -22,16 +22,11 @@ export default function SignInGoogle() {
 
   const signIn = async () => {
     try {
-      console.log("Checking Play Services...");
       await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
-      console.log("Play Services OK, opening sign-in...");
 
       const response = await GoogleSignin.signIn();
-      console.log("Response:", JSON.stringify(response));
 
       if (isSuccessResponse(response)) {
-        console.log("Success:", response.data.user.email);
-        
         // Get tokens
         const tokens = await GoogleSignin.getTokens();
         
@@ -44,15 +39,24 @@ export default function SignInGoogle() {
           accessToken: tokens.accessToken,
           idToken: tokens.idToken,
         });
+        
+        Alert.alert('Success', 'You have been signed in successfully!');
       } else {
-        console.log("Non-success response:", response);
+        Alert.alert('Sign In Failed', 'Unable to complete sign in. Please try again.');
       }
     } catch (error) {
       if (isErrorWithCode(error)) {
-        console.log("Error code:", error.code);
-        console.log("Error message:", error.message);
+        if (error.code === statusCodes.SIGN_IN_CANCELLED) {
+          Alert.alert('Cancelled', 'Sign in was cancelled.');
+        } else if (error.code === statusCodes.IN_PROGRESS) {
+          Alert.alert('In Progress', 'Sign in is already in progress.');
+        } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
+          Alert.alert('Error', 'Play Services not available or outdated.');
+        } else {
+          Alert.alert('Error', `Sign in error: ${error.message}`);
+        }
       } else {
-        console.log("Unknown error:", error);
+        Alert.alert('Error', 'An unexpected error occurred. Please try again.');
       }
     }
   };
