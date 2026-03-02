@@ -13,20 +13,10 @@ import {
   Platform,
 } from "react-native";
 import { FontAwesome } from "@expo/vector-icons";
-
+import { BuildingChoice } from "@/constants/searchBar.types";
 import { useShuttleAvailability } from "../hooks/useShuttleAvailability";
 import { styles, MAROON, MUTED, TEXT } from "../styles/searchBar.styles";
 import TransportModeSelector from "./TransportModeSelector";
-
-export type BuildingChoice = {
-  id: string;
-  name: string;
-  code?: string;
-  address?: string;
-  coordinate: { latitude: number; longitude: number };
-  campus?: "SGW" | "Loyola";
-  category?: "Home" | "Library" | "Favorites";
-};
 
 type Props = {
   buildings: BuildingChoice[];
@@ -61,22 +51,6 @@ type Props = {
 
   onClose: () => void;
 };
-
-function stripCodePrefix(name: string, code?: string) {
-  if (!code) return name?.trim() ?? "";
-  const n = (name ?? "").trim();
-  const pattern = new RegExp(`^${code}\\s*[-—:]\\s*`, "i");
-  return n.replace(pattern, "").trim();
-}
-
-function displayName(b: { name: string; code?: string }) {
-  const clean = stripCodePrefix(b.name, b.code);
-  return b.code ? `${clean} (${b.code})` : clean;
-}
-
-function makeHaystack(b: BuildingChoice) {
-  return `${stripCodePrefix(b.name, b.code)} ${b.code ?? ""} ${b.address ?? ""}`.toLowerCase();
-}
 
 type ShuttleCheckboxProps = {
   checked: boolean;
@@ -234,15 +208,6 @@ export default function ExpandedSearchBar({
 
             <Text style={styles.headerTitle}>Route</Text>
 
-            <TouchableOpacity
-              style={styles.headerBtnRight}
-              onPress={() => {}}
-              activeOpacity={0.85}
-              accessibilityRole="button"
-              accessibilityLabel="More options"
-            >
-              <FontAwesome name="ellipsis-v" size={18} color={TEXT} />
-            </TouchableOpacity>
           </View>
 
           {/* Campus segmented */}
