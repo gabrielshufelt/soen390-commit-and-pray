@@ -19,7 +19,12 @@ export default function CollapsedSearchBar({ onOpen }: Props) {
         accessibilityLabel="Search buildings, rooms"
       >
         <View style={styles.leftIconMini}>
-          <FontAwesome name="search" size={16} color={MAROON} />
+          <FontAwesome
+            name="search"
+            size={16}
+            color={MAROON}
+            aria-hidden
+          />
         </View>
         <Text style={styles.collapsedPlaceholder}>Search buildings, rooms...</Text>
       </TouchableOpacity>
