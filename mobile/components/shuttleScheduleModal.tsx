@@ -107,8 +107,8 @@ export default function ShuttleScheduleModal({ visible, onClose, onShowRoute }: 
             <View style={styles.scheduleContainer}>
               <View style={styles.column}>
                 <Text style={[styles.columnHeader, { color: RED }]}>Loyola Departures</Text>
-                {schedule.loyolaDepartures.map((time, index) => (
-                  <Text key={`loy-${index}`} style={[styles.timeText, { color: isDark ? WHITE : BLACK }]}>
+                {schedule.loyolaDepartures.map((time) => (
+                  <Text key={`loy-${time}`} style={[styles.timeText, { color: isDark ? WHITE : BLACK }]}>
                     {time}
                   </Text>
                 ))}
@@ -118,8 +118,8 @@ export default function ShuttleScheduleModal({ visible, onClose, onShowRoute }: 
 
               <View style={styles.column}>
                 <Text style={[styles.columnHeader, { color: RED }]}>SGW Departures</Text>
-                {schedule.sgwDepartures.map((time, index) => (
-                  <Text key={`sgw-${index}`} style={[styles.timeText, { color: isDark ? WHITE : BLACK }]}>
+                {schedule.sgwDepartures.map((time) => (
+                  <Text key={`sgw-${time}`} style={[styles.timeText, { color: isDark ? WHITE : BLACK }]}>
                     {time}
                   </Text>
                 ))}

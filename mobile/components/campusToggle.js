@@ -1,5 +1,7 @@
 import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity, Platform } from "react-native";
+import PropTypes from "prop-types";
+
 
 export default function CampusToggle({ selectedCampus, onCampusChange }) {
   return (
@@ -45,6 +47,11 @@ export default function CampusToggle({ selectedCampus, onCampusChange }) {
     </View>
   );
 }
+
+CampusToggle.propTypes = {
+  selectedCampus: PropTypes.string.isRequired,
+  onCampusChange: PropTypes.func.isRequired,
+};
 
 const styles = StyleSheet.create({
   toggleContainer: {
