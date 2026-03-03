@@ -17,6 +17,7 @@ import { BuildingChoice } from "@/constants/searchBar.types";
 import { useShuttleAvailability } from "../hooks/useShuttleAvailability";
 import { styles, MAROON, MUTED, TEXT } from "../styles/searchBar.styles";
 import TransportModeSelector from "./TransportModeSelector";
+import { stripCodePrefix, displayName, makeHaystack } from "@/constants/searchBar.utils";
 
 type Props = {
   buildings: BuildingChoice[];
@@ -34,6 +35,7 @@ type Props = {
 
   onOpenBuilding?: (b: BuildingChoice) => void;
   onStartRoute?: () => void;
+  onEndRoute?: () => void;
   onPreviewRoute?: () => void;
   onExitPreview?: () => void;
   previewActive?: boolean;
@@ -99,6 +101,7 @@ export default function ExpandedSearchBar({
   routeActive,
   onOpenBuilding,
   onStartRoute,
+  onEndRoute,
   onPreviewRoute,
   onExitPreview,
   previewActive = false,
@@ -375,6 +378,18 @@ export default function ExpandedSearchBar({
                   )}
                 </Text>
               </View>
+            )}
+
+            {routeActive && onEndRoute && (
+              <TouchableOpacity
+                testID="route.end.button"
+                style={styles.endRouteButton}
+                activeOpacity={0.9}
+                onPress={onEndRoute}
+                accessibilityRole="button"
+              >
+                <Text style={styles.endRouteButtonText}>End Directions</Text>
+              </TouchableOpacity>
             )}
 
             {!routeActive && destination && !start && onStartRoute && (

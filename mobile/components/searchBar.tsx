@@ -1,7 +1,8 @@
 import type { MapViewDirectionsMode } from "react-native-maps-directions";
 import React, { useState } from "react";
 import CollapsedSearchBar from "./../components/collapsedSearchBar";
-import ExpandedSearchBar, { BuildingChoice } from "./../components/expandedSearchBar";
+import ExpandedSearchBar from "./../components/expandedSearchBar";
+import { BuildingChoice } from "@/constants/searchBar.types"
 
 type Props = {
   buildings: BuildingChoice[];
@@ -20,6 +21,7 @@ type Props = {
 
   onOpenBuilding?: (b: BuildingChoice) => void;
   onStartRoute?: () => void;
+  onEndRoute?: () => void;
   onPreviewRoute?: () => void;
   onExitPreview?: () => void;
   previewActive?: boolean;
@@ -47,6 +49,7 @@ export default function SearchBar({
   defaultExpanded = false,
   onOpenBuilding,
   onStartRoute,
+  onEndRoute,
   onPreviewRoute,
   onExitPreview,
   previewActive = false,
@@ -80,6 +83,7 @@ export default function SearchBar({
       routeActive={routeActive}
       onOpenBuilding={onOpenBuilding}
       onStartRoute={onStartRoute}
+      onEndRoute={onEndRoute}
       onPreviewRoute={onPreviewRoute}
       onExitPreview={onExitPreview}
       previewActive={previewActive}

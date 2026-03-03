@@ -9,11 +9,3 @@ export type BuildingChoice = {
   campus?: "SGW" | "Loyola";
   category?: "Home" | "Library" | "Favorites";
 };
-
-  /** Controlled: whether the "Use Concordia Shuttle" option is checked. */
-  useShuttle?: boolean;
-  onUseShuttleChange?: (active: boolean) => void;
-
-  /** Fires whenever the user switches the campus filter (SGW / Loyola). */
-  onCampusChange?: (campus: "SGW" | "Loyola") => void;
-};
