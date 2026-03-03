@@ -55,6 +55,9 @@ export default {
         }
       ],
       [
+        "expo-secure-store"
+      ],
+      [
         "@react-native-google-signin/google-signin",
         {
           "iosUrlScheme": "com.googleusercontent.apps.733685665575-gg22r197trj7907dl9gr2ae0lekqlekk"

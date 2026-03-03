@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as SecureStore from 'expo-secure-store';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 
 export interface User {
@@ -31,16 +31,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const loadUser = async () => {
       try {
-        const savedUser = await AsyncStorage.getItem(AUTH_STORAGE_KEY);
+        const savedUser = await SecureStore.getItemAsync(AUTH_STORAGE_KEY);
         if (savedUser) {
           setUser(JSON.parse(savedUser));
         }
         
         // Check if user is still signed in with Google
-        const currentUser = await GoogleSignin.getCurrentUser();
+        const currentUser = GoogleSignin.getCurrentUser();
         if (!currentUser && savedUser) {
           // User was signed out elsewhere, clear local state
-          await AsyncStorage.removeItem(AUTH_STORAGE_KEY);
+          await SecureStore.deleteItemAsync(AUTH_STORAGE_KEY);
           setUser(null);
         }
       } catch (error) {
@@ -55,7 +55,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signIn = async (userData: User) => {
     try {
-      await AsyncStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(userData));
+      await SecureStore.setItemAsync(AUTH_STORAGE_KEY, JSON.stringify(userData));
       setUser(userData);
     } catch (error) {
       console.error('Error saving user data:', error);
@@ -66,7 +66,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signOut = async () => {
     try {
       await GoogleSignin.signOut();
-      await AsyncStorage.removeItem(AUTH_STORAGE_KEY);
+      await SecureStore.deleteItemAsync(AUTH_STORAGE_KEY);
       setUser(null);
     } catch (error) {
       console.error('Error signing out:', error);
@@ -85,7 +85,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           accessToken: tokens.accessToken, 
           idToken: tokens.idToken 
         };
-        await AsyncStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(updatedUser));
+        await SecureStore.setItemAsync(AUTH_STORAGE_KEY, JSON.stringify(updatedUser));
         setUser(updatedUser);
       }
       
