@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { View, StyleSheet, Text, Alert } from "react-native";
 import {
   GoogleSignin,
@@ -7,15 +7,8 @@ import {
   isErrorWithCode,
   statusCodes,
 } from "@react-native-google-signin/google-signin";
-import Constants from "expo-constants";
 import { useAuth } from "../context/AuthContext";
 
-// Call this once at app startup (e.g. in App.tsx or a root layout)
-GoogleSignin.configure({
-  webClientId: Constants.expoConfig?.extra?.googleWebClientId,
-  iosClientId: Constants.expoConfig?.extra?.googleIosClientId,
-  scopes: ['https://www.googleapis.com/auth/calendar'],
-});
 
 export default function SignInGoogle() {
   const { signIn: saveUser } = useAuth();
