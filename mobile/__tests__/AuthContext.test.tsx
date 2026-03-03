@@ -2,18 +2,18 @@ import React from 'react';
 import { render, act, waitFor, renderHook, fireEvent } from '@testing-library/react-native';
 import { Text, Pressable } from 'react-native';
 import { AuthProvider, useAuth, User } from '../context/AuthContext';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as SecureStore from 'expo-secure-store';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 
-jest.mock('@react-native-async-storage/async-storage', () => ({
-  getItem: jest.fn(() => Promise.resolve(null)),
-  setItem: jest.fn(() => Promise.resolve()),
-  removeItem: jest.fn(() => Promise.resolve()),
+jest.mock('expo-secure-store', () => ({
+  getItemAsync: jest.fn(() => Promise.resolve(null)),
+  setItemAsync: jest.fn(() => Promise.resolve()),
+  deleteItemAsync: jest.fn(() => Promise.resolve()),
 }));
 
 jest.mock('@react-native-google-signin/google-signin', () => ({
   GoogleSignin: {
-    getCurrentUser: jest.fn(() => Promise.resolve(null)),
+    getCurrentUser: jest.fn(() => null),
     signOut: jest.fn(() => Promise.resolve()),
     getTokens: jest.fn(() => Promise.resolve({
       accessToken: 'new-access-token',
@@ -67,11 +67,11 @@ describe('AuthContext', () => {
     });
   });
 
-  it('loads saved user from AsyncStorage on mount', async () => {
-    (AsyncStorage.getItem as jest.Mock).mockResolvedValueOnce(
+  it('loads saved user from SecureStore on mount', async () => {
+    (SecureStore.getItemAsync as jest.Mock).mockResolvedValueOnce(
       JSON.stringify(mockUser)
     );
-    (GoogleSignin.getCurrentUser as jest.Mock).mockResolvedValueOnce({
+    (GoogleSignin.getCurrentUser as jest.Mock).mockReturnValueOnce({
       user: mockUser,
     });
 
@@ -86,14 +86,14 @@ describe('AuthContext', () => {
       expect(getByTestId('userEmail').props.children).toBe('test@example.com');
     });
 
-    expect(AsyncStorage.getItem).toHaveBeenCalledWith('@user_data');
+    expect(SecureStore.getItemAsync).toHaveBeenCalledWith('user_data');
   });
 
   it('clears user data if Google sign-in status is invalid', async () => {
-    (AsyncStorage.getItem as jest.Mock).mockResolvedValueOnce(
+    (SecureStore.getItemAsync as jest.Mock).mockResolvedValueOnce(
       JSON.stringify(mockUser)
     );
-    (GoogleSignin.getCurrentUser as jest.Mock).mockResolvedValueOnce(null);
+    (GoogleSignin.getCurrentUser as jest.Mock).mockReturnValueOnce(null);
 
     const { getByTestId } = render(
       <AuthProvider>
@@ -105,10 +105,10 @@ describe('AuthContext', () => {
       expect(getByTestId('userName').props.children).toBe('no user');
     });
 
-    expect(AsyncStorage.removeItem).toHaveBeenCalledWith('@user_data');
+    expect(SecureStore.deleteItemAsync).toHaveBeenCalledWith('user_data');
   });
 
-  it('signs in user and saves to AsyncStorage', async () => {
+  it('signs in user and saves to SecureStore', async () => {
     const { getByTestId } = render(
       <AuthProvider>
         <TestConsumer />
@@ -127,17 +127,17 @@ describe('AuthContext', () => {
       expect(getByTestId('userName').props.children).toBe('Test User');
     });
 
-    expect(AsyncStorage.setItem).toHaveBeenCalledWith(
-      '@user_data',
+    expect(SecureStore.setItemAsync).toHaveBeenCalledWith(
+      'user_data',
       JSON.stringify(mockUser)
     );
   });
 
-  it('signs out user and clears AsyncStorage', async () => {
-    (AsyncStorage.getItem as jest.Mock).mockResolvedValueOnce(
+  it('signs out user and clears SecureStore', async () => {
+    (SecureStore.getItemAsync as jest.Mock).mockResolvedValueOnce(
       JSON.stringify(mockUser)
     );
-    (GoogleSignin.getCurrentUser as jest.Mock).mockResolvedValueOnce({
+    (GoogleSignin.getCurrentUser as jest.Mock).mockReturnValueOnce({
       user: mockUser,
     });
 
@@ -160,14 +160,14 @@ describe('AuthContext', () => {
     });
 
     expect(GoogleSignin.signOut).toHaveBeenCalled();
-    expect(AsyncStorage.removeItem).toHaveBeenCalledWith('@user_data');
+    expect(SecureStore.deleteItemAsync).toHaveBeenCalledWith('user_data');
   });
 
   it('gets and updates access token', async () => {
-    (AsyncStorage.getItem as jest.Mock).mockResolvedValueOnce(
+    (SecureStore.getItemAsync as jest.Mock).mockResolvedValueOnce(
       JSON.stringify(mockUser)
     );
-    (GoogleSignin.getCurrentUser as jest.Mock).mockResolvedValueOnce({
+    (GoogleSignin.getCurrentUser as jest.Mock).mockReturnValueOnce({
       user: mockUser,
     });
 
@@ -189,8 +189,8 @@ describe('AuthContext', () => {
     
     // Check that user was updated with new tokens
     await waitFor(() => {
-      expect(AsyncStorage.setItem).toHaveBeenCalledWith(
-        '@user_data',
+      expect(SecureStore.setItemAsync).toHaveBeenCalledWith(
+        'user_data',
         expect.stringContaining('new-access-token')
       );
     });
@@ -198,7 +198,7 @@ describe('AuthContext', () => {
 
   it('handles errors when loading user data', async () => {
     const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
-    (AsyncStorage.getItem as jest.Mock).mockRejectedValueOnce(
+    (SecureStore.getItemAsync as jest.Mock).mockRejectedValueOnce(
       new Error('Storage error')
     );
 
@@ -222,7 +222,7 @@ describe('AuthContext', () => {
 
   it('handles errors when signing in', async () => {
     const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
-    (AsyncStorage.setItem as jest.Mock).mockRejectedValueOnce(
+    (SecureStore.setItemAsync as jest.Mock).mockRejectedValueOnce(
       new Error('Storage error')
     );
 
