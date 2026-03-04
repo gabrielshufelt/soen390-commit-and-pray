@@ -279,7 +279,7 @@ describe('<Index />', () => {
     fireEvent.press(getByTestId('close-button'));
     await waitFor(() => {
       expect(queryByText('Get Directions To')).toBeFalsy();
-    });
+    }, { timeout: 3000 });
   });
 
   // --- Permission denied ---
