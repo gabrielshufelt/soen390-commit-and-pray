@@ -336,7 +336,7 @@ export default function Index() {
                 apikey={apiKey}
                 mode={directionsState.transportMode}
                 strokeWidth={5}
-                strokeColor="#0A84FF"
+                strokeColor={STROKE_COLOR}
                 onReady={handleRoutePreviewReady}
                 onError={(error) => console.error("[Index] MapViewDirections leg1 ERROR:", error)}
               />
@@ -359,7 +359,7 @@ export default function Index() {
                 apikey={apiKey}
                 mode={directionsState.transportMode}
                 strokeWidth={5}
-                strokeColor="#0A84FF"
+                strokeColor={STROKE_COLOR}
                 onError={(error) => console.error("[Index] MapViewDirections leg3 ERROR:", error)}
               />
             </React.Fragment>
@@ -371,7 +371,7 @@ export default function Index() {
               apikey={apiKey}
               mode={effectiveMode}
               strokeWidth={5}
-              strokeColor="#0A84FF"
+              strokeColor={STROKE_COLOR}
               onReady={(result) => {
                 handleRoutePreviewReady(result);
                 handleRouteReady(result);
@@ -392,7 +392,7 @@ export default function Index() {
                 apikey={apiKey}
                 mode={directionsState.transportMode}
                 strokeWidth={3}
-                strokeColor="#FFFFFFFF"
+                strokeColor={STROKE_COLOR}
                 onReady={handleRoutePreviewReady}
               />
               {/* Leg 2: shuttle departure stop → arrival stop (red = shuttle bus) */}
@@ -414,7 +414,7 @@ export default function Index() {
                 apikey={apiKey}
                 mode={directionsState.transportMode}
                 strokeWidth={3}
-                strokeColor="#FFFFFFFF"
+                strokeColor={STROKE_COLOR}
                 onReady={handleRoutePreviewReady}
               />
             </React.Fragment>
@@ -426,7 +426,7 @@ export default function Index() {
               apikey={apiKey}
               mode={effectiveMode}
               strokeWidth={3}
-              strokeColor="#FFFFFFFF"
+              strokeColor={STROKE_COLOR}
               onReady={handleRoutePreviewReady}
             />
           )
