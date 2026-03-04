@@ -128,7 +128,9 @@ export default function Index() {
       distanceText: result.distance ? `${result.distance.toFixed(1)} km` : null,
       durationText: result.duration ? `${Math.round(result.duration)} min` : null,
     });
+    onRouteReady(result);
   };
+  
   const handleShowShuttleRoute = () => {
     const loyolaStop = shuttleData.busStops.loyola.coordinate;
     const sgwStop = shuttleData.busStops.sgw.coordinate;
@@ -335,7 +337,7 @@ export default function Index() {
                 mode={directionsState.transportMode}
                 strokeWidth={5}
                 strokeColor="#0A84FF"
-                onReady={handleRouteReady}
+                onReady={handleRoutePreviewReady}
                 onError={(error) => console.error("[Index] MapViewDirections leg1 ERROR:", error)}
               />
               {/* Leg 2: shuttle departure stop → arrival stop (red = shuttle bus) */}
@@ -370,7 +372,10 @@ export default function Index() {
               mode={effectiveMode}
               strokeWidth={5}
               strokeColor="#0A84FF"
-              onReady={handleRouteReady}
+              onReady={(result) => {
+                handleRoutePreviewReady(result);
+                handleRouteReady(result);
+              }}
               onError={(error) => console.error("[Index] MapViewDirections ERROR:", error)}
             />
           )
@@ -399,6 +404,7 @@ export default function Index() {
                 mode="DRIVING"
                 strokeWidth={3}
                 strokeColor="#D32F2F"
+                onReady={handleRoutePreviewReady}
               />
               {/* Leg 3: shuttle arrival stop → destination */}
               <MapViewDirections
@@ -409,6 +415,7 @@ export default function Index() {
                 mode={directionsState.transportMode}
                 strokeWidth={3}
                 strokeColor="#FFFFFFFF"
+                onReady={handleRoutePreviewReady}
               />
             </React.Fragment>
           ) : (
@@ -470,7 +477,7 @@ export default function Index() {
         <Text style={styles.shuttleButtonText}>🚌</Text>
       </TouchableOpacity>
 
-      {directionsState.isActive && directionsState.steps.length > 0 && (
+      {directionsState.steps.length > 0 && (
         <NavigationSteps
           steps={directionsState.steps}
           currentStepIndex={directionsState.currentStepIndex}
