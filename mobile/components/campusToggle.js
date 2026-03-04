@@ -60,7 +60,7 @@ const styles = StyleSheet.create({
     alignSelf: "center",
     flexDirection: "row",
     backgroundColor: "#fff",
-    borderRadius: 999,
+    borderRadius: 14,
     padding: 4,
     zIndex: 10,
 
@@ -74,8 +74,8 @@ const styles = StyleSheet.create({
 
   button: {
     paddingVertical: 10,
-    paddingHorizontal: 22,
-    borderRadius: 999,
+    paddingHorizontal: 74,
+    borderRadius: 10,
     overflow: "hidden",
   },
 

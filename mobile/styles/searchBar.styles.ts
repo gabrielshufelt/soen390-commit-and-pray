@@ -147,22 +147,23 @@ export const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: BORDER,
     marginBottom: 12,
+    marginHorizontal: 14,
   },
   segmentBtn: {
     flex: 1,
-    borderRadius: 12,
+    borderRadius: 10,
     paddingVertical: 10,
     alignItems: "center",
   },
   segmentBtnActive: {
-    backgroundColor: CARD_BG,
+    backgroundColor: MAROON,
   },
   segmentText: {
     fontWeight: "800",
     color: MUTED,
   },
   segmentTextActive: {
-    color: MAROON,
+    color: "#fff",
   },
 
   // Route card
@@ -172,6 +173,7 @@ export const styles = StyleSheet.create({
     padding: 14,
     borderWidth: 1,
     borderColor: BORDER,
+    marginHorizontal: 14,
   },
   sectionLabel: {
     fontSize: 12,
@@ -323,7 +325,7 @@ export const styles = StyleSheet.create({
     gap: 8,
     paddingVertical: 10,
     paddingHorizontal: 14,
-    borderRadius: 999,
+    borderRadius: 10,
     backgroundColor: CARD_BG,
     borderWidth: 1,
     borderColor: BORDER,
