@@ -1,12 +1,23 @@
-import { Text, View, StyleSheet, Pressable } from 'react-native';
+import { Text, View, StyleSheet, Pressable, ActivityIndicator, Image } from 'react-native';
 import React from 'react';
 import { useTheme } from '../../context/ThemeContext';
+import { useAuth } from '../../context/AuthContext';
+import SignInGoogle from '@/components/SignInGoogle';
 
 type ThemeOption = 'light' | 'dark' | 'system';
 
 export default function SettingsScreen() {
   const { theme, setTheme, colorScheme } = useTheme();
+  const { user, isLoading, signOut } = useAuth();
   const isDark = colorScheme === 'dark';
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+    } catch (error) {
+      console.error('Failed to sign out:', error);
+    }
+  };
 
   const themeOptions: { label: string; value: ThemeOption }[] = [
     { label: 'Light', value: 'light' },
@@ -39,6 +50,50 @@ export default function SettingsScreen() {
           </Pressable>
         ))}
       </View>
+
+      <Text style={[styles.sectionTitle, { color: isDark ? '#8e8e93' : '#6e6e73', marginTop: 30 }]}>
+        Account
+      </Text>
+      
+      {isLoading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator />
+        </View>
+      ) : user ? (
+        <View>
+          <View style={[styles.optionsContainer, { backgroundColor: isDark ? '#1c1c1e' : '#ffffff' }]}>
+            <View style={styles.userInfoContainer}>
+              {user.photo && (
+                <Image 
+                  source={{ uri: user.photo }} 
+                  style={styles.profileImage}
+                />
+              )}
+              <View style={styles.userTextContainer}>
+              <Text style={[styles.userName, { color: isDark ? '#ffffff' : '#000000' }]}>
+                {user.name}
+              </Text>
+              <Text style={[styles.userEmail, { color: isDark ? '#8e8e93' : '#6e6e73' }]}>
+                {user.email}
+              </Text>
+              </View>
+            </View>
+          </View>
+          
+          <View style={[styles.optionsContainer, { backgroundColor: isDark ? '#1c1c1e' : '#ffffff', marginTop: 16 }]}>
+            <Pressable
+              style={styles.option}
+              onPress={handleSignOut}
+            >
+              <Text style={[styles.optionText, { color: '#ff3b30' }]}>
+                Log Out
+              </Text>
+            </Pressable>
+          </View>
+        </View>
+      ) : (
+        <SignInGoogle />
+      )}
     </View>
   );
 }
@@ -76,5 +131,32 @@ const styles = StyleSheet.create({
   checkmark: {
     fontSize: 17,
     color: '#007aff',
+  },
+  loadingContainer: {
+    padding: 20,
+    alignItems: 'center',
+  },
+  userInfoContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    gap: 12,
+  },
+  profileImage: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+  },
+  userTextContainer: {
+    flex: 1,
+  },
+  userName: {
+    fontSize: 17,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  userEmail: {
+    fontSize: 15,
   },
 });
