@@ -125,7 +125,7 @@ export default function ExpandedSearchBar({
   const startInputRef = useRef<TextInput>(null);
 
   const [history, setHistory] = useState<BuildingChoice[]>([]);
-  const [quickFilter, setQuickFilter] = useState<"Home" | "Library" | "Favorites">("Home");
+  const [quickFilter, setQuickFilter] = useState<"Home" | "Library" | "Favorites" | null>(null);
 
   useEffect(() => {
     if (!destFocused) setDestText(destination ? displayName(destination) : "");
@@ -178,7 +178,7 @@ export default function ExpandedSearchBar({
   const filteredHistory = useMemo(() => {
     const base = history.filter((h) => !h.campus || h.campus === campus);
     const hasCategories = base.some((b) => b.category);
-    if (!hasCategories) return base;
+    if (!hasCategories || quickFilter === null) return base;
     return base.filter((b) => b.category === quickFilter);
   }, [history, campus, quickFilter]);
 
@@ -448,7 +448,7 @@ export default function ExpandedSearchBar({
                 <TouchableOpacity
                   key={k}
                   style={[styles.filterChip, active && styles.filterChipActive]}
-                  onPress={() => setQuickFilter(k)}
+                  onPress={() => setQuickFilter(quickFilter === k ? null : k)}
                   activeOpacity={0.9}
                   accessibilityRole="button"
                   accessibilityState={{ selected: active }}
@@ -464,12 +464,12 @@ export default function ExpandedSearchBar({
             })}
           </View>
 
-          {/* ✅ Suggested Buildings — padding matches above now */}
+          {/* Suggested Buildings */}
           <View style={styles.suggestedSection}>
             <View style={styles.listHeader}>
               <Text style={styles.listTitle}>Suggested Buildings</Text>
               <TouchableOpacity
-                activeOpacity={0.85}
+                activeOpacity={0.85} 
                 accessibilityRole="button"
                 accessibilityLabel="See all buildings"
                 onPress={() => {

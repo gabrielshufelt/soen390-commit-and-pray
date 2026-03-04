@@ -19,7 +19,7 @@ export const styles = StyleSheet.create({
   },
   transportModeButtonFlex: {
     flex: 1,
-    marginHorizontal: 4,
+    marginHorizontal: 2,
   },
   transportModeButton: {
     flexDirection: "row",
@@ -315,6 +315,7 @@ export const styles = StyleSheet.create({
     gap: 10,
     marginTop: 12,
     marginBottom: 10,
+    paddingHorizontal: 18,
   },
   filterChip: {
     flexDirection: "row",
@@ -344,7 +345,7 @@ export const styles = StyleSheet.create({
   // Suggested Buildings section (padding fix)
   suggestedSection: {
     marginTop: 10,
-    paddingHorizontal: 2,
+    paddingHorizontal: 14,
   },
   listHeader: {
     flexDirection: "row",
