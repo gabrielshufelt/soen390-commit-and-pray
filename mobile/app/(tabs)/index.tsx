@@ -129,10 +129,11 @@ export default function Index() {
       durationText: result.duration ? `${Math.round(result.duration)} min` : null,
     });
   };
+
   const handleShowShuttleRoute = () => {
     const loyolaStop = shuttleData.busStops.loyola.coordinate;
     const sgwStop = shuttleData.busStops.sgw.coordinate;
-    
+
     startDirections(loyolaStop, sgwStop);
   };
 
@@ -334,7 +335,7 @@ export default function Index() {
                 apikey={apiKey}
                 mode={directionsState.transportMode}
                 strokeWidth={5}
-                strokeColor="#0A84FF"
+                strokeColor={STROKE_COLOR}
                 onReady={handleRouteReady}
                 onError={(error) => console.error("[Index] MapViewDirections leg1 ERROR:", error)}
               />
@@ -357,7 +358,7 @@ export default function Index() {
                 apikey={apiKey}
                 mode={directionsState.transportMode}
                 strokeWidth={5}
-                strokeColor="#0A84FF"
+                strokeColor={STROKE_COLOR}
                 onError={(error) => console.error("[Index] MapViewDirections leg3 ERROR:", error)}
               />
             </React.Fragment>
@@ -369,8 +370,11 @@ export default function Index() {
               apikey={apiKey}
               mode={effectiveMode}
               strokeWidth={5}
-              strokeColor="#0A84FF"
-              onReady={handleRouteReady}
+              strokeColor={STROKE_COLOR}
+              onReady={(result) => {
+                handleRoutePreviewReady(result);
+                handleRouteReady(result);
+              }}
               onError={(error) => console.error("[Index] MapViewDirections ERROR:", error)}
             />
           )
@@ -386,8 +390,8 @@ export default function Index() {
                 destination={shuttleWaypoints[0]}
                 apikey={apiKey}
                 mode={directionsState.transportMode}
-                strokeWidth={3}
-                strokeColor="#FFFFFFFF"
+                strokeWidth={5}
+                strokeColor={STROKE_COLOR}
                 onReady={handleRoutePreviewReady}
               />
               {/* Leg 2: shuttle departure stop → arrival stop (red = shuttle bus) */}
@@ -397,8 +401,9 @@ export default function Index() {
                 destination={shuttleWaypoints[1]}
                 apikey={apiKey}
                 mode="DRIVING"
-                strokeWidth={3}
+                strokeWidth={5}
                 strokeColor="#D32F2F"
+                onReady={handleRoutePreviewReady}
               />
               {/* Leg 3: shuttle arrival stop → destination */}
               <MapViewDirections
@@ -407,8 +412,9 @@ export default function Index() {
                 destination={destChoice.coordinate}
                 apikey={apiKey}
                 mode={directionsState.transportMode}
-                strokeWidth={3}
-                strokeColor="#FFFFFFFF"
+                strokeWidth={5}
+                strokeColor={STROKE_COLOR}
+                onReady={handleRoutePreviewReady}
               />
             </React.Fragment>
           ) : (
@@ -418,8 +424,8 @@ export default function Index() {
               destination={destChoice.coordinate}
               apikey={apiKey}
               mode={effectiveMode}
-              strokeWidth={3}
-              strokeColor="#FFFFFFFF"
+              strokeWidth={5}
+              strokeColor={STROKE_COLOR}
               onReady={handleRoutePreviewReady}
             />
           )
