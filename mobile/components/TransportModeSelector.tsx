@@ -12,9 +12,9 @@ type Props = {
 };
 
 const MODES: { mode: MapViewDirectionsMode; label: string; icon: string }[] = [
-  { mode: 'DRIVING', label: 'Drive', icon: 'car' },
-  { mode: 'WALKING', label: 'Walk', icon: 'walking' },
-  { mode: 'BICYCLING', label: 'Bike', icon: 'bicycle' },
+  { mode: 'DRIVING', label: 'Driving', icon: 'car' },
+  { mode: 'WALKING', label: 'Walking', icon: 'walking' },
+  { mode: 'BICYCLING', label: 'Cycling', icon: 'bicycle' },
   { mode: 'TRANSIT', label: 'Transit', icon: 'bus' },
 ];
 
