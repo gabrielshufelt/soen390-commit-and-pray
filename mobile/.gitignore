@@ -144,4 +144,5 @@ tsconfig.tsbuildinfo
 expo-env.d.ts
 # @end expo-cli
 
-ios/
+/ios
+/.claude
