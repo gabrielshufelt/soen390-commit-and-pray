@@ -392,52 +392,60 @@ export default function ExpandedSearchBar({
               </TouchableOpacity>
             )}
 
-            {!routeActive && destination && !start && onStartRoute && (
-              <TouchableOpacity
-                testID="route.start.button"
-                style={styles.startRouteButton}
-                activeOpacity={0.9}
-                onPress={() => {
-                  onStartRoute();
-                  onClose();
-                }}
-                accessibilityRole="button"
-              >
-                <Text style={styles.startRouteButtonText}>Start Directions</Text>
-              </TouchableOpacity>
-            )}
+            {(() => {
+              const isCurrentLocation = !start || start.id === "current-location";
 
-            {!routeActive && destination && start && (
-              previewActive ? (
-                <TouchableOpacity
-                  testID="route.exit-preview.button"
-                  style={styles.endRouteButton}
-                  activeOpacity={0.9}
-                  onPress={() => {
-                    onExitPreview?.();
-                    onClose();
-                  }}
-                  accessibilityRole="button"
-                >
-                  <Text style={styles.endRouteButtonText}>Exit Preview</Text>
-                </TouchableOpacity>
-              ) : (
-                onPreviewRoute && (
+              if (!routeActive && destination && isCurrentLocation && onStartRoute) {
+                return (
                   <TouchableOpacity
-                    testID="route.preview.button"
-                    style={styles.previewRouteButton}
+                    testID="route.start.button"
+                    style={styles.startRouteButton}
                     activeOpacity={0.9}
                     onPress={() => {
-                      onPreviewRoute();
+                      onStartRoute();
                       onClose();
                     }}
                     accessibilityRole="button"
                   >
-                    <Text style={styles.previewRouteButtonText}>Preview Route</Text>
+                    <Text style={styles.startRouteButtonText}>Start Directions</Text>
                   </TouchableOpacity>
-                )
-              )
-            )}
+                );
+              }
+
+              if (!routeActive && destination && !isCurrentLocation) {
+                return previewActive ? (
+                  <TouchableOpacity
+                    testID="route.exit-preview.button"
+                    style={styles.endRouteButton}
+                    activeOpacity={0.9}
+                    onPress={() => {
+                      onExitPreview?.();
+                      onClose();
+                    }}
+                    accessibilityRole="button"
+                  >
+                    <Text style={styles.endRouteButtonText}>Exit Preview</Text>
+                  </TouchableOpacity>
+                ) : (
+                  onPreviewRoute && (
+                    <TouchableOpacity
+                      testID="route.preview.button"
+                      style={styles.previewRouteButton}
+                      activeOpacity={0.9}
+                      onPress={() => {
+                        onPreviewRoute();
+                        onClose();
+                      }}
+                      accessibilityRole="button"
+                    >
+                      <Text style={styles.previewRouteButtonText}>Preview Route</Text>
+                    </TouchableOpacity>
+                  )
+                );
+              }
+
+              return null;
+            })()}
           </View>
 
           {/* Quick filters */}

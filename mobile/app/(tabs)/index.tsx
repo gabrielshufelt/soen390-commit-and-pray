@@ -128,13 +128,12 @@ export default function Index() {
       distanceText: result.distance ? `${result.distance.toFixed(1)} km` : null,
       durationText: result.duration ? `${Math.round(result.duration)} min` : null,
     });
-    onRouteReady(result);
   };
-  
+
   const handleShowShuttleRoute = () => {
     const loyolaStop = shuttleData.busStops.loyola.coordinate;
     const sgwStop = shuttleData.busStops.sgw.coordinate;
-    
+
     startDirections(loyolaStop, sgwStop);
   };
 
@@ -337,7 +336,7 @@ export default function Index() {
                 mode={directionsState.transportMode}
                 strokeWidth={5}
                 strokeColor={STROKE_COLOR}
-                onReady={handleRoutePreviewReady}
+                onReady={handleRouteReady}
                 onError={(error) => console.error("[Index] MapViewDirections leg1 ERROR:", error)}
               />
               {/* Leg 2: shuttle departure stop → arrival stop (red = shuttle bus) */}
@@ -477,7 +476,7 @@ export default function Index() {
         <Text style={styles.shuttleButtonText}>🚌</Text>
       </TouchableOpacity>
 
-      {directionsState.steps.length > 0 && (
+      {directionsState.isActive && directionsState.steps.length > 0 && (
         <NavigationSteps
           steps={directionsState.steps}
           currentStepIndex={directionsState.currentStepIndex}
