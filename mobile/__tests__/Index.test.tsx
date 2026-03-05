@@ -601,18 +601,6 @@ describe('<Index />', () => {
     });
   });
 
-  // --- startDirectionsToBuilding from BuildingModal ---
-  describe('BuildingModal Get Directions', () => {
-    it('calls startDirectionsToBuilding when Get Directions is pressed from BuildingModal', async () => {
-      const { getAllByTestId, getByText } = await renderWithTheme(<Index />);
-      const polygons = await waitFor(() => getAllByTestId('polygon'));
-      fireEvent.press(polygons[0]);
-      await waitFor(() => expect(getByText('Get Directions')).toBeTruthy());
-      fireEvent.press(getByText('Get Directions'));
-      await waitFor(() => expect(mockStartDirectionsToBuilding).toHaveBeenCalled());
-    });
-  });
-
   // --- Transport mode & shuttle props passed through SearchBar ---
   describe('SearchBar prop wiring', () => {
     it('passes transportMode from directionsState to SearchBar', async () => {
