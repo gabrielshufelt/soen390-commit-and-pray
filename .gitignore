@@ -60,3 +60,4 @@ junit.xml
 
 # IDE
 .idea
+backend/.env.local
