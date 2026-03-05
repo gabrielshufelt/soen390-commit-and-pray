@@ -391,7 +391,7 @@ export default function Index() {
                 destination={shuttleWaypoints[0]}
                 apikey={apiKey}
                 mode={directionsState.transportMode}
-                strokeWidth={3}
+                strokeWidth={5}
                 strokeColor={STROKE_COLOR}
                 onReady={handleRoutePreviewReady}
               />
@@ -402,7 +402,7 @@ export default function Index() {
                 destination={shuttleWaypoints[1]}
                 apikey={apiKey}
                 mode="DRIVING"
-                strokeWidth={3}
+                strokeWidth={5}
                 strokeColor="#D32F2F"
                 onReady={handleRoutePreviewReady}
               />
@@ -413,7 +413,7 @@ export default function Index() {
                 destination={destChoice.coordinate}
                 apikey={apiKey}
                 mode={directionsState.transportMode}
-                strokeWidth={3}
+                strokeWidth={5}
                 strokeColor={STROKE_COLOR}
                 onReady={handleRoutePreviewReady}
               />
@@ -425,7 +425,7 @@ export default function Index() {
               destination={destChoice.coordinate}
               apikey={apiKey}
               mode={effectiveMode}
-              strokeWidth={3}
+              strokeWidth={5}
               strokeColor={STROKE_COLOR}
               onReady={handleRoutePreviewReady}
             />
