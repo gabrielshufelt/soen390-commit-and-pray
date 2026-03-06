@@ -56,6 +56,12 @@ jest.mock('../context/AuthContext', () => ({
   })),
 }));
 
+jest.mock('../context/CalendarContext', () => ({
+  useCalendar: jest.fn(() => ({
+    fetchCalendars: jest.fn(() => Promise.resolve()),
+  })),
+}));
+
 jest.spyOn(Alert, 'alert');
 
 const mockSuccessResponse = {
