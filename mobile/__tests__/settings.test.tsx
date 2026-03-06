@@ -4,6 +4,8 @@ import { Alert } from 'react-native';
 import SettingsScreen from '../app/(tabs)/settings';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
+import { useCalendar } from '../context/CalendarContext';
+import { useFocusEffect } from 'expo-router';
 
 jest.mock('expo-router', () => ({
   // No-op: settings tests cover rendering, not the on-focus calendar-refresh
@@ -349,6 +351,222 @@ describe('SettingsScreen', () => {
       rerender(<SettingsScreen />);
 
       expect(getByText('Test User')).toBeTruthy();
+    });
+  });
+
+  describe('Calendar List', () => {
+    const mockCalendars = [
+      { id: 'cal-1', summary: 'University Schedule' },
+      { id: 'cal-2', summary: 'Personal' },
+    ];
+
+    beforeEach(() => {
+      (useAuth as jest.Mock).mockReturnValue({
+        user: mockUser,
+        isLoading: false,
+        signOut: jest.fn(),
+        getAccessToken: jest.fn(() => Promise.resolve('test-token')),
+      });
+    });
+
+    it('shows all calendars when signed in', () => {
+      (useCalendar as jest.Mock).mockReturnValue({
+        calendars: mockCalendars,
+        selectedCalendarId: null,
+        isLoadingCalendars: false,
+        selectCalendar: jest.fn(),
+        clearCalendars: jest.fn(),
+        fetchCalendars: jest.fn(),
+      });
+
+      const { getByText } = render(<SettingsScreen />);
+      expect(getByText('University Schedule')).toBeTruthy();
+      expect(getByText('Personal')).toBeTruthy();
+    });
+
+    it('shows "No calendars found" when list is empty', () => {
+      (useCalendar as jest.Mock).mockReturnValue({
+        calendars: [],
+        selectedCalendarId: null,
+        isLoadingCalendars: false,
+        selectCalendar: jest.fn(),
+        clearCalendars: jest.fn(),
+        fetchCalendars: jest.fn(),
+      });
+
+      const { getByText } = render(<SettingsScreen />);
+      expect(getByText('No calendars found')).toBeTruthy();
+    });
+
+    it('shows loading indicator on first load before calendars arrive', () => {
+      (useCalendar as jest.Mock).mockReturnValue({
+        calendars: [],
+        selectedCalendarId: null,
+        isLoadingCalendars: true,
+        selectCalendar: jest.fn(),
+        clearCalendars: jest.fn(),
+        fetchCalendars: jest.fn(),
+      });
+
+      const { UNSAFE_getAllByType } = render(<SettingsScreen />);
+      const ActivityIndicator = require('react-native').ActivityIndicator;
+      expect(UNSAFE_getAllByType(ActivityIndicator).length).toBeGreaterThan(0);
+    });
+
+    it('shows a checkmark on the selected calendar', () => {
+      (useCalendar as jest.Mock).mockReturnValue({
+        calendars: mockCalendars,
+        selectedCalendarId: 'cal-1',
+        isLoadingCalendars: false,
+        selectCalendar: jest.fn(),
+        clearCalendars: jest.fn(),
+        fetchCalendars: jest.fn(),
+      });
+
+      (useTheme as jest.Mock).mockReturnValue({
+        theme: 'none',
+        colorScheme: 'light',
+        setTheme: jest.fn(),
+      });
+
+      const { getAllByText } = render(<SettingsScreen />);
+      // The ✓ tick inside the calendar checkbox
+      const ticks = getAllByText('✓');
+      expect(ticks.length).toBeGreaterThanOrEqual(1);
+    });
+
+    it('calls selectCalendar with the calendar id when a calendar is pressed', async () => {
+      const mockSelectCalendar = jest.fn(() => Promise.resolve());
+      (useCalendar as jest.Mock).mockReturnValue({
+        calendars: mockCalendars,
+        selectedCalendarId: null,
+        isLoadingCalendars: false,
+        selectCalendar: mockSelectCalendar,
+        clearCalendars: jest.fn(),
+        fetchCalendars: jest.fn(),
+      });
+
+      const { getByTestId } = render(<SettingsScreen />);
+      fireEvent.press(getByTestId('calendar-item-cal-1'));
+
+      await waitFor(() => {
+        expect(mockSelectCalendar).toHaveBeenCalledWith('cal-1');
+      });
+    });
+
+    it('calls selectCalendar with null when the selected calendar is pressed again', async () => {
+      const mockSelectCalendar = jest.fn(() => Promise.resolve());
+      (useCalendar as jest.Mock).mockReturnValue({
+        calendars: mockCalendars,
+        selectedCalendarId: 'cal-1',
+        isLoadingCalendars: false,
+        selectCalendar: mockSelectCalendar,
+        clearCalendars: jest.fn(),
+        fetchCalendars: jest.fn(),
+      });
+
+      const { getByTestId } = render(<SettingsScreen />);
+      fireEvent.press(getByTestId('calendar-item-cal-1'));
+
+      await waitFor(() => {
+        expect(mockSelectCalendar).toHaveBeenCalledWith(null);
+      });
+    });
+  });
+
+  describe('Focus Effect', () => {
+    it('fetches calendars when screen comes into focus', async () => {
+      const mockGetAccessToken = jest.fn(() => Promise.resolve('test-token'));
+      const mockFetchCalendars = jest.fn(() => Promise.resolve());
+
+      (useFocusEffect as jest.Mock).mockImplementationOnce(
+        (cb: () => void) => cb()
+      );
+      (useAuth as jest.Mock).mockReturnValue({
+        user: mockUser,
+        isLoading: false,
+        signOut: jest.fn(),
+        getAccessToken: mockGetAccessToken,
+      });
+      (useCalendar as jest.Mock).mockReturnValue({
+        calendars: [],
+        selectedCalendarId: null,
+        isLoadingCalendars: false,
+        selectCalendar: jest.fn(),
+        clearCalendars: jest.fn(),
+        fetchCalendars: mockFetchCalendars,
+      });
+
+      render(<SettingsScreen />);
+
+      await waitFor(() => {
+        expect(mockGetAccessToken).toHaveBeenCalled();
+        expect(mockFetchCalendars).toHaveBeenCalledWith('test-token');
+      });
+    });
+
+    it('does not fetch calendars on focus when user is not signed in', async () => {
+      const mockFetchCalendars = jest.fn(() => Promise.resolve());
+
+      (useFocusEffect as jest.Mock).mockImplementationOnce(
+        (cb: () => void) => cb()
+      );
+      (useAuth as jest.Mock).mockReturnValue({
+        user: null,
+        isLoading: false,
+        signOut: jest.fn(),
+        getAccessToken: jest.fn(),
+      });
+      (useCalendar as jest.Mock).mockReturnValue({
+        calendars: [],
+        selectedCalendarId: null,
+        isLoadingCalendars: false,
+        selectCalendar: jest.fn(),
+        clearCalendars: jest.fn(),
+        fetchCalendars: mockFetchCalendars,
+      });
+
+      render(<SettingsScreen />);
+
+      await waitFor(() => {
+        expect(mockFetchCalendars).not.toHaveBeenCalled();
+      });
+    });
+
+    it('logs error when calendar refresh fails on focus', async () => {
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+      const mockGetAccessToken = jest.fn(() =>
+        Promise.reject(new Error('Token error'))
+      );
+
+      (useFocusEffect as jest.Mock).mockImplementationOnce(
+        (cb: () => void) => cb()
+      );
+      (useAuth as jest.Mock).mockReturnValue({
+        user: mockUser,
+        isLoading: false,
+        signOut: jest.fn(),
+        getAccessToken: mockGetAccessToken,
+      });
+      (useCalendar as jest.Mock).mockReturnValue({
+        calendars: [],
+        selectedCalendarId: null,
+        isLoadingCalendars: false,
+        selectCalendar: jest.fn(),
+        clearCalendars: jest.fn(),
+        fetchCalendars: jest.fn(),
+      });
+
+      render(<SettingsScreen />);
+
+      await waitFor(() => {
+        expect(consoleSpy).toHaveBeenCalledWith(
+          'Background calendar refresh failed:',
+          expect.any(Error)
+        );
+      });
+
+      consoleSpy.mockRestore();
     });
   });
 });

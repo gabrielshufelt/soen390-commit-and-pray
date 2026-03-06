@@ -174,4 +174,96 @@ describe('CalendarContext', () => {
     );
     consoleSpy.mockRestore();
   });
+
+  it('handles SecureStore error gracefully during initial data load', async () => {
+    (SecureStore.getItemAsync as jest.Mock).mockRejectedValue(
+      new Error('Storage read error')
+    );
+    const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+    renderHook(() => useCalendar(), { wrapper });
+
+    await waitFor(() => {
+      expect(consoleSpy).toHaveBeenCalledWith(
+        'Error loading calendar data:',
+        expect.any(Error)
+      );
+    });
+
+    consoleSpy.mockRestore();
+  });
+
+  it('handles non-ok HTTP response from Google Calendar API', async () => {
+    mockFetch.mockResolvedValue({ ok: false, status: 401 });
+    const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+    const { result } = renderHook(() => useCalendar(), { wrapper });
+
+    await act(async () => {
+      await result.current.fetchCalendars('bad-token');
+    });
+
+    expect(result.current.calendars).toEqual([]);
+    expect(consoleSpy).toHaveBeenCalledWith(
+      'Error fetching calendars:',
+      expect.any(Error)
+    );
+    consoleSpy.mockRestore();
+  });
+
+  it('handles network error during fetchCalendars', async () => {
+    mockFetch.mockRejectedValue(new Error('Network error'));
+    const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+    const { result } = renderHook(() => useCalendar(), { wrapper });
+
+    await act(async () => {
+      await result.current.fetchCalendars('test-token');
+    });
+
+    expect(result.current.calendars).toEqual([]);
+    expect(consoleSpy).toHaveBeenCalledWith(
+      'Error fetching calendars:',
+      expect.any(Error)
+    );
+    consoleSpy.mockRestore();
+  });
+
+  it('handles SecureStore error gracefully during selectCalendar', async () => {
+    (SecureStore.setItemAsync as jest.Mock).mockRejectedValue(
+      new Error('Write error')
+    );
+    const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+    const { result } = renderHook(() => useCalendar(), { wrapper });
+
+    await act(async () => {
+      await result.current.selectCalendar('calendar-1');
+    });
+
+    expect(consoleSpy).toHaveBeenCalledWith(
+      'Error saving selected calendar:',
+      expect.any(Error)
+    );
+    consoleSpy.mockRestore();
+  });
+
+  it('handles SecureStore error gracefully during clearCalendars', async () => {
+    (SecureStore.deleteItemAsync as jest.Mock).mockRejectedValue(
+      new Error('Delete error')
+    );
+    const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+    const { result } = renderHook(() => useCalendar(), { wrapper });
+
+    await act(async () => {
+      await result.current.clearCalendars();
+    });
+
+    expect(consoleSpy).toHaveBeenCalledWith(
+      'Error clearing calendar data:',
+      expect.any(Error)
+    );
+    consoleSpy.mockRestore();
+  });
 });
