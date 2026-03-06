@@ -37,13 +37,23 @@ function getMinutesUntil(target: Date): number {
   return Math.max(0, Math.round(diffMs / 60000));
 }
 
+// New function to have time in format "HHhMMm" or "MMm"
+function formattedTimeUntil(minutes: number): string {
+  if (minutes <= 0) return '0 min'; // Only applicable to walking time
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  if (h === 0) return `${m}m`;
+  if (m === 0) return `${h}h`;
+  return `${h}h${m}m`;
+}
+
 // End of helpers
 
 export default function NextClassModal({ nextClass, status, isLoading }: NextClassModalProps) {
   const { colorScheme } = useTheme();
   const isDark = colorScheme === 'dark';
 
-  // Live "in X mins" counter — updates every 30s
+  // Live "in X mins" counter. Updates every 30s
   const [minutesUntil, setMinutesUntil] = useState<number>(
     nextClass ? getMinutesUntil(nextClass.startTime) : 0,
   );
@@ -139,7 +149,7 @@ export default function NextClassModal({ nextClass, status, isLoading }: NextCla
               NEXT CLASS
             </Text>
             <Text style={[styles.countdownText, isDark ? styles.textMutedDark : styles.textMuted]}>
-              {minutesUntil <= 0 ? 'Starting now' : `In ${minutesUntil} min`}
+              {minutesUntil <= 0 ? 'Starting now' : `In ${formattedTimeUntil(minutesUntil)}`}
             </Text>
           </View>
 
@@ -178,7 +188,7 @@ export default function NextClassModal({ nextClass, status, isLoading }: NextCla
           <Ionicons name="walk-outline" size={16} color={isDark ? '#D1D5DB' : '#374151'} />
           <Text style={[styles.walkText, isDark ? styles.textDark : styles.textMain]}>
             {nextClass.walkingMinutes != null
-              ? ` ${nextClass.walkingMinutes} min walk`
+              ? ` ${formattedTimeUntil(nextClass.walkingMinutes)} walk`
               : ' Walk time unavailable'}
           </Text>
         </View>
