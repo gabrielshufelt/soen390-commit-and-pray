@@ -1,4 +1,6 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useCallback } from "react";
+import { useFocusEffect } from "expo-router";
+import * as Location from "expo-location";
 import { useNavigationCamera } from "../../hooks/useNavigationCamera";
 import MapView, { Marker, Polygon, Region } from "react-native-maps";
 import { Alert, StyleSheet, View, Text, TouchableOpacity } from "react-native";
@@ -20,6 +22,9 @@ import MapViewDirections from "react-native-maps-directions";
 import SearchBar, { BuildingChoice } from "../../components/searchBar";
 import NavigationSteps from "../../components/NavigationSteps";
 import { HIGHLIGHT_COLOR, STROKE_COLOR } from "@/styles/index.styles";
+import { DEV_OVERRIDE_LOCATION } from "../../utils/devConfig";
+import { useNextClass } from "../../hooks/useNextClass";
+import NextClassModal from "../../components/NextClassModal";
 
 const LABEL_ZOOM_THRESHOLD = 0.015;
 const ANCHOR_OFFSET = { x: 0.5, y: 0.5 };
@@ -37,12 +42,33 @@ export default function Index() {
 
   const permissionState = useLocationPermissions();
   const { location } = useWatchLocation({ enabled: permissionState.granted });
-  const userBuilding = useUserBuilding(location);
+
+  // START DEVELOPPER CONFIG
+  // When DEV_OVERRIDE_LOCATION is set in utils/devConfig.ts, the app uses those
+  // coordinates instead of real GPS everywhere (building detection, walking time,
+  // navigation start).  Set it to null in devConfig.ts to use real GPS.
+  const effectiveLocation: Location.LocationObject | null = DEV_OVERRIDE_LOCATION
+    ? ({
+        coords: {
+          latitude: DEV_OVERRIDE_LOCATION.latitude,
+          longitude: DEV_OVERRIDE_LOCATION.longitude,
+          altitude: null,
+          accuracy: null,
+          altitudeAccuracy: null,
+          heading: null,
+          speed: null,
+        },
+        timestamp: Date.now(),
+      } as unknown as Location.LocationObject)
+    : location;
+  // END DEVELOPPER CONFIG
+
+  const userBuilding = useUserBuilding(effectiveLocation);
 
   const currentCampus = useMemo(() => {
-    if (!location) return undefined;
-    return findCampusForCoordinate(location.coords.latitude, location.coords.longitude);
-  }, [location]);
+    if (!effectiveLocation) return undefined;
+    return findCampusForCoordinate(effectiveLocation.coords.latitude, effectiveLocation.coords.longitude);
+  }, [effectiveLocation]);
 
   const {
     state: directionsState,
@@ -75,6 +101,21 @@ export default function Index() {
   const [useShuttle, setUseShuttle] = useState(false);
   const [shuttleCampus, setShuttleCampus] = useState<"SGW" | "Loyola">("SGW");
 
+  // fetchTrigger is incremented every time the home screen gains focus so that
+  // the next class data is refreshed when the user returns from Settings after
+  // selecting a different calendar.
+  const [fetchTrigger, setFetchTrigger] = useState(0);
+  useFocusEffect(
+    useCallback(() => {
+      setFetchTrigger((n) => n + 1);
+    }, [])
+  );
+  const {
+    nextClass,
+    status: nextClassStatus,
+    isLoading: nextClassLoading,
+  } = useNextClass(effectiveLocation, fetchTrigger);
+
   /**
    * Waypoints to inject into MapViewDirections when the shuttle option is
    * selected.  The route becomes:
@@ -105,9 +146,9 @@ export default function Index() {
   };
 
   const handleStartRoute = () => {
-    if (!destChoice || !location) return;
+    if (!destChoice || !effectiveLocation) return;
 
-    startDirections({ latitude: location.coords.latitude, longitude: location.coords.longitude }, destChoice.coordinate);
+    startDirections({ latitude: effectiveLocation.coords.latitude, longitude: effectiveLocation.coords.longitude }, destChoice.coordinate);
   };
 
   const handlePreviewRoute = () => {
@@ -174,14 +215,14 @@ export default function Index() {
 
   const { mapRef, handleRouteReady } = useNavigationCamera({
     directionsState,
-    location,
+    location: effectiveLocation,
     selectedCampus,
     onRouteReady,
     checkProgress,
   });
 
   React.useEffect(() => {
-    if (!startChoice && location) {
+    if (!startChoice && effectiveLocation) {
       if (userBuilding) {
         setStartChoice({
           id: userBuilding.id,
@@ -195,14 +236,14 @@ export default function Index() {
           id: "current-location",
           name: "My Current Location",
           coordinate: {
-            latitude: location.coords.latitude,
-            longitude: location.coords.longitude,
+            latitude: effectiveLocation.coords.latitude,
+            longitude: effectiveLocation.coords.longitude,
           },
           campus: (currentCampus?.campus.name as any) ?? campusKey,
         });
       }
     }
-  }, [location, userBuilding, startChoice, campusKey]);
+  }, [effectiveLocation, userBuilding, startChoice, campusKey]);
 
 
   const buildingPolygons = useMemo(() => {
@@ -380,13 +421,13 @@ export default function Index() {
           )
         )}
 
-        {!directionsState.isActive && destChoice && (startChoice || (location && !startChoice)) && (
+        {!directionsState.isActive && destChoice && (startChoice || (effectiveLocation && !startChoice)) && (
           useShuttle && shuttleWaypoints ? (
             <React.Fragment>
               {/* Leg 1: origin → shuttle departure stop */}
               <MapViewDirections
-                key={`preview-leg1-${(startChoice?.coordinate.latitude || location?.coords.latitude) ?? "x"}-${shuttleWaypoints[0].latitude}-${useShuttle}`}
-                origin={startChoice?.coordinate || { latitude: location!.coords.latitude, longitude: location!.coords.longitude }}
+                key={`preview-leg1-${(startChoice?.coordinate.latitude || effectiveLocation?.coords.latitude) ?? "x"}-${shuttleWaypoints[0].latitude}-${useShuttle}`}
+                origin={startChoice?.coordinate || { latitude: effectiveLocation!.coords.latitude, longitude: effectiveLocation!.coords.longitude }}
                 destination={shuttleWaypoints[0]}
                 apikey={apiKey}
                 mode={directionsState.transportMode}
@@ -419,8 +460,8 @@ export default function Index() {
             </React.Fragment>
           ) : (
             <MapViewDirections
-              key={`preview-${(startChoice?.coordinate.latitude || location?.coords.latitude) ?? "x"}-${destChoice.coordinate.latitude}-${effectiveMode}`}
-              origin={startChoice?.coordinate || { latitude: location!.coords.latitude, longitude: location!.coords.longitude }}
+              key={`preview-${(startChoice?.coordinate.latitude || effectiveLocation?.coords.latitude) ?? "x"}-${destChoice.coordinate.latitude}-${effectiveMode}`}
+              origin={startChoice?.coordinate || { latitude: effectiveLocation!.coords.latitude, longitude: effectiveLocation!.coords.longitude }}
               destination={destChoice.coordinate}
               apikey={apiKey}
               mode={effectiveMode}
@@ -454,15 +495,13 @@ export default function Index() {
         />
       )}
 
-
-      <View style={styles.overlay}>
-        <Text style={styles.overlayTitle}>Current Location</Text>
-        <Text style={styles.overlayValue}>
-          {permissionState.granted ? currentCampus?.campus.name ?? "Outside campus boundaries" : "Location permission required"}
-        </Text>
-
-        {userBuilding && <Text style={styles.overlayBuilding}>📍 Inside: {userBuilding.name}</Text>}
-      </View>
+      {!directionsState.isActive && (
+        <NextClassModal
+          nextClass={nextClass}
+          status={nextClassStatus}
+          isLoading={nextClassLoading}
+        />
+      )}
 
       {!directionsState.isActive && (
         <CampusToggle selectedCampus={campusKey} onCampusChange={setCampusKey} />
@@ -513,35 +552,6 @@ export default function Index() {
 const styles = StyleSheet.create({
   container: { flex: 1, position: "relative" },
   map: { width: "100%", height: "100%" },
-
-  overlay: {
-    position: "absolute",
-    bottom: 24,
-    left: 16,
-    right: 16,
-    backgroundColor: "rgba(0,0,0,0.75)",
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 12,
-  },
-  overlayTitle: {
-    color: "#9ca3af",
-    fontSize: 12,
-    textTransform: "uppercase",
-    letterSpacing: 0.8,
-    marginBottom: 4,
-  },
-  overlayBuilding: {
-    color: "#60a5fa",
-    fontSize: 14,
-    fontWeight: "500",
-    marginTop: 4,
-  },
-  overlayValue: {
-    color: "#ffffff",
-    fontSize: 18,
-    fontWeight: "600",
-  },
 
   labelContainer: { backgroundColor: "transparent" },
   buildingLabel: {

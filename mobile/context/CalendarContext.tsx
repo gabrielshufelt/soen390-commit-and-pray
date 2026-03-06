@@ -6,6 +6,49 @@ export interface GoogleCalendar {
   summary: string;
 }
 
+export interface GoogleCalendarEvent {
+  id: string;
+  summary: string;
+  start: { dateTime: string };
+  end: { dateTime: string };
+  location?: string;
+  description?: string;
+}
+
+/**
+ * Fetch all events from a specific calendar that fall within the given
+ * time window.  Passing "singleEvents=true" tells Google to expand
+ * recurring events and honour exclusion dates (EXDATE), so the
+ * caller receives individual occurrences.
+ */
+export async function fetchEvents(
+  accessToken: string,
+  calendarId: string,
+  timeMin: string,
+  timeMax: string,
+): Promise<GoogleCalendarEvent[]> {
+  const params = new URLSearchParams({
+    singleEvents: 'true',
+    orderBy: 'startTime',
+    timeMin,
+    timeMax,
+  });
+
+  const response = await fetch(
+    `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events?${params.toString()}`,
+    {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    },
+  );
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch calendar events: ${response.status}`);
+  }
+
+  const data = await response.json();
+  return (data.items ?? []) as GoogleCalendarEvent[];
+}
+
 interface CalendarContextType {
   calendars: GoogleCalendar[];
   selectedCalendarId: string | null;
