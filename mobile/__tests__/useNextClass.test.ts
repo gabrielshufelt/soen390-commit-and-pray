@@ -6,9 +6,10 @@ import { parseBuildingLocation } from '../utils/buildingParser';
 import { getBuildingCoordinate } from '../utils/buildingCoordinates';
 import * as Location from 'expo-location';
 
-// Fixed "now" for all tests: Tuesday Jan 13 2026 at 12:00 local time
+// Fixed "now" for all tests: Tuesday Jan 13 2026 at 12:00 EST (17:00 UTC).
+// Using an explicit UTC offset avoids timezone-dependent failures in CI (which runs in UTC).
 jest.mock('../utils/devConfig', () => ({
-  DEV_OVERRIDE_TIME: new Date('2026-01-13T12:00:00'),
+  DEV_OVERRIDE_TIME: new Date('2026-01-13T17:00:00Z'), // noon EST = 17:00 UTC
   DEV_OVERRIDE_LOCATION: null,
 }));
 
