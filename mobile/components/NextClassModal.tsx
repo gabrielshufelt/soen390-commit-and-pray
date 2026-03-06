@@ -3,7 +3,6 @@ import {
   View,
   Text,
   TouchableOpacity,
-  StyleSheet,
   ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -11,6 +10,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
 import { ParsedNextClass, NextClassStatus, NO_CLASS_BEHAVIOR } from '../hooks/useNextClass';
 import { DEV_OVERRIDE_TIME } from '../utils/devConfig';
+import { styles } from '../styles/nextClassModal.styles';
 
 const TIMEOUT_MS = 30_000; // 30 seconds, how often the "in X mins" counter updates
 
@@ -210,169 +210,3 @@ export default function NextClassModal({ nextClass, status, isLoading }: NextCla
     </View>
   );
 }
-
-
-
-const CONCORDIA_RED = '#922338';
-
-const styles = StyleSheet.create({
-  card: {
-    position: 'absolute',
-    bottom: 24,
-    left: 16,
-    right: 16,
-    borderRadius: 14,
-    paddingTop: 14,
-    paddingHorizontal: 14,
-    paddingBottom: 12,
-    // Shadow (iOS)
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.18,
-    shadowRadius: 8,
-    // Elevation (Android)
-    elevation: 6,
-  },
-  cardLight: {
-    backgroundColor: '#FFFFFF',
-  },
-  cardDark: {
-    backgroundColor: '#1F2937',
-  },
-
-  // Top section
-  topSection: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginBottom: 10,
-  },
-
-  // Left column
-  leftCol: {
-    alignItems: 'center',
-    marginRight: 12,
-    width: 48,
-  },
-  buildingBadge: {
-    backgroundColor: CONCORDIA_RED,
-    borderRadius: 8,
-    paddingHorizontal: 6,
-    paddingVertical: 4,
-    minWidth: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  buildingBadgeText: {
-    color: '#FFFFFF',
-    fontWeight: '700',
-    fontSize: 13,
-    letterSpacing: 0.5,
-  },
-  badgeIconSpacer: {
-    marginTop: 8,
-    alignItems: 'center',
-  },
-
-  // Right column
-  rightCol: {
-    flex: 1,
-  },
-  headerRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 2,
-  },
-  labelText: {
-    fontSize: 10,
-    fontWeight: '600',
-    letterSpacing: 0.8,
-    textTransform: 'uppercase',
-  },
-  countdownText: {
-    fontSize: 11,
-    fontWeight: '500',
-  },
-  className: {
-    fontSize: 20,
-    fontWeight: '700',
-    marginBottom: 4,
-  },
-  detailRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  roomText: {
-    fontSize: 13,
-    fontWeight: '500',
-  },
-  timeText: {
-    fontSize: 13,
-  },
-
-  // Divider
-  divider: {
-    height: 1,
-    marginBottom: 10,
-  },
-  dividerLight: {
-    backgroundColor: '#E5E7EB',
-  },
-  dividerDark: {
-    backgroundColor: '#374151',
-  },
-
-  // Bottom section
-  bottomSection: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  walkTimeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  walkText: {
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  directionsButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: CONCORDIA_RED,
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 20,
-  },
-  directionsButtonText: {
-    color: '#FFFFFF',
-    fontWeight: '600',
-    fontSize: 14,
-  },
-
-  // Done / info cards
-  doneRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 6,
-    gap: 10,
-  },
-  doneText: {
-    fontSize: 15,
-    fontWeight: '500',
-  },
-
-  // Text colour variants
-  textMain: {
-    color: '#111827',
-  },
-  textDark: {
-    color: '#F9FAFB',
-  },
-  textMuted: {
-    color: '#6B7280',
-  },
-  textMutedDark: {
-    color: '#9CA3AF',
-  },
-});
