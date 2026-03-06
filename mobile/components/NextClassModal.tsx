@@ -12,6 +12,7 @@ import { useTheme } from '../context/ThemeContext';
 import { ParsedNextClass, NextClassStatus, NO_CLASS_BEHAVIOR } from '../hooks/useNextClass';
 import { DEV_OVERRIDE_TIME } from '../utils/devConfig';
 
+const TIMEOUT_MS = 30_000; // 30 seconds, how often the "in X mins" counter updates
 
 interface NextClassModalProps {
   nextClass: ParsedNextClass | null;
@@ -64,7 +65,7 @@ export default function NextClassModal({ nextClass, status, isLoading }: NextCla
 
     const id = setInterval(() => {
       setMinutesUntil(getMinutesUntil(nextClass.startTime));
-    }, 30_000);
+    }, TIMEOUT_MS);
 
     return () => clearInterval(id);
   }, [nextClass]);
