@@ -96,7 +96,6 @@ export function useNextClass(
       setStatus('no_calendar');
       setIsLoading(false);
       setError(null);
-      console.log('[useNextClass] No calendar selected.');
       return;
     }
 
@@ -105,7 +104,6 @@ export function useNextClass(
     const run = async () => {
       setIsLoading(true);
       setError(null);
-      console.log('[useNextClass] Fetching events...');
 
       try {
         const accessToken = await getAccessToken();
@@ -114,14 +112,12 @@ export function useNextClass(
             setStatus('error');
             setError('Could not retrieve access token.');
             setIsLoading(false);
-            console.log('[useNextClass] No access token.');
           }
           return;
         }
 
         // "Now": use dev override when set, otherwise real clock
         const now = DEV_OVERRIDE_TIME ? new Date(DEV_OVERRIDE_TIME) : new Date();
-        console.log('[useNextClass] now =', now.toISOString(), '| calendarId =', selectedCalendarId);
 
         // Today's window: from now until midnight tonight
         const endOfDay = new Date(now);
@@ -133,7 +129,6 @@ export function useNextClass(
           now.toISOString(),
           endOfDay.toISOString(),
         );
-        console.log('[useNextClass] Events from API (timeMin→endOfDay):', events.length, events.map(e => e.summary + ' @ ' + e.start?.dateTime));
 
         if (cancelled) return;
 
@@ -164,12 +159,10 @@ export function useNextClass(
             // There were classes today but they are all done
             setNextClass(null);
             setStatus('done_today');
-            console.log('[useNextClass] Status: done_today');
           } else {
             // Completely free day
             setNextClass(null);
             setStatus('no_class');
-            console.log('[useNextClass] Status: no_class');
           }
           setIsLoading(false);
           return;
@@ -215,7 +208,6 @@ export function useNextClass(
           rawLocation,
         });
         setStatus('found');
-        console.log('[useNextClass] Status: found |', title, '| building:', parsed?.buildingCode, parsed?.room, '| walk:', walkingMinutes, 'min');
       } catch (err) {
         if (!cancelled) {
           console.error('[useNextClass] Error:', err);
