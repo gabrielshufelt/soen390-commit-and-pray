@@ -147,7 +147,7 @@ describe('useNextClass', () => {
 
     const nc = result.current.nextClass!;
     expect(nc).not.toBeNull();
-    expect(nc.title).toBe('PHYS 468');           // " - Lecture" suffix stripped
+    expect(nc.title).toBe('PHYS 468 - Lecture');  // suffix kept to indicate event type
     expect(nc.buildingCode).toBe('CJ');
     expect(nc.buildingName).toBe('Communication Studies and Journalism Building');
     expect(nc.room).toBe('1.129');
@@ -156,7 +156,7 @@ describe('useNextClass', () => {
     expect(nc.rawLocation).toBe('CJ Building 1.129');
   });
 
-  it('strips " - Tutorial" suffix from title', async () => {
+  it('keeps " - Tutorial" suffix in title to indicate event type', async () => {
     (fetchEvents as jest.Mock).mockResolvedValueOnce([
       { ...futureEvent, summary: 'COMP 345 - Tutorial' },
     ]);
@@ -164,10 +164,10 @@ describe('useNextClass', () => {
     const { result } = renderHook(() => useNextClass(null, 0));
 
     await waitFor(() => expect(result.current.status).toBe('found'));
-    expect(result.current.nextClass!.title).toBe('COMP 345');
+    expect(result.current.nextClass!.title).toBe('COMP 345 - Tutorial');
   });
 
-  it('strips " - Lab" suffix from title', async () => {
+  it('keeps " - Lab" suffix in title to indicate event type', async () => {
     (fetchEvents as jest.Mock).mockResolvedValueOnce([
       { ...futureEvent, summary: 'ENGR 201 - Lab' },
     ]);
@@ -175,10 +175,10 @@ describe('useNextClass', () => {
     const { result } = renderHook(() => useNextClass(null, 0));
 
     await waitFor(() => expect(result.current.status).toBe('found'));
-    expect(result.current.nextClass!.title).toBe('ENGR 201');
+    expect(result.current.nextClass!.title).toBe('ENGR 201 - Lab');
   });
 
-  it('does not strip suffix that is not a known type', async () => {
+  it('keeps non-type suffix in title unchanged', async () => {
     (fetchEvents as jest.Mock).mockResolvedValueOnce([
       { ...futureEvent, summary: 'COMP 345 - Project' },
     ]);
@@ -261,9 +261,7 @@ describe('useNextClass', () => {
 
   // School day finished (done_today)
   it('returns done_today when all classes for today are in the past', async () => {
-    // First call (timeMin=now) returns [], nothing upcoming
-    (fetchEvents as jest.Mock).mockResolvedValueOnce([]);
-    // Second call (timeMin=startOfDay) returns a past event, classes existed
+    // Single call (startOfDay -> endOfDay) returns only a past event
     (fetchEvents as jest.Mock).mockResolvedValueOnce([pastEvent]);
 
     const { result } = renderHook(() => useNextClass(null, 0));
@@ -277,7 +275,7 @@ describe('useNextClass', () => {
 
   // No classes today (no_class)
   it('returns no_class when the calendar has no events today', async () => {
-    (fetchEvents as jest.Mock).mockResolvedValue([]); // both calls return []
+    (fetchEvents as jest.Mock).mockResolvedValueOnce([]); // single call returns []
 
     const { result } = renderHook(() => useNextClass(null, 0));
 
