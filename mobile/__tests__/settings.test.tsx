@@ -5,6 +5,12 @@ import SettingsScreen from '../app/(tabs)/settings';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 
+jest.mock('expo-router', () => ({
+  // No-op: settings tests cover rendering, not the on-focus calendar-refresh
+  // side effect.
+  useFocusEffect: jest.fn(),
+}));
+
 jest.mock('../context/ThemeContext', () => ({
   useTheme: jest.fn(() => ({
     theme: 'system',
@@ -18,6 +24,7 @@ jest.mock('../context/AuthContext', () => ({
     user: null,
     isLoading: false,
     signOut: jest.fn(),
+    getAccessToken: jest.fn(() => Promise.resolve('test-token')),
   })),
 }));
 
@@ -28,6 +35,7 @@ jest.mock('../context/CalendarContext', () => ({
     isLoadingCalendars: false,
     selectCalendar: jest.fn(),
     clearCalendars: jest.fn(),
+    fetchCalendars: jest.fn(() => Promise.resolve()),
   })),
 }));
 

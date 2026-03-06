@@ -1,5 +1,6 @@
 import { Text, View, StyleSheet, Pressable, ActivityIndicator, Image, ScrollView } from 'react-native';
-import React from 'react';
+import React, { useCallback, useRef } from 'react';
+import { useFocusEffect } from 'expo-router';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
 import { useCalendar } from '../../context/CalendarContext';
@@ -9,9 +10,34 @@ type ThemeOption = 'light' | 'dark' | 'system';
 
 export default function SettingsScreen() {
   const { theme, setTheme, colorScheme } = useTheme();
-  const { user, isLoading, signOut } = useAuth();
-  const { calendars, selectedCalendarId, isLoadingCalendars, selectCalendar, clearCalendars } = useCalendar();
+  const { user, isLoading, signOut, getAccessToken } = useAuth();
+  const { calendars, selectedCalendarId, isLoadingCalendars, selectCalendar, clearCalendars, fetchCalendars } = useCalendar();
   const isDark = colorScheme === 'dark';
+
+  // Use refs to keep closures pointed at the latest functions.
+  const getAccessTokenRef = useRef(getAccessToken);
+  getAccessTokenRef.current = getAccessToken;
+  const fetchCalendarsRef = useRef(fetchCalendars);
+  fetchCalendarsRef.current = fetchCalendars;
+
+  // Refresh calendar list when screen comes into focus.
+  // Use user?.id as dependency (not the whole user object) to avoid re-triggering
+  // when the access token refreshes.
+  useFocusEffect(
+    useCallback(() => {
+      if (!user) return;
+      (async () => {
+        try {
+          const token = await getAccessTokenRef.current();
+          if (token) {
+            await fetchCalendarsRef.current(token);
+          }
+        } catch (e) {
+          console.error('Background calendar refresh failed:', e);
+        }
+      })();
+    }, [user?.id])
+  );
 
   const handleSignOut = async () => {
     try {
@@ -93,7 +119,9 @@ export default function SettingsScreen() {
             Calendars
           </Text>
           <View style={[styles.optionsContainer, { backgroundColor: isDark ? '#1c1c1e' : '#ffffff' }]}>
-            {isLoadingCalendars ? (
+            {isLoadingCalendars && calendars.length === 0 ? (
+              // Only block the UI with a spinner on first load when there is no
+              // cached data yet. Background refreshes are silent.
               <View style={styles.loadingContainer}>
                 <ActivityIndicator />
               </View>
