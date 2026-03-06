@@ -6,12 +6,12 @@ import {
   TextInput,
   TouchableOpacity,
   FlatList,
-  SafeAreaView,
   Keyboard,
   TouchableWithoutFeedback,
   Modal,
   Platform,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { FontAwesome } from "@expo/vector-icons";
 import { BuildingChoice } from "@/constants/searchBar.types";
 import { useShuttleAvailability } from "../hooks/useShuttleAvailability";

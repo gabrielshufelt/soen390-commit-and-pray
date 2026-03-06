@@ -251,6 +251,11 @@ describe('AuthContext', () => {
 
   it('handles errors when getting access token', async () => {
     const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    // load a user so the guard passes, then make getTokens throw
+    (SecureStore.getItemAsync as jest.Mock).mockResolvedValueOnce(
+      JSON.stringify(mockUser)
+    );
+    (GoogleSignin.getCurrentUser as jest.Mock).mockReturnValueOnce({ user: mockUser });
     (GoogleSignin.getTokens as jest.Mock).mockRejectedValueOnce(
       new Error('Token error')
     );
