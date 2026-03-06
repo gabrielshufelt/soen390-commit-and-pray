@@ -5,7 +5,7 @@
 // Set to null to use the real clock.
 // Example: new Date('2026-03-09T12:00:00') puts the app at March 9 at noon.
 
-export const DEV_OVERRIDE_TIME: Date | null = new Date('2026-03-11T11:00:00'); // UNCOMMENT TO USE OVERRIDE TIME
+export const DEV_OVERRIDE_TIME: Date | null = new Date('2026-03-11T16:00:00'); // UNCOMMENT TO USE OVERRIDE TIME
 // export const DEV_OVERRIDE_TIME: Date | null = null; // UNCOMMENT TO USE REAL TIME
 
 

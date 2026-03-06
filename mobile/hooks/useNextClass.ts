@@ -231,9 +231,9 @@ export function useNextClass(
     run();
     return () => { cancelled = true; };
 
-    // fetchTrigger is intentionally in the dependency array to allow forced re-fetches
+    // fetchTrigger forces re-fetch on screen focus; DEV_OVERRIDE_TIME re-runs on hot reload when the time is changed
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedCalendarId, fetchTrigger]);
+  }, [selectedCalendarId, fetchTrigger, DEV_OVERRIDE_TIME?.getTime() ?? 0]);
 
   return { nextClass, status, isLoading, error };
 }
