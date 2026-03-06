@@ -12,6 +12,7 @@ https://www.concordia.ca/maps/buildings.html
 - VA - Visual Arts Building
 - LS - Concordia Learning Square
 - GN - Maison-Mère des Sœurs grises (Grey Nuns Residence)
+- CL
 
 **Loyola Campus Buildings (21 buildings):**
 - SP - Richard J Renaud Science Complex

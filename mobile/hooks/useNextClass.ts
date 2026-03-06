@@ -201,9 +201,8 @@ export function useNextClass(
 
         if (cancelled) return;
 
-        // Extract a clean title: strip the " - Lecture" / " - Tutorial" suffixes
-        // common in Concordia ICS exports, e.g. "PHYS 468 - Lecture" → "PHYS 468"
-        const title = event.summary.replace(/\s*-\s*(Lecture|Tutorial|Lab|Seminar|Workshop)$/i, '').trim();
+        // Keep the event type suffix (e.g. " - Lecture", " - Tutorial") to indicate to the user what kind of event it is
+        const title = event.summary.trim();
 
         setNextClass({
           title,

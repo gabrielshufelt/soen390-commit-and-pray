@@ -114,6 +114,8 @@ const NAME_TO_CODE: Record<string, string> = {
   'vanier library': 'VL',
   'vanier': 'VL',
   'vl': 'VL',
+  'cl building': 'CL',
+  'cl': 'CL',
 };
 
 // Maps building code -> canonical full name
@@ -149,6 +151,7 @@ const CODE_TO_NAME: Record<string, string> = {
   AD: 'Administration Building',
   HU: 'Applied Science Hub',
   VL: 'Concordia Vanier Library',
+  CL: 'CL Building',
 };
 
 // Set of valid building codes for direct matching (uppercase)
