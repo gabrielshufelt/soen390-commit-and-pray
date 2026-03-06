@@ -1,6 +1,6 @@
 import React from 'react';
 import { act, waitFor, renderHook } from '@testing-library/react-native';
-import { CalendarProvider, useCalendar, GoogleCalendar } from '../context/CalendarContext';
+import { CalendarProvider, useCalendar, GoogleCalendar, fetchEvents, GoogleCalendarEvent } from '../context/CalendarContext';
 import * as SecureStore from 'expo-secure-store';
 
 jest.mock('expo-secure-store', () => ({
@@ -265,5 +265,93 @@ describe('CalendarContext', () => {
       expect.any(Error)
     );
     consoleSpy.mockRestore();
+  });
+});
+
+describe('fetchEvents', () => {
+  const TOKEN = 'test-access-token';
+  const CALENDAR_ID = 'user@example.com';
+  const TIME_MIN = '2026-01-13T00:00:00.000Z';
+  const TIME_MAX = '2026-01-13T23:59:59.999Z';
+
+  const mockEvent: GoogleCalendarEvent = {
+    id: 'evt-1',
+    summary: 'COMP 472',
+    start: { dateTime: '2026-01-13T13:15:00-05:00' },
+    end: { dateTime: '2026-01-13T14:30:00-05:00' },
+    location: 'H 937',
+  };
+
+  beforeEach(() => {
+    jest.resetAllMocks();
+    mockFetch.mockResolvedValue({
+      ok: true,
+      json: async () => ({ items: [mockEvent] }),
+    });
+  });
+
+  it('calls the correct Google Calendar Events API URL', async () => {
+    await fetchEvents(TOKEN, CALENDAR_ID, TIME_MIN, TIME_MAX);
+
+    const calledUrl: string = mockFetch.mock.calls[0][0];
+    expect(calledUrl).toContain(
+      `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(CALENDAR_ID)}/events`,
+    );
+  });
+
+  it('includes singleEvents and orderBy query params', async () => {
+    await fetchEvents(TOKEN, CALENDAR_ID, TIME_MIN, TIME_MAX);
+
+    const calledUrl: string = mockFetch.mock.calls[0][0];
+    expect(calledUrl).toContain('singleEvents=true');
+    expect(calledUrl).toContain('orderBy=startTime');
+  });
+
+  it('includes timeMin and timeMax query params', async () => {
+    await fetchEvents(TOKEN, CALENDAR_ID, TIME_MIN, TIME_MAX);
+
+    const calledUrl: string = mockFetch.mock.calls[0][0];
+    expect(calledUrl).toContain(encodeURIComponent(TIME_MIN));
+    expect(calledUrl).toContain(encodeURIComponent(TIME_MAX));
+  });
+
+  it('sends Authorization Bearer header', async () => {
+    await fetchEvents(TOKEN, CALENDAR_ID, TIME_MIN, TIME_MAX);
+
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.any(String),
+      { headers: { Authorization: `Bearer ${TOKEN}` } },
+    );
+  });
+
+  it('returns the items array from the response', async () => {
+    const events = await fetchEvents(TOKEN, CALENDAR_ID, TIME_MIN, TIME_MAX);
+    expect(events).toEqual([mockEvent]);
+  });
+
+  it('returns an empty array when response has no items field', async () => {
+    mockFetch.mockResolvedValue({
+      ok: true,
+      json: async () => ({}),
+    });
+
+    const events = await fetchEvents(TOKEN, CALENDAR_ID, TIME_MIN, TIME_MAX);
+    expect(events).toEqual([]);
+  });
+
+  it('throws an Error when the response is not ok', async () => {
+    mockFetch.mockResolvedValue({ ok: false, status: 401 });
+
+    await expect(
+      fetchEvents(TOKEN, CALENDAR_ID, TIME_MIN, TIME_MAX),
+    ).rejects.toThrow('Failed to fetch calendar events: 401');
+  });
+
+  it('propagates network errors', async () => {
+    mockFetch.mockRejectedValue(new Error('Network error'));
+
+    await expect(
+      fetchEvents(TOKEN, CALENDAR_ID, TIME_MIN, TIME_MAX),
+    ).rejects.toThrow('Network error');
   });
 });
