@@ -1,0 +1,89 @@
+// buildingCoordinates uses real GeoJSON + geometry (pure math, no native deps)
+import { getBuildingCoordinate } from '../utils/buildingCoordinates';
+
+describe('getBuildingCoordinate', () => {
+  // Known SGW buildings
+  it('returns coordinates for Hall Building (H)', () => {
+    const result = getBuildingCoordinate('H');
+    expect(result).not.toBeNull();
+    expect(typeof result!.latitude).toBe('number');
+    expect(typeof result!.longitude).toBe('number');
+  });
+
+  it('returns coordinates for MB (JMSB)', () => {
+    const result = getBuildingCoordinate('MB');
+    expect(result).not.toBeNull();
+    expect(result!.latitude).toBeCloseTo(45.495, 1);
+  });
+
+  it('returns coordinates for EV building', () => {
+    const result = getBuildingCoordinate('EV');
+    expect(result).not.toBeNull();
+  });
+
+  it('returns coordinates for LB (Library)', () => {
+    const result = getBuildingCoordinate('LB');
+    expect(result).not.toBeNull();
+  });
+
+  // Known Loyola buildings
+  it('returns coordinates for CJ (Communication Studies and Journalism)', () => {
+    const result = getBuildingCoordinate('CJ');
+    expect(result).not.toBeNull();
+    expect(typeof result!.latitude).toBe('number');
+    expect(typeof result!.longitude).toBe('number');
+  });
+
+  it('returns coordinates for CC (Central Building)', () => {
+    const result = getBuildingCoordinate('CC');
+    expect(result).not.toBeNull();
+  });
+
+  it('returns coordinates for SP (Renaud Science Complex)', () => {
+    const result = getBuildingCoordinate('SP');
+    expect(result).not.toBeNull();
+  });
+
+  // Case-insensitive lookup
+  it('is case-insensitive: "h" returns same as "H"', () => {
+    expect(getBuildingCoordinate('h')).toEqual(getBuildingCoordinate('H'));
+  });
+
+  it('is case-insensitive: "ev" returns same as "EV"', () => {
+    expect(getBuildingCoordinate('ev')).toEqual(getBuildingCoordinate('EV'));
+  });
+
+  // Unknown codes
+  it('returns null for a completely unknown code', () => {
+    expect(getBuildingCoordinate('ZZZZZ')).toBeNull();
+  });
+
+  it('returns null for empty string', () => {
+    expect(getBuildingCoordinate('')).toBeNull();
+  });
+
+  // Coordinate sanity checks
+  it('SGW campus buildings have latitude near 45.49 and longitude near -73.57', () => {
+    const sgwBuildings = ['H', 'MB', 'EV', 'LB', 'GM'];
+    for (const code of sgwBuildings) {
+      const coord = getBuildingCoordinate(code);
+      expect(coord).not.toBeNull();
+      expect(coord!.latitude).toBeGreaterThan(45.48);
+      expect(coord!.latitude).toBeLessThan(45.51);
+      expect(coord!.longitude).toBeGreaterThan(-73.60);
+      expect(coord!.longitude).toBeLessThan(-73.56);
+    }
+  });
+
+  it('Loyola campus buildings have latitude near 45.45 and longitude near -73.64', () => {
+    const loyolaBuildings = ['CJ', 'CC', 'SP'];
+    for (const code of loyolaBuildings) {
+      const coord = getBuildingCoordinate(code);
+      expect(coord).not.toBeNull();
+      expect(coord!.latitude).toBeGreaterThan(45.45);
+      expect(coord!.latitude).toBeLessThan(45.47);
+      expect(coord!.longitude).toBeGreaterThan(-73.66);
+      expect(coord!.longitude).toBeLessThan(-73.62);
+    }
+  });
+});
