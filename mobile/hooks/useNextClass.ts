@@ -120,52 +120,27 @@ export function useNextClass(
         const now = DEV_OVERRIDE_TIME ? new Date(DEV_OVERRIDE_TIME) : new Date();
 
         // Today's window: from now until midnight tonight
+        const startOfDay = new Date(now);
+        startOfDay.setHours(0, 0, 0, 0);
         const endOfDay = new Date(now);
         endOfDay.setHours(23, 59, 59, 999);
 
-        const events: GoogleCalendarEvent[] = await fetchEvents(
-          accessToken,
-          selectedCalendarId,
-          now.toISOString(),
-          endOfDay.toISOString(),
-        );
-
+        const allToday = await fetchEvents(accessToken, selectedCalendarId, startOfDay.toISOString(),
+            endOfDay.toISOString());
+              
         if (cancelled) return;
 
         // Determine next upcoming event
         // fetchEvents already orders by startTime and uses timeMin=now, BUT
         // Google may include events already in progress (startTime < now).
         // Filter strictly to future events.
-        const upcoming = events.filter(
-          (e) => e.start?.dateTime && new Date(e.start.dateTime) > now,
-        );
+        const upcoming = allToday.filter(e => e.start?.dateTime && new Date(e.start.dateTime) > now);
 
         if (upcoming.length === 0) {
-          // Check whether there were ANY events today (all past) vs none at all
-          // by re-querying from start of day
-          const startOfDay = new Date(now);
-          startOfDay.setHours(0, 0, 0, 0);
-
-          const allToday: GoogleCalendarEvent[] = await fetchEvents(
-            accessToken,
-            selectedCalendarId,
-            startOfDay.toISOString(),
-            endOfDay.toISOString(),
-          );
-
-          if (cancelled) return;
-
-          if (allToday.length > 0) {
-            // There were classes today but they are all done
+            setStatus(allToday.length > 0 ? 'done_today' : 'no_class');
             setNextClass(null);
-            setStatus('done_today');
-          } else {
-            // Completely free day
-            setNextClass(null);
-            setStatus('no_class');
-          }
-          setIsLoading(false);
-          return;
+            setIsLoading(false);
+            return;
         }
 
         // Parse soonest event
