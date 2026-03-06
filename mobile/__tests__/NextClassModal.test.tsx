@@ -80,7 +80,7 @@ describe('NextClassModal', () => {
   // School day finished
   it('shows school day finished message when status is "done_today"', () => {
     const { getByText } = renderModal(null, 'done_today');
-    expect(getByText('School day finished — see you tomorrow!')).toBeTruthy();
+    expect(getByText('School day finished. See you tomorrow!')).toBeTruthy();
   });
 
   // No classes today

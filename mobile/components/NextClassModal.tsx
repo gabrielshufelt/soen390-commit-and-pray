@@ -80,7 +80,7 @@ export default function NextClassModal({ nextClass, status, isLoading }: NextCla
         <View style={styles.doneRow}>
           <Ionicons name="checkmark-circle" size={22} color="#16a34a" />
           <Text style={[styles.doneText, isDark ? styles.textDark : styles.textMain]}>
-            School day finished — see you tomorrow!
+            School day finished. See you tomorrow!
           </Text>
         </View>
       </View>
