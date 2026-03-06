@@ -19,7 +19,8 @@ import BuildingModal from "../../components/buildingModal";
 import ShuttleScheduleModal from "../../components/shuttleScheduleModal";
 import { useDirections } from "../../hooks/useDirections";
 import MapViewDirections from "react-native-maps-directions";
-import SearchBar, { BuildingChoice } from "../../components/searchBar";
+import SearchBar from "@/components/searchBar";
+import { BuildingChoice } from "@/constants/searchBar.types";
 import NavigationSteps from "../../components/NavigationSteps";
 import { HIGHLIGHT_COLOR, STROKE_COLOR } from "@/styles/index.styles";
 import { DEV_OVERRIDE_LOCATION } from "../../utils/devConfig";
@@ -60,7 +61,7 @@ export default function Index() {
         },
         timestamp: Date.now(),
       } as unknown as Location.LocationObject)
-    : location;
+    : useWatchLocation({ enabled: permissionState.granted });
   // END DEVELOPPER CONFIG
 
   const userBuilding = useUserBuilding(effectiveLocation);
