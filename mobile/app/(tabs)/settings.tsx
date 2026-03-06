@@ -1,22 +1,56 @@
-import { Text, View, StyleSheet, Pressable, ActivityIndicator, Image } from 'react-native';
-import React from 'react';
+import { Text, View, StyleSheet, Pressable, ActivityIndicator, Image, ScrollView } from 'react-native';
+import React, { useCallback, useRef } from 'react';
+import { useFocusEffect } from 'expo-router';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
+import { useCalendar } from '../../context/CalendarContext';
 import SignInGoogle from '@/components/SignInGoogle';
 
 type ThemeOption = 'light' | 'dark' | 'system';
 
 export default function SettingsScreen() {
   const { theme, setTheme, colorScheme } = useTheme();
-  const { user, isLoading, signOut } = useAuth();
+  const { user, isLoading, signOut, getAccessToken } = useAuth();
+  const { calendars, selectedCalendarId, isLoadingCalendars, selectCalendar, clearCalendars, fetchCalendars } = useCalendar();
   const isDark = colorScheme === 'dark';
+
+  // Use refs to keep closures pointed at the latest functions.
+  const getAccessTokenRef = useRef(getAccessToken);
+  getAccessTokenRef.current = getAccessToken;
+  const fetchCalendarsRef = useRef(fetchCalendars);
+  fetchCalendarsRef.current = fetchCalendars;
+
+  // Refresh calendar list when screen comes into focus.
+  // Use user?.id as dependency (not the whole user object) to avoid re-triggering
+  // when the access token refreshes.
+  useFocusEffect(
+    useCallback(() => {
+      if (!user) return;
+      (async () => {
+        try {
+          const token = await getAccessTokenRef.current();
+          if (token) {
+            await fetchCalendarsRef.current(token);
+          }
+        } catch (e) {
+          console.error('Background calendar refresh failed:', e);
+        }
+      })();
+    }, [user?.id])
+  );
 
   const handleSignOut = async () => {
     try {
+      await clearCalendars();
       await signOut();
     } catch (error) {
       console.error('Failed to sign out:', error);
     }
+  };
+
+  const handleCalendarSelect = async (calendarId: string) => {
+    // Toggle off if already selected, otherwise select the new one
+    await selectCalendar(selectedCalendarId === calendarId ? null : calendarId);
   };
 
   const themeOptions: { label: string; value: ThemeOption }[] = [
@@ -26,7 +60,7 @@ export default function SettingsScreen() {
   ];
 
   return (
-    <View style={[styles.container, { backgroundColor: isDark ? '#000000' : '#f2f2f7' }]}>
+    <ScrollView style={[styles.container, { backgroundColor: isDark ? '#000000' : '#f2f2f7' }]}>
       <Text style={[styles.sectionTitle, { color: isDark ? '#8e8e93' : '#6e6e73' }]}>
         Appearance
       </Text>
@@ -80,7 +114,67 @@ export default function SettingsScreen() {
             </View>
           </View>
           
-          <View style={[styles.optionsContainer, { backgroundColor: isDark ? '#1c1c1e' : '#ffffff', marginTop: 16 }]}>
+          {/* Calendars section */}
+          <Text style={[styles.sectionTitle, { color: isDark ? '#8e8e93' : '#6e6e73', marginTop: 30 }]}>
+            Calendars
+          </Text>
+          <View style={[styles.optionsContainer, { backgroundColor: isDark ? '#1c1c1e' : '#ffffff' }]}>
+            {isLoadingCalendars && calendars.length === 0 ? (
+              // Only block the UI with a spinner on first load when there is no
+              // cached data yet. Background refreshes are silent.
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator />
+              </View>
+            ) : calendars.length === 0 ? (
+              <View style={styles.option}>
+                <Text style={[styles.optionText, { color: isDark ? '#8e8e93' : '#6e6e73' }]}>
+                  No calendars found
+                </Text>
+              </View>
+            ) : (
+              calendars.map((cal, index) => (
+                <Pressable
+                  key={cal.id}
+                  testID={`calendar-item-${cal.id}`}
+                  style={[
+                    styles.option,
+                    index < calendars.length - 1 && styles.optionBorder,
+                    { borderBottomColor: isDark ? '#38383a' : '#e5e5ea' },
+                  ]}
+                  onPress={() => handleCalendarSelect(cal.id)}
+                >
+                  <View style={styles.checkboxRow}>
+                    <View
+                      style={[
+                        styles.checkbox,
+                        {
+                          borderColor: isDark ? '#636366' : '#c7c7cc',
+                          backgroundColor:
+                            selectedCalendarId === cal.id
+                              ? '#912338'
+                              : 'transparent',
+                        },
+                      ]}
+                    >
+                      {selectedCalendarId === cal.id && (
+                        <Text style={styles.checkboxTick}>✓</Text>
+                      )}
+                    </View>
+                    <Text
+                      style={[
+                        styles.optionText,
+                        { color: isDark ? '#ffffff' : '#000000', marginLeft: 12 },
+                      ]}
+                    >
+                      {cal.summary}
+                    </Text>
+                  </View>
+                </Pressable>
+              ))
+            )}
+          </View>
+
+          <View style={[styles.optionsContainer, { backgroundColor: isDark ? '#1c1c1e' : '#ffffff', marginTop: 16, marginBottom: 40 }]}>
             <Pressable
               style={styles.option}
               onPress={handleSignOut}
@@ -94,7 +188,7 @@ export default function SettingsScreen() {
       ) : (
         <SignInGoogle />
       )}
-    </View>
+    </ScrollView>
   );
 }
 
@@ -158,5 +252,22 @@ const styles = StyleSheet.create({
   },
   userEmail: {
     fontSize: 15,
+  },
+  checkboxRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  checkbox: {
+    width: 22,
+    height: 22,
+    borderRadius: 4,
+    borderWidth: 2,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  checkboxTick: {
+    color: '#ffffff',
+    fontSize: 13,
+    fontWeight: '700',
   },
 });
