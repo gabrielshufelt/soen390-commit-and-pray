@@ -21,6 +21,16 @@ jest.mock('../context/AuthContext', () => ({
   })),
 }));
 
+jest.mock('../context/CalendarContext', () => ({
+  useCalendar: jest.fn(() => ({
+    calendars: [],
+    selectedCalendarId: null,
+    isLoadingCalendars: false,
+    selectCalendar: jest.fn(),
+    clearCalendars: jest.fn(),
+  })),
+}));
+
 jest.mock('@/components/SignInGoogle', () => {
   const { View, Text } = require('react-native');
   return function MockSignInGoogle() {
