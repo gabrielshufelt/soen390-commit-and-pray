@@ -61,7 +61,7 @@ export default function Index() {
         },
         timestamp: Date.now(),
       } as unknown as Location.LocationObject)
-    : useWatchLocation({ enabled: permissionState.granted });
+    : location; // DO NOT CHANGE AS IT WILL CRASH IF DEV_OVERRIDE_LOCATION IS NULL
   // END DEVELOPPER CONFIG
 
   const userBuilding = useUserBuilding(effectiveLocation);
