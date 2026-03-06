@@ -2,6 +2,7 @@ import { Stack } from 'expo-router';
 import React from 'react';
 import { ThemeProvider } from '../context/ThemeContext';
 import { AuthProvider } from '../context/AuthContext';
+import { CalendarProvider } from '../context/CalendarContext';
 import Constants from 'expo-constants';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 
@@ -15,9 +16,11 @@ export default function RootLayout() {
   return (
     <ThemeProvider>
       <AuthProvider>
-        <Stack>
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        </Stack>
+        <CalendarProvider>
+          <Stack>
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          </Stack>
+        </CalendarProvider>
       </AuthProvider>
     </ThemeProvider>
   );

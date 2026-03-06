@@ -8,10 +8,12 @@ import {
   statusCodes,
 } from "@react-native-google-signin/google-signin";
 import { useAuth } from "../context/AuthContext";
+import { useCalendar } from "../context/CalendarContext";
 
 
 export default function SignInGoogle() {
   const { signIn: saveUser } = useAuth();
+  const { fetchCalendars } = useCalendar();
 
   const signIn = async () => {
     try {
@@ -32,7 +34,10 @@ export default function SignInGoogle() {
           accessToken: tokens.accessToken,
           idToken: tokens.idToken,
         });
-        
+
+        // Fetch the user's Google Calendars now that we have a valid access token
+        await fetchCalendars(tokens.accessToken);
+
         Alert.alert('Success', 'You have been signed in successfully!');
       } else {
         Alert.alert('Sign In Failed', 'Unable to complete sign in. Please try again.');
