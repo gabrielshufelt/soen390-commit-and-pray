@@ -135,7 +135,7 @@ describe('NextClassModal', () => {
 
   it('shows walking time in minutes', () => {
     const { getByText } = renderModal(makeNextClass({ walkingMinutes: 8 }), 'found');
-    expect(getByText(' 8 min walk')).toBeTruthy();
+    expect(getByText(' 8m walk')).toBeTruthy();
   });
 
   it('shows "Walk time unavailable" when walkingMinutes is null', () => {
@@ -150,8 +150,8 @@ describe('NextClassModal', () => {
 
   it('shows "In X min" countdown when class is in the future', () => {
     const { getByText } = renderModal(makeNextClass(), 'found');
-    // startTime is 13:15, DEV_OVERRIDE_TIME is 12:00 -> 75 min away
-    expect(getByText('In 75 min')).toBeTruthy();
+    // startTime is 13:15, DEV_OVERRIDE_TIME is 12:00 -> 75 min away -> 1h15m
+    expect(getByText('In 1h15m')).toBeTruthy();
   });
 
   it('shows "Starting now" when minutesUntil is 0', () => {
