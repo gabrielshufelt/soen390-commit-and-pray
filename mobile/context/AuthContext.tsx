@@ -76,6 +76,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const getAccessToken = async (): Promise<string | null> => {
     try {
+      // return null silently if no user is signed in
+      if (!user) return null;
       const tokens = await GoogleSignin.getTokens();
       
       // Update stored tokens if user is signed in
