@@ -17,6 +17,7 @@ yarn-error.log
 
 # Env
 .envrc.local
+.env
 
 # Emacs
 *~
@@ -143,6 +144,10 @@ tsconfig.tsbuildinfo
 
 expo-env.d.ts
 # @end expo-cli
+
+# Firebase Analytics
+GoogleService-Info.plist
+google-services.json
 
 /ios
 /.claude
