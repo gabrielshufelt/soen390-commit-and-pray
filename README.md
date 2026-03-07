@@ -66,17 +66,55 @@ cd ..
 ## RUNNING THE APPLICATION
 ### FRONTEND (MOBILE APP)
 
-1. Navigate to the mobile directory:
-   `cd mobile`
+#### First Time Setup
 
-2. Start the Expo development server:
-   `npx expo start`
+Before starting, make sure to install the project dependencies:
 
-3. After running the command, a QR code will appear in the terminal.
+```bash
+cd mobile
+npm install
+```
 
-4. Open the Expo Go app on your physical iOS or Android device and scan the QR code.
+You **must run one of these commands first** to build the development version with native modules.
 
-The application will load and run on your device through Expo Go.
+**Android:**
+```bash
+cd mobile
+npx expo run:android
+```
+
+If you have not set up an Android Emulator, follow this guide:  
+https://docs.expo.dev/workflow/android-studio-emulator/
+
+**iOS:**
+```bash
+cd mobile
+npx expo run:ios
+```
+
+These commands will:
+1. Build a development version of the app with all native modules
+2. Install it on your device or simulator
+3. Start the Metro bundler
+
+---
+
+#### Subsequent Runs
+
+After the initial build, you can use the standard development workflow:
+
+```bash
+cd mobile
+npx expo start
+```
+
+Then press:
+
+- `s` to switch to development build  
+- `a` to open on Android (development build)  
+- `i` to open on iOS (development build)
+
+The development build will reconnect to the Metro bundler without needing to rebuild the native code (unless native dependencies change).
 
 ### BACKEND
 5. Navigate to the backend directory:
