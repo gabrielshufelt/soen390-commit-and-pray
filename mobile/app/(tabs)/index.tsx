@@ -26,6 +26,7 @@ import { HIGHLIGHT_COLOR, STROKE_COLOR } from "@/styles/index.styles";
 import { DEV_OVERRIDE_LOCATION } from "../../utils/devConfig";
 import { useNextClass } from "../../hooks/useNextClass";
 import NextClassModal from "../../components/NextClassModal";
+import { getBuildingCoordinate } from "../../utils/buildingCoordinates";
 
 const LABEL_ZOOM_THRESHOLD = 0.015;
 const ANCHOR_OFFSET = { x: 0.5, y: 0.5 };
@@ -497,11 +498,26 @@ export default function Index() {
       )}
 
       {!directionsState.isActive && (
-        <NextClassModal
-          nextClass={nextClass}
-          status={nextClassStatus}
-          isLoading={nextClassLoading}
-        />
+	<NextClassModal
+  	  nextClass={nextClass}
+  	  status={nextClassStatus}
+  	  isLoading={nextClassLoading}
+  	  onGetDirections={(code) => {
+    	    // 1. Get the GPS coordinates for the building code (e.g., "H")
+    	    const coords = getBuildingCoordinate(code);
+    
+    	    // 2. If we have coordinates and the user's location, start the route
+    	    if (coords && effectiveLocation) {
+      	      startDirections(
+        	{ 
+          	  latitude: effectiveLocation.coords.latitude, 
+          	  longitude: effectiveLocation.coords.longitude 
+        	}, 
+        	coords
+      	      );
+    	    }
+  	  }}
+	/>
       )}
 
       {!directionsState.isActive && (

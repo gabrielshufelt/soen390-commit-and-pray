@@ -18,6 +18,7 @@ interface NextClassModalProps {
   nextClass: ParsedNextClass | null;
   status: NextClassStatus;
   isLoading: boolean;
+  onGetDirections: (code: string) => void;
 }
 
 // Helpers
@@ -50,7 +51,7 @@ function formattedTimeUntil(minutes: number): string {
 
 // End of helpers
 
-export default function NextClassModal({ nextClass, status, isLoading }: NextClassModalProps) {
+export default function NextClassModal({ nextClass, status, isLoading, onGetDirections }: NextClassModalProps) {
   const { colorScheme } = useTheme();
   const isDark = colorScheme === 'dark';
 
@@ -118,6 +119,11 @@ export default function NextClassModal({ nextClass, status, isLoading }: NextCla
     return null;
   }
 
+  // isLate: walk time is greater than time left for ex...
+  const isLate = nextClass.walkingMinutes !== null && nextClass.walkingMinutes > minutesUntil;
+
+  const classStarted = minutesUntil <= 0;
+	
   // Next class found
   const buildingLabel = nextClass.buildingCode || '?';
   const roomLabel = nextClass.room
@@ -143,6 +149,16 @@ export default function NextClassModal({ nextClass, status, isLoading }: NextCla
 
         {/* Right column: labels + class info */}
         <View style={styles.rightCol}>
+	  {/*LATE WARNING*/}
+	  {classStarted ? (
+	    <Text style={{ color: '#ef4444', fontSize: 10, fontWeight: '700', marginBottom: 2 }}>
+              ⚠️ CLASS HAS STARTED
+	    </Text>
+	  ) : isLate ? (
+            <Text style={{ color: '#f59e0b', fontSize: 10, fontWeight: '700', marginBottom: 2 }}>
+              ⚠️ YOU WILL BE LATE (WALK: {nextClass.walkingMinutes} MIN)
+            </Text>
+          ) : null}
 
           {/* "NEXT CLASS"  ·  "In X mins" */}
           <View style={styles.headerRow}>
@@ -198,9 +214,7 @@ export default function NextClassModal({ nextClass, status, isLoading }: NextCla
         <TouchableOpacity
           style={styles.directionsButton}
           activeOpacity={0.8}
-          onPress={() => {
-            // TODO: implement indoor/outdoor navigation to next class
-          }}
+          onPress={() => onGetDirections(nextClass.buildingCode)}
         >
           <Ionicons name="navigate" size={14} color="#FFFFFF" style={{ marginRight: 5 }} />
           <Text style={styles.directionsButtonText}>Get Directions</Text>

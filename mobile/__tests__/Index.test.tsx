@@ -42,7 +42,7 @@ jest.mock('expo-secure-store', () => ({
 }));
 
 jest.mock('../hooks/useNextClass', () => ({
-  useNextClass: () => ({ nextClass: null, status: 'no_calendar', isLoading: false }),
+  useNextClass: jest.fn(() => ({ nextClass: null, status: 'no_calendar', isLoading: false })),
   NO_CLASS_BEHAVIOR: 'hide',
 }));
 
@@ -865,5 +865,31 @@ describe('<Index />', () => {
         expect(mockSearchBarProperties.destination.coordinate.longitude).toBeDefined();
       });
     });
+  });
+
+  it('starts directions when "Get Directions" is triggered from NextClassModal', async () => {
+    const { useNextClass } = require('../hooks/useNextClass');
+    
+    useNextClass.mockReturnValue({
+      nextClass: { 
+        title: 'Test Class', 
+        buildingCode: 'H', 
+        startTime: new Date(), 
+        endTime: new Date(),
+        walkingMinutes: 5 
+      },
+      status: 'found',
+      isLoading: false
+    });
+
+    const { getByText } = await renderWithTheme(<Index />);
+    
+    await waitFor(() => expect(getByText('Get Directions')).toBeTruthy());
+    fireEvent.press(getByText('Get Directions'));
+
+    expect(mockStartDirections).toHaveBeenCalledWith(
+      expect.objectContaining({ latitude: 45.4972 }),
+      expect.objectContaining({ latitude: expect.closeTo(45.497, 3) })
+    );
   });
 });

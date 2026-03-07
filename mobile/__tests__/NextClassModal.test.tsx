@@ -1,5 +1,5 @@
 import React from 'react';
-import { render } from '@testing-library/react-native';
+import { render, fireEvent } from '@testing-library/react-native';
 import NextClassModal from '../components/NextClassModal';
 import { ParsedNextClass, NextClassStatus } from '../hooks/useNextClass';
 
@@ -39,9 +39,15 @@ function renderModal(
   nextClass: ParsedNextClass | null,
   status: NextClassStatus,
   isLoading = false,
+  onGetDirections = jest.fn()
 ) {
   return render(
-    <NextClassModal nextClass={nextClass} status={status} isLoading={isLoading} />,
+    <NextClassModal 
+      nextClass={nextClass} 
+      status={status} 
+      isLoading={isLoading} 
+      onGetDirections={onGetDirections} 
+    />
   );
 }
 
@@ -170,5 +176,31 @@ describe('NextClassModal', () => {
     expect(getByText('PHYS 468')).toBeTruthy();
 
     (useTheme as jest.Mock).mockReturnValue({ colorScheme: 'light' });
+  });
+
+  it('shows late warning when walking time exceeds time until class', () => {
+    // Walk is 10m, class is in 5m
+    const nc = makeNextClass({ 
+      walkingMinutes: 10, 
+      startTime: new Date('2026-01-13T12:05:00') 
+    });
+    const { getByText } = renderModal(nc, 'found');
+    expect(getByText(/YOU WILL BE LATE/i)).toBeTruthy();
+  });
+
+  it('shows "CLASS HAS STARTED" warning when minutesUntil is 0 or less', () => {
+    // Class started at noon (DEV_OVERRIDE_TIME)
+    const nc = makeNextClass({ startTime: new Date('2026-01-13T12:00:00') });
+    const { getByText } = renderModal(nc, 'found');
+    expect(getByText(/CLASS HAS STARTED/i)).toBeTruthy();
+  });
+
+  it('calls onGetDirections with building code when button is pressed', () => {
+    const mockDirections = jest.fn();
+    const nc = makeNextClass({ buildingCode: 'H' });
+    const { getByText } = renderModal(nc, 'found', false, mockDirections);
+    
+    fireEvent.press(getByText('Get Directions'));
+    expect(mockDirections).toHaveBeenCalledWith('H');
   });
 });
