@@ -1,0 +1,17 @@
+appId: com.commitandpray.soen390project
+---
+- launchApp:
+    clearState: true
+- tapOn: Settings, tab, 2 of 2
+- runFlow:
+    when:
+      visible: "Log out"
+    commands:
+      - tapOn: "Log out"
+- tapOn: Sign in with Google
+- tapOn: Continue
+- tapOn: Hawad Ahmad
+- scrollUntilVisible:
+    element: Continue
+- tapOn: Continue
+- tapOn: OK
