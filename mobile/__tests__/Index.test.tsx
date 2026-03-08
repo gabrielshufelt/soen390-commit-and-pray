@@ -41,9 +41,23 @@ jest.mock('expo-secure-store', () => ({
   deleteItemAsync: jest.fn(() => Promise.resolve()),
 }));
 
+const mockNextClassData = {
+  title: 'COMP 345',
+  buildingCode: 'H',
+  buildingName: 'Hall Building',
+  room: '820',
+  startTime: new Date(),
+  endTime: new Date(),
+  walkingMinutes: 5,
+};
+
 jest.mock('../hooks/useNextClass', () => ({
-  useNextClass: () => ({ nextClass: null, status: 'no_calendar', isLoading: false }),
-  NO_CLASS_BEHAVIOR: 'hide',
+  useNextClass: jest.fn(() => ({ 
+    nextClass: mockNextClassData, 
+    status: 'found', 
+    isLoading: false 
+  })),
+  NO_CLASS_BEHAVIOR: 'show_message',
 }));
 
 jest.mock('@react-native-async-storage/async-storage', () => ({

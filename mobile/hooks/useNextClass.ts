@@ -75,8 +75,12 @@ async function resolveWalkingMinutes(
   userLocation: Location.LocationObject | null,
   parsed: ReturnType<typeof parseBuildingLocation>,
   apiKey: string,
+  userBuildingCode?: string | null
 ): Promise<number | null> {
   if (!userLocation || !parsed || !apiKey) return null;
+
+  if (userBuildingCode === parsed.buildingCode) return 0;
+
   const buildingCoord = getBuildingCoordinate(parsed.buildingCode);
   if (!buildingCoord) return null;
   return fetchWalkingMinutes(
@@ -93,6 +97,7 @@ async function resolveWalkingMinutes(
 export function useNextClass(
   userLocation: Location.LocationObject | null, // can be overriden by DEV_OVERRIDE_LOCATION for testing
   fetchTrigger: number, // increment to force re-fetch (e.g. on screen focus)
+  userBuildingCode?: string | null
 ): UseNextClassResult {
   const { selectedCalendarId } = useCalendar();
   const { getAccessToken } = useAuth();
@@ -168,7 +173,7 @@ export function useNextClass(
         const parsed = parseBuildingLocation(rawLocation);
 
         // Walking time
-        const walkingMinutes = await resolveWalkingMinutes(userLocation, parsed, apiKey);
+        const walkingMinutes = await resolveWalkingMinutes(userLocation, parsed, apiKey, userBuildingCode);
 
         if (cancelled) return;
 
@@ -202,7 +207,7 @@ export function useNextClass(
 
     // fetchTrigger forces re-fetch on screen focus; DEV_OVERRIDE_TIME re-runs on hot reload when the time is changed
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedCalendarId, fetchTrigger, DEV_OVERRIDE_TIME?.getTime() ?? 0]);
+  }, [selectedCalendarId, fetchTrigger, DEV_OVERRIDE_TIME?.getTime() ?? 0, userBuildingCode]);
 
   return { nextClass, status, isLoading, error };
 }

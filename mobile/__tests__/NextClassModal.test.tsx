@@ -1,5 +1,5 @@
 import React from 'react';
-import { render } from '@testing-library/react-native';
+import { render, fireEvent } from '@testing-library/react-native';
 import NextClassModal from '../components/NextClassModal';
 import { ParsedNextClass, NextClassStatus } from '../hooks/useNextClass';
 
@@ -35,13 +35,14 @@ const makeNextClass = (overrides: Partial<ParsedNextClass> = {}): ParsedNextClas
   ...overrides,
 });
 
+const mockOnGetDirections = jest.fn()
 function renderModal(
   nextClass: ParsedNextClass | null,
   status: NextClassStatus,
   isLoading = false,
 ) {
   return render(
-    <NextClassModal nextClass={nextClass} status={status} isLoading={isLoading} />,
+    <NextClassModal nextClass={nextClass} status={status} isLoading={isLoading} onGetDirections={mockOnGetDirections} />,
   );
 }
 
@@ -154,11 +155,11 @@ describe('NextClassModal', () => {
     expect(getByText('In 1h15m')).toBeTruthy();
   });
 
-  it('shows "Starting now" when minutesUntil is 0', () => {
+  it('shows "STARTED" when minutesUntil is 0', () => {
     // Set startTime == DEV_OVERRIDE_TIME (noon exactly)
     const nc = makeNextClass({ startTime: new Date('2026-01-13T12:00:00') });
     const { getByText } = renderModal(nc, 'found');
-    expect(getByText('Starting now')).toBeTruthy();
+    expect(getByText('STARTED')).toBeTruthy();
   });
 
   // Dark mode
@@ -170,5 +171,50 @@ describe('NextClassModal', () => {
     expect(getByText('PHYS 468')).toBeTruthy();
 
     (useTheme as jest.Mock).mockReturnValue({ colorScheme: 'light' });
+  });
+
+  it('shows "You are here" when walking minutes is less than 1', () => {
+    const nc = makeNextClass({ walkingMinutes: 0 });
+    const { getByText, queryByText } = renderModal(nc, 'found');
+   
+    expect(getByText(/You are here/)).toBeTruthy();
+    // The "Get Directions" button should be hidden
+    expect(queryByText('Get Directions')).toBeNull();		
+  });
+
+  it('calls onGetDirections when the button is pressed', () => {
+    const nc = makeNextClass({ walkingMinutes: 10, buildingCode: 'H' });
+    const { getByText } = renderModal(nc, 'found');
+   
+    const button = getByText('Get Directions');
+    fireEvent.press(button);
+   
+    expect(mockOnGetDirections).toHaveBeenCalledWith('H');
+  });
+
+  it('cleans up the timer on unmount', () => {
+    const nc = makeNextClass();
+    const { unmount } = renderModal(nc, 'found');
+    const clearIntervalSpy = jest.spyOn(global, 'clearInterval');
+    unmount();
+    expect(clearIntervalSpy).toHaveBeenCalled();
+    clearIntervalSpy.mockRestore();
+  });
+  it('shows ⚠️ YOU WILL BE LATE banner when walk time exceeds time until class', () => {
+    const nc = makeNextClass({ 
+      startTime: new Date('2026-01-13T12:05:00'), 
+      walkingMinutes: 10 
+    });
+    const { getByText } = renderModal(nc, 'found');
+    
+    expect(getByText(/⚠️ YOU WILL BE LATE/)).toBeTruthy();
+    expect(getByText(/\(10m WALK\)/)).toBeTruthy();
+  });
+
+  it('shows ⚠️ CLASS HAS STARTED banner when class has begun', () => {
+    const nc = makeNextClass({ startTime: new Date('2026-01-13T11:50:00') });
+    const { getByText } = renderModal(nc, 'found');
+    
+    expect(getByText('⚠️ CLASS HAS STARTED')).toBeTruthy();
   });
 });

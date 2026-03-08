@@ -27,6 +27,7 @@ import { DEV_OVERRIDE_LOCATION } from "../../utils/devConfig";
 import { useNextClass } from "../../hooks/useNextClass";
 import { getRouteLineStyle } from "../../constants/routeStyles";
 import NextClassModal from "../../components/NextClassModal";
+import { getBuildingCoordinate } from "../../utils/buildingCoordinates";
 
 const LABEL_ZOOM_THRESHOLD = 0.015;
 const ANCHOR_OFFSET = { x: 0.5, y: 0.5 };
@@ -116,7 +117,7 @@ export default function Index() {
     nextClass,
     status: nextClassStatus,
     isLoading: nextClassLoading,
-  } = useNextClass(effectiveLocation, fetchTrigger);
+  } = useNextClass(effectiveLocation, fetchTrigger, userBuilding?.code);
 
   /**
    * Waypoints to inject into MapViewDirections when the shuttle option is
@@ -151,6 +152,20 @@ export default function Index() {
     if (!destChoice || !effectiveLocation) return;
 
     startDirections({ latitude: effectiveLocation.coords.latitude, longitude: effectiveLocation.coords.longitude }, destChoice.coordinate);
+  };
+
+  const handleNextClassDirections = (buildingCode: string) => {
+    if (!effectiveLocation) return;
+    
+    const buildingCoord = getBuildingCoordinate(buildingCode);
+    if (buildingCoord) {
+      startDirections(
+        { latitude: effectiveLocation.coords.latitude, longitude: effectiveLocation.coords.longitude },
+        buildingCoord
+      );
+    } else {
+      Alert.alert("Error", "Could not find coordinates for this building.");
+    }
   };
 
   const handlePreviewRoute = () => {
@@ -494,6 +509,7 @@ export default function Index() {
           nextClass={nextClass}
           status={nextClassStatus}
           isLoading={nextClassLoading}
+	  onGetDirections={handleNextClassDirections}
         />
       )}
 
