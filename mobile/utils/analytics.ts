@@ -97,3 +97,18 @@ export const logCalendarDeselected = (calendarName: string): Promise<void> =>
 // Log when the user switches the app appearance (light, dark, system).
 export const logAppearanceChanged = (theme: string): Promise<void> =>
   analytics().logEvent('appearance_changed', { theme });
+
+// Log when the user picks a building as a route start or destination from the building modal.
+// role is either 'start' or 'destination'.
+export const logBuildingDirectionsSet = (
+  buildingName: string,
+  role: 'start' | 'destination'
+): Promise<void> =>
+  analytics().logEvent('building_directions_set', {
+    building_name: buildingName,
+    role,
+  });
+
+// Log when the user taps "Show Route" inside the shuttle schedule modal.
+export const logShuttleRouteShown = (): Promise<void> =>
+  analytics().logEvent('shuttle_route_shown', {});

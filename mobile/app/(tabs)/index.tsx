@@ -35,6 +35,8 @@ import {
   logSearchPerformed,
   logCampusToggled,
   logFeatureTap,
+  logBuildingDirectionsSet,
+  logShuttleRouteShown,
 } from "../../utils/analytics";
 
 const LABEL_ZOOM_THRESHOLD = 0.015;
@@ -189,7 +191,8 @@ export default function Index() {
   const handleShowShuttleRoute = () => {
     const loyolaStop = shuttleData.busStops.loyola.coordinate;
     const sgwStop = shuttleData.busStops.sgw.coordinate;
-
+    // log that the user tapped Show Route inside the shuttle modal
+    logShuttleRouteShown();
     startDirections(loyolaStop, sgwStop);
   };
 
@@ -222,10 +225,20 @@ export default function Index() {
   });
 
   const handleDirectionsFrom = (building: any) => {
+    // log that the user set this building as their start point
+    logBuildingDirectionsSet(
+      building?.properties?.name ?? building?.properties?.code ?? building.id,
+      'start'
+    );
     setStartChoice(buildingToChoice(building));
   };
 
   const handleDirectionsTo = (building: any) => {
+    // log that the user set this building as their destination
+    logBuildingDirectionsSet(
+      building?.properties?.name ?? building?.properties?.code ?? building.id,
+      'destination'
+    );
     setDestChoice(buildingToChoice(building));
   };
 
