@@ -51,17 +51,17 @@ export default function Index() {
   // navigation start).  Set it to null in devConfig.ts to use real GPS.
   const effectiveLocation: Location.LocationObject | null = DEV_OVERRIDE_LOCATION
     ? ({
-        coords: {
-          latitude: DEV_OVERRIDE_LOCATION.latitude,
-          longitude: DEV_OVERRIDE_LOCATION.longitude,
-          altitude: null,
-          accuracy: null,
-          altitudeAccuracy: null,
-          heading: null,
-          speed: null,
-        },
-        timestamp: Date.now(),
-      } as unknown as Location.LocationObject)
+      coords: {
+        latitude: DEV_OVERRIDE_LOCATION.latitude,
+        longitude: DEV_OVERRIDE_LOCATION.longitude,
+        altitude: null,
+        accuracy: null,
+        altitudeAccuracy: null,
+        heading: null,
+        speed: null,
+      },
+      timestamp: Date.now(),
+    } as unknown as Location.LocationObject)
     : location; // DO NOT CHANGE AS IT WILL CRASH IF DEV_OVERRIDE_LOCATION IS NULL
   // END DEVELOPPER CONFIG
 
@@ -424,8 +424,8 @@ export default function Index() {
             <React.Fragment>
               {/* Leg 1: origin → shuttle departure stop */}
               <MapViewDirections
-                key={`preview-leg1-${(startChoice?.coordinate.latitude || location?.coords.latitude) ?? "x"}-${shuttleWaypoints[0].latitude}-${useShuttle}-${directionsState.transportMode}`}
-                origin={startChoice?.coordinate || { latitude: location!.coords.latitude, longitude: location!.coords.longitude }}
+                key={`preview-leg1-${(startChoice?.coordinate.latitude || effectiveLocation?.coords.latitude) ?? "x"}-${shuttleWaypoints[0].latitude}-${useShuttle}-${directionsState.transportMode}`}
+                origin={startChoice?.coordinate || { latitude: effectiveLocation!.coords.latitude, longitude: effectiveLocation!.coords.longitude }}
                 destination={shuttleWaypoints[0]}
                 apikey={apiKey}
                 mode={directionsState.transportMode}
