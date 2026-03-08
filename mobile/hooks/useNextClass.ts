@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import Constants from 'expo-constants';
 import * as Location from 'expo-location';
 
-import { useCalendar, fetchEvents, GoogleCalendarEvent } from '../context/CalendarContext';
+import { useCalendar, fetchEvents } from '../context/CalendarContext';
 import { useAuth } from '../context/AuthContext';
 import { parseBuildingLocation } from '../utils/buildingParser';
 import { getBuildingCoordinate } from '../utils/buildingCoordinates';
@@ -70,6 +70,22 @@ async function fetchWalkingMinutes(
 }
 
 
+// Resolves walking time to a building, returning null when any input is missing or the API fails.
+async function resolveWalkingMinutes(
+  userLocation: Location.LocationObject | null,
+  parsed: ReturnType<typeof parseBuildingLocation>,
+  apiKey: string,
+): Promise<number | null> {
+  if (!userLocation || !parsed || !apiKey) return null;
+  const buildingCoord = getBuildingCoordinate(parsed.buildingCode);
+  if (!buildingCoord) return null;
+  return fetchWalkingMinutes(
+    { latitude: userLocation.coords.latitude, longitude: userLocation.coords.longitude },
+    buildingCoord,
+    apiKey,
+  );
+}
+
 /**
  * Fetches today's calendar events for the user's selected calendar and returns
  * the next upcoming class along with walking time from the user's position.
@@ -126,8 +142,8 @@ export function useNextClass(
         endOfDay.setHours(23, 59, 59, 999);
 
         const allToday = await fetchEvents(accessToken, selectedCalendarId, startOfDay.toISOString(),
-            endOfDay.toISOString());
-              
+          endOfDay.toISOString());
+
         if (cancelled) return;
 
         // Determine next upcoming event
@@ -137,10 +153,10 @@ export function useNextClass(
         const upcoming = allToday.filter(e => e.start?.dateTime && new Date(e.start.dateTime) > now);
 
         if (upcoming.length === 0) {
-            setStatus(allToday.length > 0 ? 'done_today' : 'no_class');
-            setNextClass(null);
-            setIsLoading(false);
-            return;
+          setStatus(allToday.length > 0 ? 'done_today' : 'no_class');
+          setNextClass(null);
+          setIsLoading(false);
+          return;
         }
 
         // Parse soonest event
@@ -152,20 +168,7 @@ export function useNextClass(
         const parsed = parseBuildingLocation(rawLocation);
 
         // Walking time
-        let walkingMinutes: number | null = null;
-        if (userLocation && parsed && apiKey) {
-          const buildingCoord = getBuildingCoordinate(parsed.buildingCode);
-          if (buildingCoord) {
-            walkingMinutes = await fetchWalkingMinutes(
-              {
-                latitude: userLocation.coords.latitude,
-                longitude: userLocation.coords.longitude,
-              },
-              buildingCoord,
-              apiKey,
-            );
-          }
-        }
+        const walkingMinutes = await resolveWalkingMinutes(userLocation, parsed, apiKey);
 
         if (cancelled) return;
 
