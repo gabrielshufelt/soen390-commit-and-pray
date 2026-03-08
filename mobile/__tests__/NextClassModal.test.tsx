@@ -200,4 +200,21 @@ describe('NextClassModal', () => {
     expect(clearIntervalSpy).toHaveBeenCalled();
     clearIntervalSpy.mockRestore();
   });
+  it('shows ⚠️ YOU WILL BE LATE banner when walk time exceeds time until class', () => {
+    const nc = makeNextClass({ 
+      startTime: new Date('2026-01-13T12:05:00'), 
+      walkingMinutes: 10 
+    });
+    const { getByText } = renderModal(nc, 'found');
+    
+    expect(getByText(/⚠️ YOU WILL BE LATE/)).toBeTruthy();
+    expect(getByText(/\(10m WALK\)/)).toBeTruthy();
+  });
+
+  it('shows ⚠️ CLASS HAS STARTED banner when class has begun', () => {
+    const nc = makeNextClass({ startTime: new Date('2026-01-13T11:50:00') });
+    const { getByText } = renderModal(nc, 'found');
+    
+    expect(getByText('⚠️ CLASS HAS STARTED')).toBeTruthy();
+  });
 });

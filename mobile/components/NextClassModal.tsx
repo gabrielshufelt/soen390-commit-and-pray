@@ -140,7 +140,7 @@ export default function NextClassModal({ nextClass, status, isLoading, onGetDire
   const walkLabel = isAlreadyThere 
     ? " You are here" 
     : nextClass.walkingMinutes != null
-      ? ` ${formattedTimeUntil(nextClass.walkingMinutes)} walk${isLate ? ' (LATE)' : ''}`
+      ? ` ${formattedTimeUntil(nextClass.walkingMinutes)} walk`
       : ' Walk time unavailable';
 
   return (
@@ -170,6 +170,16 @@ export default function NextClassModal({ nextClass, status, isLoading, onGetDire
   	      {hasStarted ? 'STARTED' : countdownLabel}
 	    </Text>
           </View>
+	  {/* LATE WARNING */}
+          {hasStarted ? (
+	    <Text style={{ color: '#ef4444', fontSize: 10, fontWeight: '700', marginBottom: 2 }}>
+    	      ⚠️ CLASS HAS STARTED
+            </Text>
+          ) : isLate ? (
+            <Text style={{ color: '#f59e0b', fontSize: 10, fontWeight: '700', marginBottom: 2 }}>
+    	      ⚠️ YOU WILL BE LATE ({formattedTimeUntil(nextClass.walkingMinutes ?? 0)} WALK)
+            </Text>
+          ) : null}
 
           {/* Class name */}
           <Text style={[styles.className, textStyle]} numberOfLines={1}>
@@ -202,7 +212,7 @@ export default function NextClassModal({ nextClass, status, isLoading, onGetDire
           <Text style={[styles.walkText, textStyle]}>{walkLabel}</Text>
         </View>
 
-	{/* Task #70: Hide button if already there, otherwise trigger navigation */}
+	{/*Hide button if already there, otherwise trigger navigation */}
         {!isAlreadyThere && (
           <TouchableOpacity
             style={styles.directionsButton}
