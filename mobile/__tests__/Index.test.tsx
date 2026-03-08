@@ -228,7 +228,7 @@ function setupDefaults() {
 
 async function renderWithTheme(component: React.ReactElement) {
   const result = render(<ThemeProvider>{component}</ThemeProvider>);
-  await act(async () => {});
+  await act(async () => { });
   return result;
 }
 
@@ -862,6 +862,61 @@ describe('<Index />', () => {
         expect(mockSearchBarProperties.destination.coordinate.latitude).toBeDefined();
         expect(mockSearchBarProperties.destination.coordinate.longitude).toBeDefined();
       });
+    });
+  });
+
+  // --- Route line visual styles per transport mode ---
+  describe('Route line styles per transport mode', () => {
+    const ROUTE_LINE_STYLES = require('../constants/routeStyles').ROUTE_LINE_STYLES;
+
+    function makeActiveDirectionsWithMode(mode: string) {
+      return {
+        ...activeDirections,
+        state: {
+          ...activeDirections.state,
+          transportMode: mode as any,
+        },
+      };
+    }
+
+    it('applies DRIVING style (solid blue) to the route line', async () => {
+      mockDirectionsHook.mockReturnValue(makeActiveDirectionsWithMode('DRIVING'));
+      const { getAllByTestId } = await renderWithTheme(<Index />);
+      const directions = await waitFor(() => getAllByTestId('map-directions'));
+      const routeLine = directions[0];
+      expect(routeLine.props.strokeColor).toBe(ROUTE_LINE_STYLES.DRIVING.strokeColor);
+      expect(routeLine.props.strokeWidth).toBe(ROUTE_LINE_STYLES.DRIVING.strokeWidth);
+      expect(routeLine.props.lineDashPattern).toBeUndefined();
+    });
+
+    it('applies WALKING style (dotted green) to the route line', async () => {
+      mockDirectionsHook.mockReturnValue(makeActiveDirectionsWithMode('WALKING'));
+      const { getAllByTestId } = await renderWithTheme(<Index />);
+      const directions = await waitFor(() => getAllByTestId('map-directions'));
+      const routeLine = directions[0];
+      expect(routeLine.props.strokeColor).toBe(ROUTE_LINE_STYLES.WALKING.strokeColor);
+      expect(routeLine.props.strokeWidth).toBe(ROUTE_LINE_STYLES.WALKING.strokeWidth);
+      expect(routeLine.props.lineDashPattern).toEqual(ROUTE_LINE_STYLES.WALKING.lineDashPattern);
+    });
+
+    it('applies BICYCLING style (dashed orange) to the route line', async () => {
+      mockDirectionsHook.mockReturnValue(makeActiveDirectionsWithMode('BICYCLING'));
+      const { getAllByTestId } = await renderWithTheme(<Index />);
+      const directions = await waitFor(() => getAllByTestId('map-directions'));
+      const routeLine = directions[0];
+      expect(routeLine.props.strokeColor).toBe(ROUTE_LINE_STYLES.BICYCLING.strokeColor);
+      expect(routeLine.props.strokeWidth).toBe(ROUTE_LINE_STYLES.BICYCLING.strokeWidth);
+      expect(routeLine.props.lineDashPattern).toEqual(ROUTE_LINE_STYLES.BICYCLING.lineDashPattern);
+    });
+
+    it('applies TRANSIT style (solid purple) to the route line', async () => {
+      mockDirectionsHook.mockReturnValue(makeActiveDirectionsWithMode('TRANSIT'));
+      const { getAllByTestId } = await renderWithTheme(<Index />);
+      const directions = await waitFor(() => getAllByTestId('map-directions'));
+      const routeLine = directions[0];
+      expect(routeLine.props.strokeColor).toBe(ROUTE_LINE_STYLES.TRANSIT.strokeColor);
+      expect(routeLine.props.strokeWidth).toBe(ROUTE_LINE_STYLES.TRANSIT.strokeWidth);
+      expect(routeLine.props.lineDashPattern).toBeUndefined();
     });
   });
 });
