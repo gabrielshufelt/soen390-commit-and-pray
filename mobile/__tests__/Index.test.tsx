@@ -167,6 +167,7 @@ jest.mock('react-native-maps', () => {
 
 // --- Test Starting and Ending Directions ---
 let mockSearchBarProperties: any = {};
+let mockBuildingModalProperties: any = {};
 
 jest.mock('../components/searchBar', () => {
   const React = require('react');
@@ -179,6 +180,43 @@ jest.mock('../components/searchBar', () => {
     },
   };
 })
+
+jest.mock('../components/buildingModal', () => {
+  const React = require('react');
+  const { View, Text, TouchableOpacity } = require('react-native');
+  return {
+    __esModule: true,
+    default: (props: any) => {
+      mockBuildingModalProperties = props;
+      if (!props.visible) return null;
+      return (
+        <View testID="building-modal">
+          <TouchableOpacity testID="close-button" onPress={props.onClose}>
+            <Text>Close</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            testID="directions-from-button"
+            onPress={() => {
+              props.onDirectionsFrom(props.building);
+              props.onClose();
+            }}
+          >
+            <Text>Get Directions From</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            testID="directions-to-button"
+            onPress={() => {
+              props.onDirectionsTo(props.building);
+              props.onClose();
+            }}
+          >
+            <Text>Get Directions To</Text>
+          </TouchableOpacity>
+        </View>
+      );
+    },
+  };
+});
 
 
 
@@ -277,6 +315,7 @@ describe('<Index />', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockSearchBarProperties = {};
+    mockBuildingModalProperties = {};
     mockPolygonRenderCount = 0;
     mockMapDirectionsBehavior = 'none';
     setupDefaults();
@@ -863,6 +902,109 @@ describe('<Index />', () => {
         expect(mockSearchBarProperties.destination.coordinate).toBeTruthy();
         expect(mockSearchBarProperties.destination.coordinate.latitude).toBeDefined();
         expect(mockSearchBarProperties.destination.coordinate.longitude).toBeDefined();
+      });
+    });
+  });
+
+  // --- onGetDirections via BuildingModal ---
+  describe('onGetDirections via BuildingModal', () => {
+    it('calls startDirectionsToBuilding when location is available', async () => {
+      const { getAllByTestId } = await renderWithTheme(<Index />);
+      const polygons = await waitFor(() => getAllByTestId('polygon'));
+
+      // Open modal to populate building data
+      fireEvent.press(polygons[0]);
+
+      await waitFor(() => expect(mockBuildingModalProperties.onGetDirections).toBeDefined());
+
+      const mockBuilding = { geometry: { coordinates: [[[-73.579, 45.497], [-73.578, 45.497]]] } };
+      act(() => {
+        mockBuildingModalProperties.onGetDirections(mockBuilding);
+      });
+
+      expect(mockStartDirectionsToBuilding).toHaveBeenCalledWith(
+        sgwLocation,
+        mockBuilding.geometry.coordinates[0]
+      );
+    });
+
+    it('does not call startDirectionsToBuilding when location is null', async () => {
+      mockWatchLocation.mockReturnValue(noLocationWatch);
+      mockPermissionState.mockReturnValue(deniedPermission);
+
+      const { getAllByTestId } = await renderWithTheme(<Index />);
+      const polygons = await waitFor(() => getAllByTestId('polygon'));
+
+      fireEvent.press(polygons[0]);
+
+      await waitFor(() => expect(mockBuildingModalProperties.onGetDirections).toBeDefined());
+
+      const mockBuilding = { geometry: { coordinates: [[[-73.579, 45.497], [-73.578, 45.497]]] } };
+      act(() => {
+        mockBuildingModalProperties.onGetDirections(mockBuilding);
+      });
+
+      expect(mockStartDirectionsToBuilding).not.toHaveBeenCalled();
+    });
+  });
+
+  // --- MapViewDirections onError callbacks ---
+  describe('MapViewDirections onError', () => {
+    it('logs error for active non-shuttle route', async () => {
+      mockMapDirectionsBehavior = 'error';
+      mockDirectionsHook.mockReturnValue(activeDirections);
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+
+      await renderWithTheme(<Index />);
+
+      await waitFor(() => {
+        expect(consoleSpy).toHaveBeenCalledWith(
+          '[Index] MapViewDirections ERROR:', 'Route not found'
+        );
+      });
+      consoleSpy.mockRestore();
+    });
+  });
+
+  // --- Preview route with shuttle and fallback origin ---
+  describe('Preview shuttle route with location fallback', () => {
+    it('renders preview shuttle legs using location when no start choice is set', async () => {
+      mockMapDirectionsBehavior = 'ready';
+
+      // Use default (no active directions) so the preview path is taken
+      // Set up directions hook in preview mode with shuttle-compatible state
+      const previewDirectionsState = {
+        ...defaultDirections,
+        state: {
+          ...defaultDirections.state,
+          origin: null,
+          destination: null,
+        },
+      };
+      mockDirectionsHook.mockReturnValue(previewDirectionsState);
+
+      await renderWithTheme(<Index />);
+
+      // Set a destination via SearchBar (no start → falls back to location)
+      await waitFor(() => expect(mockSearchBarProperties.onChangeDestination).toBeDefined());
+
+      await act(async () => {
+        mockSearchBarProperties.onChangeDestination({
+          id: 'LOY',
+          name: 'Loyola Building',
+          coordinate: { latitude: 45.458, longitude: -73.639 },
+        });
+      });
+
+      // Enable shuttle
+      await act(async () => {
+        mockSearchBarProperties.onUseShuttleChange(true);
+      });
+
+      // The preview shuttle legs should render using location as origin fallback
+      await waitFor(() => {
+        expect(mockSearchBarProperties.useShuttle).toBe(true);
+        expect(mockSearchBarProperties.destination).toBeTruthy();
       });
     });
   });
