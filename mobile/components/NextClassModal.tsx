@@ -18,6 +18,7 @@ interface NextClassModalProps {
   nextClass: ParsedNextClass | null;
   status: NextClassStatus;
   isLoading: boolean;
+  onGetDirections: (buildingCode: string) => void;
 }
 
 // Helpers
@@ -93,7 +94,7 @@ function renderStatusCard(
   return undefined;
 }
 
-export default function NextClassModal({ nextClass, status, isLoading }: NextClassModalProps) {
+export default function NextClassModal({ nextClass, status, isLoading, onGetDirections }: NextClassModalProps) {
   const { colorScheme } = useTheme();
   const isDark = colorScheme === 'dark';
 
@@ -117,6 +118,11 @@ export default function NextClassModal({ nextClass, status, isLoading }: NextCla
   if (statusCard !== undefined) return statusCard;
   if (!nextClass) return null;
 
+  // logic for late warning and "already there" check
+  const isAlreadyThere = nextClass.walkingMinutes !== null && nextClass.walkingMinutes < 1;
+  const isLate = nextClass.walkingMinutes !== null && nextClass.walkingMinutes > minutesUntil && !isAlreadyThere;
+  const hasStarted = minutesUntil <= 0;
+
   // Precompute theme-dependent styles to avoid ternaries in JSX
   const cardStyle = [styles.card, isDark ? styles.cardDark : styles.cardLight];
   const textStyle = isDark ? styles.textDark : styles.textMain;
@@ -131,9 +137,11 @@ export default function NextClassModal({ nextClass, status, isLoading }: NextCla
     ? `${nextClass.buildingCode}-${nextClass.room}`
     : nextClass.buildingCode;
   const countdownLabel = minutesUntil <= 0 ? 'Starting now' : `In ${formattedTimeUntil(minutesUntil)}`;
-  const walkLabel = nextClass.walkingMinutes != null
-    ? ` ${formattedTimeUntil(nextClass.walkingMinutes)} walk`
-    : ' Walk time unavailable';
+  const walkLabel = isAlreadyThere 
+    ? " You are here" 
+    : nextClass.walkingMinutes != null
+      ? ` ${formattedTimeUntil(nextClass.walkingMinutes)} walk${isLate ? ' (LATE)' : ''}`
+      : ' Walk time unavailable';
 
   return (
     <View style={cardStyle}>
@@ -158,7 +166,9 @@ export default function NextClassModal({ nextClass, status, isLoading }: NextCla
           {/* "NEXT CLASS"  ·  "In X mins" */}
           <View style={styles.headerRow}>
             <Text style={[styles.labelText, mutedStyle]}>NEXT CLASS</Text>
-            <Text style={[styles.countdownText, mutedStyle]}>{countdownLabel}</Text>
+	    <Text style={[styles.countdownText, (isLate || hasStarted) ? { color: '#ff3b30' } : mutedStyle]}>
+  	      {hasStarted ? 'STARTED' : countdownLabel}
+	    </Text>
           </View>
 
           {/* Class name */}
@@ -192,17 +202,17 @@ export default function NextClassModal({ nextClass, status, isLoading }: NextCla
           <Text style={[styles.walkText, textStyle]}>{walkLabel}</Text>
         </View>
 
-        {/* Get Directions: placeholder, no functionality yet */}
-        <TouchableOpacity
-          style={styles.directionsButton}
-          activeOpacity={0.8}
-          onPress={() => {
-            // TODO: implement indoor/outdoor navigation to next class
-          }}
-        >
-          <Ionicons name="navigate" size={14} color="#FFFFFF" style={{ marginRight: 5 }} />
-          <Text style={styles.directionsButtonText}>Get Directions</Text>
-        </TouchableOpacity>
+	{/* Task #70: Hide button if already there, otherwise trigger navigation */}
+        {!isAlreadyThere && (
+          <TouchableOpacity
+            style={styles.directionsButton}
+            activeOpacity={0.8}
+            onPress={() => onGetDirections(nextClass.buildingCode)}
+          >
+            <Ionicons name="navigate" size={14} color="#FFFFFF" style={{ marginRight: 5 }} />
+            <Text style={styles.directionsButtonText}>Get Directions</Text>
+          </TouchableOpacity>
+        )}
       </View>
 
     </View>

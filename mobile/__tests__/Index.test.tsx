@@ -41,9 +41,23 @@ jest.mock('expo-secure-store', () => ({
   deleteItemAsync: jest.fn(() => Promise.resolve()),
 }));
 
+const mockNextClassData = {
+  title: 'COMP 345',
+  buildingCode: 'H',
+  buildingName: 'Hall Building',
+  room: '820',
+  startTime: new Date(),
+  endTime: new Date(),
+  walkingMinutes: 5,
+};
+
 jest.mock('../hooks/useNextClass', () => ({
-  useNextClass: () => ({ nextClass: null, status: 'no_calendar', isLoading: false }),
-  NO_CLASS_BEHAVIOR: 'hide',
+  useNextClass: jest.fn(() => ({ 
+    nextClass: mockNextClassData, 
+    status: 'found', 
+    isLoading: false 
+  })),
+  NO_CLASS_BEHAVIOR: 'show_message',
 }));
 
 jest.mock('@react-native-async-storage/async-storage', () => ({
@@ -865,5 +879,20 @@ describe('<Index />', () => {
         expect(mockSearchBarProperties.destination.coordinate.longitude).toBeDefined();
       });
     });
+  });
+
+  it('starts directions when the NextClassModal button is pressed', async () => {
+    const { getByText } = await renderWithTheme(<Index />);
+    
+    const directionsButton = await waitFor(() => getByText('Get Directions'));
+    fireEvent.press(directionsButton);
+
+    expect(mockStartDirections).toHaveBeenCalledWith(
+      expect.anything(), // Current location coordinates
+      expect.objectContaining({ 
+        latitude: expect.closeTo(45.497, 3), 
+        longitude: expect.closeTo(-73.579, 3) 
+      })
+    );
   });
 });
