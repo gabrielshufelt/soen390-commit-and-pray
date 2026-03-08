@@ -25,6 +25,7 @@ import NavigationSteps from "../../components/NavigationSteps";
 import { HIGHLIGHT_COLOR, STROKE_COLOR } from "@/styles/index.styles";
 import { DEV_OVERRIDE_LOCATION } from "../../utils/devConfig";
 import { useNextClass } from "../../hooks/useNextClass";
+import { getRouteLineStyle } from "../../constants/routeStyles";
 import NextClassModal from "../../components/NextClassModal";
 import { getBuildingCoordinate } from "../../utils/buildingCoordinates";
 
@@ -51,17 +52,17 @@ export default function Index() {
   // navigation start).  Set it to null in devConfig.ts to use real GPS.
   const effectiveLocation: Location.LocationObject | null = DEV_OVERRIDE_LOCATION
     ? ({
-        coords: {
-          latitude: DEV_OVERRIDE_LOCATION.latitude,
-          longitude: DEV_OVERRIDE_LOCATION.longitude,
-          altitude: null,
-          accuracy: null,
-          altitudeAccuracy: null,
-          heading: null,
-          speed: null,
-        },
-        timestamp: Date.now(),
-      } as unknown as Location.LocationObject)
+      coords: {
+        latitude: DEV_OVERRIDE_LOCATION.latitude,
+        longitude: DEV_OVERRIDE_LOCATION.longitude,
+        altitude: null,
+        accuracy: null,
+        altitudeAccuracy: null,
+        heading: null,
+        speed: null,
+      },
+      timestamp: Date.now(),
+    } as unknown as Location.LocationObject)
     : location; // DO NOT CHANGE AS IT WILL CRASH IF DEV_OVERRIDE_LOCATION IS NULL
   // END DEVELOPPER CONFIG
 
@@ -386,36 +387,33 @@ export default function Index() {
             <React.Fragment>
               {/* Leg 1: origin → shuttle departure stop */}
               <MapViewDirections
-                key={`active-leg1-${directionsState.origin.latitude}-${shuttleWaypoints[0].latitude}-${useShuttle}`}
+                key={`active-leg1-${directionsState.origin.latitude}-${shuttleWaypoints[0].latitude}-${useShuttle}-${directionsState.transportMode}`}
                 origin={directionsState.origin}
                 destination={shuttleWaypoints[0]}
                 apikey={apiKey}
                 mode={directionsState.transportMode}
-                strokeWidth={5}
-                strokeColor={STROKE_COLOR}
+                {...getRouteLineStyle(directionsState.transportMode)}
                 onReady={handleRouteReady}
                 onError={(error) => console.error("[Index] MapViewDirections leg1 ERROR:", error)}
               />
-              {/* Leg 2: shuttle departure stop → arrival stop (red = shuttle bus) */}
+              {/* Leg 2: shuttle departure stop → arrival stop (shuttle bus) */}
               <MapViewDirections
-                key={`active-leg2-${shuttleWaypoints[0].latitude}-${shuttleWaypoints[1].latitude}-${useShuttle}`}
+                key={`active-leg2-${shuttleWaypoints[0].latitude}-${shuttleWaypoints[1].latitude}-${useShuttle}-${directionsState.transportMode}`}
                 origin={shuttleWaypoints[0]}
                 destination={shuttleWaypoints[1]}
                 apikey={apiKey}
                 mode="DRIVING"
-                strokeWidth={5}
-                strokeColor="#D32F2F"
+                {...getRouteLineStyle('SHUTTLE')}
                 onError={(error) => console.error("[Index] MapViewDirections leg2 ERROR:", error)}
               />
               {/* Leg 3: shuttle arrival stop → destination */}
               <MapViewDirections
-                key={`active-leg3-${shuttleWaypoints[1].latitude}-${directionsState.destination.latitude}-${useShuttle}`}
+                key={`active-leg3-${shuttleWaypoints[1].latitude}-${directionsState.destination.latitude}-${useShuttle}-${directionsState.transportMode}`}
                 origin={shuttleWaypoints[1]}
                 destination={directionsState.destination}
                 apikey={apiKey}
                 mode={directionsState.transportMode}
-                strokeWidth={5}
-                strokeColor={STROKE_COLOR}
+                {...getRouteLineStyle(directionsState.transportMode)}
                 onError={(error) => console.error("[Index] MapViewDirections leg3 ERROR:", error)}
               />
             </React.Fragment>
@@ -426,8 +424,7 @@ export default function Index() {
               destination={directionsState.destination}
               apikey={apiKey}
               mode={effectiveMode}
-              strokeWidth={5}
-              strokeColor={STROKE_COLOR}
+              {...getRouteLineStyle(effectiveMode)}
               onReady={(result) => {
                 handleRoutePreviewReady(result);
                 handleRouteReady(result);
@@ -442,35 +439,32 @@ export default function Index() {
             <React.Fragment>
               {/* Leg 1: origin → shuttle departure stop */}
               <MapViewDirections
-                key={`preview-leg1-${(startChoice?.coordinate.latitude || effectiveLocation?.coords.latitude) ?? "x"}-${shuttleWaypoints[0].latitude}-${useShuttle}`}
+                key={`preview-leg1-${(startChoice?.coordinate.latitude || effectiveLocation?.coords.latitude) ?? "x"}-${shuttleWaypoints[0].latitude}-${useShuttle}-${directionsState.transportMode}`}
                 origin={startChoice?.coordinate || { latitude: effectiveLocation!.coords.latitude, longitude: effectiveLocation!.coords.longitude }}
                 destination={shuttleWaypoints[0]}
                 apikey={apiKey}
                 mode={directionsState.transportMode}
-                strokeWidth={5}
-                strokeColor={STROKE_COLOR}
+                {...getRouteLineStyle(directionsState.transportMode)}
                 onReady={handleRoutePreviewReady}
               />
-              {/* Leg 2: shuttle departure stop → arrival stop (red = shuttle bus) */}
+              {/* Leg 2: shuttle departure stop → arrival stop (shuttle bus) */}
               <MapViewDirections
-                key={`preview-leg2-${shuttleWaypoints[0].latitude}-${shuttleWaypoints[1].latitude}-${useShuttle}`}
+                key={`preview-leg2-${shuttleWaypoints[0].latitude}-${shuttleWaypoints[1].latitude}-${useShuttle}-${directionsState.transportMode}`}
                 origin={shuttleWaypoints[0]}
                 destination={shuttleWaypoints[1]}
                 apikey={apiKey}
                 mode="DRIVING"
-                strokeWidth={5}
-                strokeColor="#D32F2F"
+                {...getRouteLineStyle('SHUTTLE')}
                 onReady={handleRoutePreviewReady}
               />
               {/* Leg 3: shuttle arrival stop → destination */}
               <MapViewDirections
-                key={`preview-leg3-${shuttleWaypoints[1].latitude}-${destChoice.coordinate.latitude}-${useShuttle}`}
+                key={`preview-leg3-${shuttleWaypoints[1].latitude}-${destChoice.coordinate.latitude}-${useShuttle}-${directionsState.transportMode}`}
                 origin={shuttleWaypoints[1]}
                 destination={destChoice.coordinate}
                 apikey={apiKey}
                 mode={directionsState.transportMode}
-                strokeWidth={5}
-                strokeColor={STROKE_COLOR}
+                {...getRouteLineStyle(directionsState.transportMode)}
                 onReady={handleRoutePreviewReady}
               />
             </React.Fragment>
@@ -481,8 +475,7 @@ export default function Index() {
               destination={destChoice.coordinate}
               apikey={apiKey}
               mode={effectiveMode}
-              strokeWidth={5}
-              strokeColor={STROKE_COLOR}
+              {...getRouteLineStyle(effectiveMode)}
               onReady={handleRoutePreviewReady}
             />
           )
@@ -552,7 +545,9 @@ export default function Index() {
         onDirectionsFrom={handleDirectionsFrom}
         onDirectionsTo={handleDirectionsTo}
         onGetDirections={(building) => {
-          startDirectionsToBuilding(building);
+          if (location) {
+            startDirectionsToBuilding(location, building.geometry.coordinates[0]);
+          }
           handleCloseModal();
         }}
       />

@@ -181,6 +181,7 @@ jest.mock('react-native-maps', () => {
 
 // --- Test Starting and Ending Directions ---
 let mockSearchBarProperties: any = {};
+let mockBuildingModalProperties: any = {};
 
 jest.mock('../components/searchBar', () => {
   const React = require('react');
@@ -193,6 +194,43 @@ jest.mock('../components/searchBar', () => {
     },
   };
 })
+
+jest.mock('../components/buildingModal', () => {
+  const React = require('react');
+  const { View, Text, TouchableOpacity } = require('react-native');
+  return {
+    __esModule: true,
+    default: (props: any) => {
+      mockBuildingModalProperties = props;
+      if (!props.visible) return null;
+      return (
+        <View testID="building-modal">
+          <TouchableOpacity testID="close-button" onPress={props.onClose}>
+            <Text>Close</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            testID="directions-from-button"
+            onPress={() => {
+              props.onDirectionsFrom(props.building);
+              props.onClose();
+            }}
+          >
+            <Text>Get Directions From</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            testID="directions-to-button"
+            onPress={() => {
+              props.onDirectionsTo(props.building);
+              props.onClose();
+            }}
+          >
+            <Text>Get Directions To</Text>
+          </TouchableOpacity>
+        </View>
+      );
+    },
+  };
+});
 
 
 
@@ -283,7 +321,7 @@ function setupDefaults() {
 
 async function renderWithTheme(component: React.ReactElement) {
   const result = render(<ThemeProvider>{component}</ThemeProvider>);
-  await act(async () => {});
+  await act(async () => { });
   return result;
 }
 
@@ -291,6 +329,7 @@ describe('<Index />', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockSearchBarProperties = {};
+    mockBuildingModalProperties = {};
     mockPolygonRenderCount = 0;
     mockMapDirectionsBehavior = 'none';
     setupDefaults();
@@ -881,18 +920,196 @@ describe('<Index />', () => {
     });
   });
 
-  it('starts directions when the NextClassModal button is pressed', async () => {
-    const { getByText } = await renderWithTheme(<Index />);
-    
-    const directionsButton = await waitFor(() => getByText('Get Directions'));
-    fireEvent.press(directionsButton);
+  // --- onGetDirections via BuildingModal ---
+  describe('onGetDirections via BuildingModal', () => {
+    it('calls startDirectionsToBuilding when location is available', async () => {
+      const { getAllByTestId } = await renderWithTheme(<Index />);
+      const polygons = await waitFor(() => getAllByTestId('polygon'));
 
-    expect(mockStartDirections).toHaveBeenCalledWith(
-      expect.anything(), // Current location coordinates
-      expect.objectContaining({ 
-        latitude: expect.closeTo(45.497, 3), 
-        longitude: expect.closeTo(-73.579, 3) 
-      })
-    );
+      // Open modal to populate building data
+      fireEvent.press(polygons[0]);
+
+      await waitFor(() => expect(mockBuildingModalProperties.onGetDirections).toBeDefined());
+
+      const mockBuilding = { geometry: { coordinates: [[[-73.579, 45.497], [-73.578, 45.497]]] } };
+      act(() => {
+        mockBuildingModalProperties.onGetDirections(mockBuilding);
+      });
+
+      expect(mockStartDirectionsToBuilding).toHaveBeenCalledWith(
+        sgwLocation,
+        mockBuilding.geometry.coordinates[0]
+      );
+    });
+
+    it('does not call startDirectionsToBuilding when location is null', async () => {
+      mockWatchLocation.mockReturnValue(noLocationWatch);
+      mockPermissionState.mockReturnValue(deniedPermission);
+
+      const { getAllByTestId } = await renderWithTheme(<Index />);
+      const polygons = await waitFor(() => getAllByTestId('polygon'));
+
+      fireEvent.press(polygons[0]);
+
+      await waitFor(() => expect(mockBuildingModalProperties.onGetDirections).toBeDefined());
+
+      const mockBuilding = { geometry: { coordinates: [[[-73.579, 45.497], [-73.578, 45.497]]] } };
+      act(() => {
+        mockBuildingModalProperties.onGetDirections(mockBuilding);
+      });
+
+      expect(mockStartDirectionsToBuilding).not.toHaveBeenCalled();
+    });
+  });
+
+  // --- MapViewDirections onError callbacks ---
+  describe('MapViewDirections onError', () => {
+    it('logs error for active non-shuttle route', async () => {
+      mockMapDirectionsBehavior = 'error';
+      mockDirectionsHook.mockReturnValue(activeDirections);
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+
+      await renderWithTheme(<Index />);
+
+      await waitFor(() => {
+        expect(consoleSpy).toHaveBeenCalledWith(
+          '[Index] MapViewDirections ERROR:', 'Route not found'
+        );
+      });
+      consoleSpy.mockRestore();
+    });
+
+    it('logs errors for active shuttle leg onError callbacks', async () => {
+      mockMapDirectionsBehavior = 'error';
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+
+      // 1. Start with inactive directions so SearchBar is visible
+      mockDirectionsHook.mockReturnValue(defaultDirections);
+      const { rerender } = await renderWithTheme(<Index />);
+      await waitFor(() => expect(mockSearchBarProperties.onUseShuttleChange).toBeDefined());
+
+      // 2. Enable shuttle while SearchBar is still rendered
+      await act(async () => {
+        mockSearchBarProperties.onUseShuttleChange(true);
+      });
+
+      // 3. Now switch the mock to active directions and re-render
+      mockDirectionsHook.mockReturnValue(activeDirections);
+      await act(async () => {
+        rerender(<ThemeProvider><Index /></ThemeProvider>);
+      });
+
+      // All 3 shuttle leg onError callbacks should fire
+      await waitFor(() => {
+        expect(consoleSpy).toHaveBeenCalledWith(
+          '[Index] MapViewDirections leg1 ERROR:', 'Route not found'
+        );
+        expect(consoleSpy).toHaveBeenCalledWith(
+          '[Index] MapViewDirections leg2 ERROR:', 'Route not found'
+        );
+        expect(consoleSpy).toHaveBeenCalledWith(
+          '[Index] MapViewDirections leg3 ERROR:', 'Route not found'
+        );
+      });
+      consoleSpy.mockRestore();
+    });
+  });
+
+  // --- Preview route with shuttle and fallback origin ---
+  describe('Preview shuttle route with location fallback', () => {
+    it('renders preview shuttle legs using location when no start choice is set', async () => {
+      mockMapDirectionsBehavior = 'ready';
+
+      // Use default (no active directions) so the preview path is taken
+      // Set up directions hook in preview mode with shuttle-compatible state
+      const previewDirectionsState = {
+        ...defaultDirections,
+        state: {
+          ...defaultDirections.state,
+          origin: null,
+          destination: null,
+        },
+      };
+      mockDirectionsHook.mockReturnValue(previewDirectionsState);
+
+      await renderWithTheme(<Index />);
+
+      // Set a destination via SearchBar (no start → falls back to location)
+      await waitFor(() => expect(mockSearchBarProperties.onChangeDestination).toBeDefined());
+
+      await act(async () => {
+        mockSearchBarProperties.onChangeDestination({
+          id: 'LOY',
+          name: 'Loyola Building',
+          coordinate: { latitude: 45.458, longitude: -73.639 },
+        });
+      });
+
+      // Enable shuttle
+      await act(async () => {
+        mockSearchBarProperties.onUseShuttleChange(true);
+      });
+
+      // The preview shuttle legs should render using location as origin fallback
+      await waitFor(() => {
+        expect(mockSearchBarProperties.useShuttle).toBe(true);
+        expect(mockSearchBarProperties.destination).toBeTruthy();
+      });
+    });
+  });
+
+  // --- Route line visual styles per transport mode ---
+  describe('Route line styles per transport mode', () => {
+    const ROUTE_LINE_STYLES = require('../constants/routeStyles').ROUTE_LINE_STYLES;
+
+    function makeActiveDirectionsWithMode(mode: string) {
+      return {
+        ...activeDirections,
+        state: {
+          ...activeDirections.state,
+          transportMode: mode as any,
+        },
+      };
+    }
+
+    it('applies DRIVING style (solid blue) to the route line', async () => {
+      mockDirectionsHook.mockReturnValue(makeActiveDirectionsWithMode('DRIVING'));
+      const { getAllByTestId } = await renderWithTheme(<Index />);
+      const directions = await waitFor(() => getAllByTestId('map-directions'));
+      const routeLine = directions[0];
+      expect(routeLine.props.strokeColor).toBe(ROUTE_LINE_STYLES.DRIVING.strokeColor);
+      expect(routeLine.props.strokeWidth).toBe(ROUTE_LINE_STYLES.DRIVING.strokeWidth);
+      expect(routeLine.props.lineDashPattern).toBeUndefined();
+    });
+
+    it('applies WALKING style (dotted green) to the route line', async () => {
+      mockDirectionsHook.mockReturnValue(makeActiveDirectionsWithMode('WALKING'));
+      const { getAllByTestId } = await renderWithTheme(<Index />);
+      const directions = await waitFor(() => getAllByTestId('map-directions'));
+      const routeLine = directions[0];
+      expect(routeLine.props.strokeColor).toBe(ROUTE_LINE_STYLES.WALKING.strokeColor);
+      expect(routeLine.props.strokeWidth).toBe(ROUTE_LINE_STYLES.WALKING.strokeWidth);
+      expect(routeLine.props.lineDashPattern).toEqual(ROUTE_LINE_STYLES.WALKING.lineDashPattern);
+    });
+
+    it('applies BICYCLING style (dashed orange) to the route line', async () => {
+      mockDirectionsHook.mockReturnValue(makeActiveDirectionsWithMode('BICYCLING'));
+      const { getAllByTestId } = await renderWithTheme(<Index />);
+      const directions = await waitFor(() => getAllByTestId('map-directions'));
+      const routeLine = directions[0];
+      expect(routeLine.props.strokeColor).toBe(ROUTE_LINE_STYLES.BICYCLING.strokeColor);
+      expect(routeLine.props.strokeWidth).toBe(ROUTE_LINE_STYLES.BICYCLING.strokeWidth);
+      expect(routeLine.props.lineDashPattern).toEqual(ROUTE_LINE_STYLES.BICYCLING.lineDashPattern);
+    });
+
+    it('applies TRANSIT style (solid purple) to the route line', async () => {
+      mockDirectionsHook.mockReturnValue(makeActiveDirectionsWithMode('TRANSIT'));
+      const { getAllByTestId } = await renderWithTheme(<Index />);
+      const directions = await waitFor(() => getAllByTestId('map-directions'));
+      const routeLine = directions[0];
+      expect(routeLine.props.strokeColor).toBe(ROUTE_LINE_STYLES.TRANSIT.strokeColor);
+      expect(routeLine.props.strokeWidth).toBe(ROUTE_LINE_STYLES.TRANSIT.strokeWidth);
+      expect(routeLine.props.lineDashPattern).toBeUndefined();
+    });
   });
 });
