@@ -32,16 +32,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const loadUser = async () => {
       try {
         const savedUser = await SecureStore.getItemAsync(AUTH_STORAGE_KEY);
-        if (savedUser) {
-          setUser(JSON.parse(savedUser));
-        }
-        
-        // Check if user is still signed in with Google
         const currentUser = GoogleSignin.getCurrentUser();
-        if (!currentUser && savedUser) {
-          // User was signed out elsewhere, clear local state
+        if (savedUser && currentUser) {
+          // Both local data and Google session exist -> restore user
+          setUser(JSON.parse(savedUser));
+        } else if (savedUser && !currentUser) {
+          // Stale local data (signed out elsewhere) -> clear it
           await SecureStore.deleteItemAsync(AUTH_STORAGE_KEY);
-          setUser(null);
         }
       } catch (error) {
         console.error('Error loading user data:', error);
@@ -76,6 +73,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const getAccessToken = async (): Promise<string | null> => {
     try {
+      // return null silently if no user is signed in
+      if (!user) return null;
       const tokens = await GoogleSignin.getTokens();
       
       // Update stored tokens if user is signed in

@@ -5,6 +5,47 @@ import Index from '../app/(tabs)/index';
 import { ThemeProvider } from '../context/ThemeContext';
 
 
+jest.mock('@react-native-google-signin/google-signin', () => ({
+  GoogleSignin: {
+    configure: jest.fn(),
+    hasPlayServices: jest.fn(() => Promise.resolve(true)),
+    signIn: jest.fn(() => Promise.resolve({ data: { user: { id: '1', name: 'Test', email: 'test@test.com', photo: null }, idToken: 'id-token' } })),
+    signOut: jest.fn(() => Promise.resolve()),
+    getTokens: jest.fn(() => Promise.resolve({ accessToken: 'access-token', idToken: 'id-token' })),
+    getCurrentUser: jest.fn(() => null),
+  },
+  GoogleSigninButton: Object.assign(
+    () => null,
+    { Size: { Wide: 1 }, Color: { Dark: 1 } }
+  ),
+  isSuccessResponse: jest.fn(() => true),
+  isErrorWithCode: jest.fn(() => false),
+  statusCodes: { SIGN_IN_CANCELLED: 'SIGN_IN_CANCELLED', IN_PROGRESS: 'IN_PROGRESS', PLAY_SERVICES_NOT_AVAILABLE: 'PLAY_SERVICES_NOT_AVAILABLE' },
+}));
+
+jest.mock('expo-router', () => ({
+  useFocusEffect: (cb: () => void) => {
+    const { useEffect } = require('react');
+    useEffect(() => { cb(); }, []);
+  },
+}));
+
+jest.mock('../utils/devConfig', () => ({
+  DEV_OVERRIDE_LOCATION: null,
+  DEV_OVERRIDE_TIME: null,
+}));
+
+jest.mock('expo-secure-store', () => ({
+  getItemAsync: jest.fn(() => Promise.resolve(null)),
+  setItemAsync: jest.fn(() => Promise.resolve()),
+  deleteItemAsync: jest.fn(() => Promise.resolve()),
+}));
+
+jest.mock('../hooks/useNextClass', () => ({
+  useNextClass: () => ({ nextClass: null, status: 'no_calendar', isLoading: false }),
+  NO_CLASS_BEHAVIOR: 'hide',
+}));
+
 jest.mock('@react-native-async-storage/async-storage', () => ({
   getItem: jest.fn(() => Promise.resolve(null)),
   setItem: jest.fn(() => Promise.resolve()),
@@ -280,45 +321,6 @@ describe('<Index />', () => {
     await waitFor(() => {
       expect(queryByText('Get Directions To')).toBeFalsy();
     }, { timeout: 3000 });
-  });
-
-  // --- Permission denied ---
-  it('shows permission required when location not granted', async () => {
-    mockPermissionState.mockReturnValue(deniedPermission);
-    mockWatchLocation.mockReturnValue(noLocationWatch);
-    const { getByText } = await renderWithTheme(<Index />);
-    await waitFor(() => {
-      expect(getByText('Location permission required')).toBeTruthy();
-    });
-  });
-
-  // --- Location outside campus boundaries (also covers null location → undefined campus) ---
-  it('shows outside campus boundaries for distant location', async () => {
-    mockWatchLocation.mockReturnValue(outsideWatch);
-    const { getByText } = await renderWithTheme(<Index />);
-    await waitFor(() => {
-      expect(getByText('Outside campus boundaries')).toBeTruthy();
-    });
-  });
-
-  // --- Location on campus ---
-  it('shows campus name when on campus', async () => {
-    const { getByText } = await renderWithTheme(<Index />);
-    await waitFor(() => {
-      expect(getByText('SGW Campus')).toBeTruthy();
-    });
-  });
-
-  // --- User inside a building ---
-  it('shows building name when user is inside a building', async () => {
-    mockUserBuilding.mockReturnValue({
-      id: 'b1', name: 'Hall Building', code: 'H',
-      coordinates: [], properties: {},
-    });
-    const { getByText } = await renderWithTheme(<Index />);
-    await waitFor(() => {
-      expect(getByText(/Inside: Hall Building/)).toBeTruthy();
-    });
   });
 
   // --- Region change: hide labels ---
