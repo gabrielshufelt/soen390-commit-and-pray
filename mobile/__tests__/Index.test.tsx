@@ -964,6 +964,41 @@ describe('<Index />', () => {
       });
       consoleSpy.mockRestore();
     });
+
+    it('logs errors for active shuttle leg onError callbacks', async () => {
+      mockMapDirectionsBehavior = 'error';
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+
+      // 1. Start with inactive directions so SearchBar is visible
+      mockDirectionsHook.mockReturnValue(defaultDirections);
+      const { rerender } = await renderWithTheme(<Index />);
+      await waitFor(() => expect(mockSearchBarProperties.onUseShuttleChange).toBeDefined());
+
+      // 2. Enable shuttle while SearchBar is still rendered
+      await act(async () => {
+        mockSearchBarProperties.onUseShuttleChange(true);
+      });
+
+      // 3. Now switch the mock to active directions and re-render
+      mockDirectionsHook.mockReturnValue(activeDirections);
+      await act(async () => {
+        rerender(<ThemeProvider><Index /></ThemeProvider>);
+      });
+
+      // All 3 shuttle leg onError callbacks should fire
+      await waitFor(() => {
+        expect(consoleSpy).toHaveBeenCalledWith(
+          '[Index] MapViewDirections leg1 ERROR:', 'Route not found'
+        );
+        expect(consoleSpy).toHaveBeenCalledWith(
+          '[Index] MapViewDirections leg2 ERROR:', 'Route not found'
+        );
+        expect(consoleSpy).toHaveBeenCalledWith(
+          '[Index] MapViewDirections leg3 ERROR:', 'Route not found'
+        );
+      });
+      consoleSpy.mockRestore();
+    });
   });
 
   // --- Preview route with shuttle and fallback origin ---
