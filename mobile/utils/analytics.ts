@@ -77,3 +77,23 @@ export const logFeatureTap = (
     feature_name: featureName,
     screen_name: screenName,
   });
+
+// Log when the user signs in with Google.
+export const logGoogleSignIn = (): Promise<void> =>
+  analytics().logEvent('google_sign_in', {});
+
+// Log when the user signs out.
+export const logGoogleSignOut = (): Promise<void> =>
+  analytics().logEvent('google_sign_out', {});
+
+// Log when the user selects a calendar.
+export const logCalendarSelected = (calendarName: string): Promise<void> =>
+  analytics().logEvent('calendar_selected', { calendar_name: calendarName });
+
+// Log when the user deselects (unchecks) a calendar.
+export const logCalendarDeselected = (calendarName: string): Promise<void> =>
+  analytics().logEvent('calendar_deselected', { calendar_name: calendarName });
+
+// Log when the user switches the app appearance (light, dark, system).
+export const logAppearanceChanged = (theme: string): Promise<void> =>
+  analytics().logEvent('appearance_changed', { theme });

@@ -5,6 +5,12 @@ import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
 import { useCalendar } from '../../context/CalendarContext';
 import SignInGoogle from '@/components/SignInGoogle';
+import {
+  logGoogleSignOut,
+  logCalendarSelected,
+  logCalendarDeselected,
+  logAppearanceChanged,
+} from '../../utils/analytics';
 
 type ThemeOption = 'light' | 'dark' | 'system';
 
@@ -43,14 +49,23 @@ export default function SettingsScreen() {
     try {
       await clearCalendars();
       await signOut();
+      // log that the user signed out
+      logGoogleSignOut();
     } catch (error) {
       console.error('Failed to sign out:', error);
     }
   };
 
-  const handleCalendarSelect = async (calendarId: string) => {
-    // Toggle off if already selected, otherwise select the new one
-    await selectCalendar(selectedCalendarId === calendarId ? null : calendarId);
+  const handleCalendarSelect = async (calendarId: string, calendarName: string) => {
+    if (selectedCalendarId === calendarId) {
+      // already selected -> user is deselecting it
+      logCalendarDeselected(calendarName);
+      await selectCalendar(null);
+    } else {
+      // picking a new calendar
+      logCalendarSelected(calendarName);
+      await selectCalendar(calendarId);
+    }
   };
 
   const themeOptions: { label: string; value: ThemeOption }[] = [
@@ -73,7 +88,11 @@ export default function SettingsScreen() {
               index < themeOptions.length - 1 && styles.optionBorder,
               { borderBottomColor: isDark ? '#38383a' : '#e5e5ea' },
             ]}
-            onPress={() => setTheme(option.value)}
+            onPress={() => {
+              setTheme(option.value);
+              // log which appearance setting the user picked
+              logAppearanceChanged(option.value);
+            }}
           >
             <Text style={[styles.optionText, { color: isDark ? '#ffffff' : '#000000' }]}>
               {option.label}
@@ -141,7 +160,7 @@ export default function SettingsScreen() {
                     index < calendars.length - 1 && styles.optionBorder,
                     { borderBottomColor: isDark ? '#38383a' : '#e5e5ea' },
                   ]}
-                  onPress={() => handleCalendarSelect(cal.id)}
+                  onPress={() => handleCalendarSelect(cal.id, cal.summary)}
                 >
                   <View style={styles.checkboxRow}>
                     <View

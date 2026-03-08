@@ -9,6 +9,7 @@ import {
 } from "@react-native-google-signin/google-signin";
 import { useAuth } from "../context/AuthContext";
 import { useCalendar } from "../context/CalendarContext";
+import { logGoogleSignIn } from "../utils/analytics";
 
 
 export default function SignInGoogle() {
@@ -37,6 +38,9 @@ export default function SignInGoogle() {
 
         // Fetch the user's Google Calendars now that we have a valid access token
         await fetchCalendars(tokens.accessToken);
+
+        // log that the user signed in with Google
+        logGoogleSignIn();
 
         Alert.alert('Success', 'You have been signed in successfully!');
       } else {
