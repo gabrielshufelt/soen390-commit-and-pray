@@ -26,6 +26,16 @@ import { HIGHLIGHT_COLOR, STROKE_COLOR } from "@/styles/index.styles";
 import { DEV_OVERRIDE_LOCATION } from "../../utils/devConfig";
 import { useNextClass } from "../../hooks/useNextClass";
 import NextClassModal from "../../components/NextClassModal";
+import {
+  logBuildingSelected,
+  logDirectionsStarted,
+  logRoutePreview,
+  logDirectionsEnded,
+  logTransportModeChanged,
+  logSearchPerformed,
+  logCampusToggled,
+  logFeatureTap,
+} from "../../utils/analytics";
 
 const LABEL_ZOOM_THRESHOLD = 0.015;
 const ANCHOR_OFFSET = { x: 0.5, y: 0.5 };
@@ -144,11 +154,14 @@ export default function Index() {
       distanceText: null,
       durationText: null,
     });
+    // log that the user ended or cancelled the route
+    logDirectionsEnded();
   };
 
   const handleStartRoute = () => {
     if (!destChoice || !effectiveLocation) return;
-
+    // log that the user started turn-by-turn navigation
+    logDirectionsStarted(effectiveMode, destChoice.name);
     startDirections({ latitude: effectiveLocation.coords.latitude, longitude: effectiveLocation.coords.longitude }, destChoice.coordinate);
   };
 
@@ -159,7 +172,8 @@ export default function Index() {
       Alert.alert("Start and destination cannot be the same building.");
       return;
     }
-
+    // log that the user previewed a route before starting it
+    logRoutePreview(effectiveMode, destChoice.name);
     previewDirections(startChoice?.coordinate, destChoice?.coordinate);
   }
 
@@ -187,6 +201,11 @@ export default function Index() {
   const handleBuildingSelect = (buildingId: string, buildingData: any) => {
     setSelectedBuilding(buildingId);
     setSelectedBuildingData(buildingData);
+    // log which building the user tapped on the map
+    logBuildingSelected(
+      buildingData?.properties?.name ?? buildingData?.properties?.code ?? buildingId,
+      campusKey
+    );
   };
 
   const handleCloseModal = () => {
@@ -480,9 +499,17 @@ export default function Index() {
           start={startChoice}
           destination={destChoice}
           onChangeStart={setStartChoice}
-          onChangeDestination={setDestChoice}
+          onChangeDestination={(choice) => {
+            setDestChoice(choice);
+            // log whenever the user picks a destination from the search bar
+            if (choice) logSearchPerformed(choice.name.length, true);
+          }}
           transportMode={directionsState.transportMode}
-          onChangeTransportMode={setTransportMode}
+          onChangeTransportMode={(mode) => {
+            setTransportMode(mode);
+            // log which transport mode the user switched to
+            logTransportModeChanged(mode);
+          }}
           routeActive={directionsState.isActive}
           previewActive={!directionsState.isActive && !!directionsState.origin}
           onEndRoute={handleEndDirections}
@@ -505,12 +532,23 @@ export default function Index() {
       )}
 
       {!directionsState.isActive && (
-        <CampusToggle selectedCampus={campusKey} onCampusChange={setCampusKey} />
+        <CampusToggle
+          selectedCampus={campusKey}
+          onCampusChange={(campus) => {
+            setCampusKey(campus);
+            // log which campus the user switched to
+            logCampusToggled(campus);
+          }}
+        />
       )}
 
       <TouchableOpacity
         style={styles.shuttleButton}
-        onPress={() => setShowShuttleModal(true)}
+        onPress={() => {
+          setShowShuttleModal(true);
+          // log that the user opened the shuttle schedule
+          logFeatureTap('shuttle_schedule', '/');
+        }}
         activeOpacity={0.8}
       >
         <Text style={styles.shuttleButtonText}>🚌</Text>

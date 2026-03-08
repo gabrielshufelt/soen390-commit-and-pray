@@ -45,6 +45,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Decode Firebase config files
+        working-directory: mobile
+        run: |
+          echo "${{ secrets.FIREBASE_IOS_CONFIG_BASE64 }}" | base64 --decode > GoogleService-Info.plist
+          echo "${{ secrets.FIREBASE_ANDROID_CONFIG_BASE64 }}" | base64 --decode > google-services.json
       - name: Set up Node.js 20
         uses: actions/setup-node@v4
         with:

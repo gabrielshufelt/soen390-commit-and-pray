@@ -12,7 +12,9 @@ export default {
     newArchEnabled: true,
     ios: {
       supportsTablet: true,
-      bundleIdentifier: "com.commitandpray.soen390project"
+      bundleIdentifier: "com.commitandpray.soen390project",
+      // path to the Firebase iOS config file (decoded from env var in CI)
+      googleServicesFile: "./GoogleService-Info.plist"
     },
     android: {
       adaptiveIcon: {
@@ -27,7 +29,9 @@ export default {
         "android.permission.ACCESS_COARSE_LOCATION",
         "android.permission.ACCESS_FINE_LOCATION"
       ],
-      package: "com.commitandpray.soen390project"
+      package: "com.commitandpray.soen390project",
+      // path to the Firebase Android config file (decoded from env var in CI)
+      googleServicesFile: "./google-services.json"
     },
     web: {
       output: "static",
@@ -57,6 +61,10 @@ export default {
       [
         "expo-secure-store"
       ],
+      // Firebase app plugin. Required for RNFB to work on iOS and Android
+      "@react-native-firebase/app",
+      // custom plugin that fixes the iOS modulemap conflict when using static frameworks
+      "./plugins/withFirebaseCompatibility",
       [
         "@react-native-google-signin/google-signin",
         {
@@ -66,6 +74,10 @@ export default {
       [
         "expo-build-properties",
         {
+          // use_frameworks! static is required for Firebase to link correctly on iOS
+          ios: {
+            useFrameworks: "static"
+          },
           android: {
             signingConfig: {
               debug: {
