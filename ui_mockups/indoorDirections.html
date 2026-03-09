@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+    <script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "primary": "#800000",
+              "background-light": "#f8f5f5",
+              "background-dark": "#230f0f",
+            },
+            fontFamily: {
+              "display": "Lexend",
+            },
+            borderRadius: {
+              "DEFAULT": "0.25rem",
+              "lg": "0.5rem",
+              "xl": "0.75rem",
+              "full": "9999px",
+            },
+          },
+        },
+      };
+    </script>
+    <style>
+      body {
+        font-family: 'Lexend', sans-serif;
+        min-height: max(884px, 100dvh);
+      }
+
+      .instruction-card-shadow {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      }
+    </style>
+  </head>
+  <body class="bg-background-light dark:bg-background-dark font-display">
+    <div class="relative flex h-screen w-full flex-col overflow-hidden max-w-md mx-auto bg-white dark:bg-background-dark">
+      <!-- Top Banner: Fixed Navigation Context -->
+      <div class="fixed top-0 left-0 right-0 z-20 bg-primary px-4 py-3 flex items-center justify-between shadow-md max-w-md mx-auto">
+        <div class="flex items-center gap-3">
+          <span class="material-symbols-outlined text-white">navigation</span>
+          <div>
+            <h1 class="text-white text-sm font-medium leading-none">To Room 820</h1>
+            <p class="text-white/80 text-xs mt-1">Level 8, Science Block</p>
+          </div>
+        </div>
+        <button class="bg-white/20 hover:bg-white/30 text-white rounded-lg px-3 py-1.5 text-xs font-medium transition-colors">
+          Exit
+        </button>
+      </div>
+
+      <!-- Main Content Area: Map View -->
+      <div class="relative flex-1 w-full bg-[#E5E7EB] dark:bg-slate-800 pt-14">
+        <!-- Simulated Indoor Map Background -->
+        <div class="absolute inset-0 z-0 bg-center bg-cover" style="background-image: url('h8.svg');">
+          <!-- Overlay for readability -->
+          <div class="absolute inset-0 bg-white/10"></div>
+          <!-- Simulated Route Line (SVG) -->
+          <svg class="absolute inset-0 w-full h-full pointer-events-none" viewbox="0 0 400 800">
+            <path d="M 220 600 L 220 180 L 320 180" fill="none" stroke="#009e91" stroke-dasharray="1, 15" stroke-linecap="round" stroke-linejoin="round" stroke-width="8"></path>
+            <circle cx="220" cy="600" fill="#009e91" r="10"></circle>
+            <circle cx="320" cy="180" fill="white" r="12" stroke="#009e91" stroke-width="4"></circle>
+          </svg>
+        </div>
+
+        <!-- Map Floating Utilities -->
+        <div class="absolute right-4 bottom-5 flex flex-col gap-2 z-20">
+          <button class="flex size-11 items-center justify-center rounded-lg bg-white dark:bg-slate-900 shadow-md text-slate-800 dark:text-slate-100">
+            <span class="material-symbols-outlined">layers</span>
+          </button>
+          <button class="flex size-11 items-center justify-center rounded-lg bg-white dark:bg-slate-900 shadow-md text-slate-800 dark:text-slate-100">
+            <span class="material-symbols-outlined">my_location</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Bottom Sheet Area -->
+      <div class="relative z-20 bg-white dark:bg-background-dark rounded-t-[24px] shadow-[0_-8px_24px_rgba(0,0,0,0.06)] px-5 pt-3 pb-8">
+        <!-- Pull Handle -->
+        <div class="w-12 h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full mx-auto mb-6"></div>
+
+        <!-- Progress Indicator -->
+        <div class="flex flex-col gap-2 mb-6">
+          <div class="flex justify-between items-center text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+            <span>Route Progress</span>
+            <span class="text-primary">Step 4 of 5</span>
+          </div>
+          <div class="h-1.5 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+            <div class="h-full bg-primary" style="width: 80%;"></div>
+          </div>
+        </div>
+
+        <!-- Active Instruction Card -->
+        <div class="instruction-card-shadow rounded-xl border border-slate-50 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 mb-6 flex gap-4">
+          <div class="flex size-12 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+            <span class="material-symbols-outlined text-3xl">straight</span>
+          </div>
+          <div class="flex flex-col justify-center">
+            <h2 class="text-slate-900 dark:text-slate-100 text-xl font-bold leading-tight">Walk 10m towards Room 820</h2>
+            <p class="text-slate-500 dark:text-slate-400 text-sm mt-1">Keep straight past the lounge area</p>
+          </div>
+        </div>
+
+        <!-- Next Step Preview (Subtle) -->
+        <div class="flex items-center gap-3 px-1 mb-8">
+          <div class="flex size-8 shrink-0 items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-400">
+            <span class="material-symbols-outlined text-lg">turn_right</span>
+          </div>
+          <p class="text-slate-500 dark:text-slate-400 text-sm">
+            <span class="font-medium">Next:</span>
+            Turn right at the end of the hallway and Room 820 will be on your right.
+          </p>
+        </div>
+
+        <!-- Primary Action -->
+        <button class="w-full bg-primary hover:bg-primary/90 text-white flex items-center justify-center gap-3 py-4 rounded-xl font-bold text-lg shadow-lg shadow-primary/20 transition-all active:scale-[0.98]">
+          <span>Next Step</span>
+          <span class="material-symbols-outlined">arrow_forward</span>
+        </button>
+
+        <!-- Bottom Navigation Bar Spacing (iOS style) -->
+        <div class="h-2"></div>
+      </div>
+    </div>
+  </body>
+</html>

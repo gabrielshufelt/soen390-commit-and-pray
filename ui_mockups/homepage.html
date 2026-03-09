@@ -65,14 +65,14 @@
     <div class="relative z-20 flex flex-col h-full p-4 pointer-events-auto">
 
       <!-- Campus Toggle (Segmented Control) -->
-      <div class="flex h-11 items-center justify-center rounded-xl bg-white/90 dark:bg-[#2a2a2a]/90 ios-blur p-1 shadow-lg">
-        <label class="flex cursor-pointer h-full grow items-center justify-center overflow-hidden rounded-lg px-2 has-[:checked]:bg-primary has-[:checked]:text-white text-[#5e8d89] text-sm font-semibold leading-normal transition-all">
+      <div class="campus-selector ios-blur">
+        <label>
           <span class="truncate">SGW</span>
-          <input class="hidden" name="campus" type="radio" value="SGW"/>
+          <input name="campus" type="radio" value="SGW"/>
         </label>
-        <label class="flex cursor-pointer h-full grow items-center justify-center overflow-hidden rounded-lg px-2 has-[:checked]:bg-primary has-[:checked]:text-white text-[#5e8d89] text-sm font-semibold leading-normal transition-all">
+        <label>
           <span class="truncate">Loyola</span>
-          <input checked="" class="hidden" name="campus" type="radio" value="Loyola"/>
+          <input name="campus" type="radio" value="Loyola" checked/>
         </label>
       </div>
       <div class="flex-col gap-2"></div>
