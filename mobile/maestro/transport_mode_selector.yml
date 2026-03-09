@@ -1,0 +1,23 @@
+# Maestro acceptance test for Transport Mode Selector
+
+# This test verifies that the user can select different transport modes in the app and that the UI updates accordingly.
+
+appId: com.commitandpray.soen390project
+
+---
+- tapOn: Search buildings, rooms...
+- tapOn: "Route"
+- tapOn: My Current Location
+- tapOn: Loyola Campus
+- tapOn: Where to?
+- inputText: "Ri"
+- tapOn: Richard J Renaud Science Complex (SP)
+- tapOn: "Driving"
+- assertVisible: 2629 min • 4814.3 km
+- tapOn: "Walking"
+- assertVisible: 65613 min • 4836.4 km
+- tapOn: "Cycling"
+- assertVisible: 16912 min • 5396.5 km
+- tapOn: "Transit"
+- assertVisible: 5462 min • 6238.1 km
+

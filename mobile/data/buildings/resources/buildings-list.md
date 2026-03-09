@@ -12,6 +12,7 @@ https://www.concordia.ca/maps/buildings.html
 - VA - Visual Arts Building
 - LS - Concordia Learning Square
 - GN - Maison-Mère des Sœurs grises (Grey Nuns Residence)
+- CL
 
 **Loyola Campus Buildings (21 buildings):**
 - SP - Richard J Renaud Science Complex
@@ -35,23 +36,3 @@ https://www.concordia.ca/maps/buildings.html
 - HU - Applied Science Hub
 - Concordia Loyola Campus Central Building
 - Concordia Vanier Library
-
-
-LIST
-Description
-
-Amenities:
-- Info
-- ATM
-- Bike Parking
-- Car Parking
-- Internet
-
-Accessibility:
-- Accessible Entrance
-- Accessible Elevator
-- Accessibility Ramp
-- Wheelchair Lift
-
-- Gender-Inclusive Washrooms
-- Accessible Washrooms

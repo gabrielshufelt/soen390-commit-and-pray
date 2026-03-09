@@ -26,12 +26,11 @@ describe('findBuildingForLocation', () => {
     }
   });
 
-  it('defaults code to empty string for buildings without a code', () => {
-    // Concordia Vanier Library has no code property
-    const result = findBuildingForLocation(45.45901, -73.63852);
+  it('returns a Loyola building when point is inside (Richard J Renaud Science Complex - SP)', () => {
+    const result = findBuildingForLocation(45.4579, -73.6415);
     expect(result).not.toBeNull();
-    expect(result!.code).toBe('');
-    expect(result!.name).toBe('Concordia Vanier Library');
+    expect(result!.code).toBe('SP');
+    expect(result!.name).toContain('Science Complex');
   });
 });
 

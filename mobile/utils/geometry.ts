@@ -73,71 +73,83 @@ function distanceToPolygon(lng: number, lat: number, polygon: number[][]): numbe
  *
  * @param polygon - Array of [longitude, latitude] pairs (GeoJSON order)
  */
-export const getInteriorPoint = (polygon: number[][]): { latitude: number; longitude: number } => {
-    // Step 1: Try simple centroid (works for convex polygons)
-    let latSum = 0;
-    let lngSum = 0;
-    const n = polygon.length;
-
+/**
+ * Computes the centroid of a polygon.
+ */
+function computeCentroid(polygon: number[][]): { latitude: number; longitude: number } {
+    let latSum = 0, lngSum = 0;
     for (const [lng, lat] of polygon) {
         latSum += lat;
         lngSum += lng;
     }
+    return { latitude: latSum / polygon.length, longitude: lngSum / polygon.length };
+}
 
-    const centroid = { latitude: latSum / n, longitude: lngSum / n };
-    
-    if (isPointInPolygon(centroid, polygon)) {
-        return centroid;
-    }
-
-    // Step 2: For concave polygons, find pole of inaccessibility
-    // Get bounding box
+/**
+ * Computes the bounding box of a polygon.
+ */
+function computeBoundingBox(polygon: number[][]) {
     let minLat = Infinity, maxLat = -Infinity;
     let minLng = Infinity, maxLng = -Infinity;
-    
     for (const [lng, lat] of polygon) {
         if (lat < minLat) minLat = lat;
         if (lat > maxLat) maxLat = lat;
         if (lng < minLng) minLng = lng;
         if (lng > maxLng) maxLng = lng;
     }
+    return { minLat, maxLat, minLng, maxLng };
+}
 
-    // Grid search to find the point with maximum distance to polygon edges
+/**
+ * Searches a grid for the interior point furthest from all polygon edges.
+ */
+function searchGrid(
+    polygon: number[][],
+    latStart: number, latEnd: number,
+    lngStart: number, lngEnd: number,
+    cellSize: number,
+    initialBest: { lat: number; lng: number; dist: number }
+): { lat: number; lng: number; dist: number } {
+    let best = { ...initialBest };
+    for (let lat = latStart; lat <= latEnd; lat += cellSize) {
+        for (let lng = lngStart; lng <= lngEnd; lng += cellSize) {
+            if (!isPointInPolygon({ latitude: lat, longitude: lng }, polygon)) continue;
+            const dist = distanceToPolygon(lng, lat, polygon);
+            if (dist > best.dist) {
+                best = { lat, lng, dist };
+            }
+        }
+    }
+    return best;
+}
+
+/**
+ * Returns a visually centered point inside the polygon using a simplified
+ * pole of inaccessibility algorithm.
+ */
+export const getInteriorPoint = (polygon: number[][]): { latitude: number; longitude: number } => {
+    const centroid = computeCentroid(polygon);
+    if (isPointInPolygon(centroid, polygon)) return centroid;
+
+    const { minLat, maxLat, minLng, maxLng } = computeBoundingBox(polygon);
+
     const GRID_DIVISIONS = 20;
-	const cellSize = Math.min(maxLat - minLat, maxLng - minLng) / GRID_DIVISIONS;
-    let bestLat = centroid.latitude;
-    let bestLng = centroid.longitude;
-    let bestDist = 0;
+    const cellSize = Math.min(maxLat - minLat, maxLng - minLng) / GRID_DIVISIONS;
 
-    // Start with a coarse grid
-    for (let lat = minLat; lat <= maxLat; lat += cellSize) {
-        for (let lng = minLng; lng <= maxLng; lng += cellSize) {
-            if (isPointInPolygon({ latitude: lat, longitude: lng }, polygon)) {
-                const dist = distanceToPolygon(lng, lat, polygon);
-                if (dist > bestDist) {
-                    bestDist = dist;
-                    bestLat = lat;
-                    bestLng = lng;
-                }
-            }
-        }
-    }
+    // Coarse grid search
+    const initialBest = { lat: centroid.latitude, lng: centroid.longitude, dist: 0 };
+    const coarseBest = searchGrid(polygon, minLat, maxLat, minLng, maxLng, cellSize, initialBest);
 
-    // Refine with a finer grid around the best point
+    // Fine grid search around best point
     const REFINEMENT_FACTOR = 4;
-	const refineCellSize = cellSize / REFINEMENT_FACTOR;
-    for (let lat = bestLat - cellSize; lat <= bestLat + cellSize; lat += refineCellSize) {
-        for (let lng = bestLng - cellSize; lng <= bestLng + cellSize; lng += refineCellSize) {
-            if (isPointInPolygon({ latitude: lat, longitude: lng }, polygon)) {
-                const dist = distanceToPolygon(lng, lat, polygon);
-                if (dist > bestDist) {
-                    bestDist = dist;
-                    bestLat = lat;
-                    bestLng = lng;
-                }
-            }
-        }
-    }
+    const refineCellSize = cellSize / REFINEMENT_FACTOR;
+    const fineBest = searchGrid(
+        polygon,
+        coarseBest.lat - cellSize, coarseBest.lat + cellSize,
+        coarseBest.lng - cellSize, coarseBest.lng + cellSize,
+        refineCellSize,
+        coarseBest
+    );
 
-    return { latitude: bestLat, longitude: bestLng };
+    return { latitude: fineBest.lat, longitude: fineBest.lng };
 };

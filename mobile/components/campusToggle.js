@@ -1,5 +1,7 @@
 import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity, Platform } from "react-native";
+import PropTypes from "prop-types";
+
 
 export default function CampusToggle({ selectedCampus, onCampusChange }) {
   return (
@@ -46,6 +48,11 @@ export default function CampusToggle({ selectedCampus, onCampusChange }) {
   );
 }
 
+CampusToggle.propTypes = {
+  selectedCampus: PropTypes.string.isRequired,
+  onCampusChange: PropTypes.func.isRequired,
+};
+
 const styles = StyleSheet.create({
   toggleContainer: {
     position: "absolute",
@@ -53,7 +60,7 @@ const styles = StyleSheet.create({
     alignSelf: "center",
     flexDirection: "row",
     backgroundColor: "#fff",
-    borderRadius: 999,
+    borderRadius: 14,
     padding: 4,
     zIndex: 10,
 
@@ -67,8 +74,8 @@ const styles = StyleSheet.create({
 
   button: {
     paddingVertical: 10,
-    paddingHorizontal: 22,
-    borderRadius: 999,
+    paddingHorizontal: 74,
+    borderRadius: 10,
     overflow: "hidden",
   },
 

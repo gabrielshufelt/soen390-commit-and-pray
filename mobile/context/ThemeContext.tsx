@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import { useColorScheme as useDeviceColorScheme } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SplashScreen from 'expo-splash-screen';
@@ -51,6 +51,12 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const colorScheme: ColorScheme =
     theme === 'system' ? (deviceColorScheme ?? 'light') : theme;
 
+
+  const contextValue = useMemo(
+    () => ({ theme, colorScheme, setTheme }),
+    [theme, colorScheme]
+  );
+
   // Keep splash screen visible until theme is loaded
   // (splash hiding is handled by the useEffect above)
   if (!isLoaded) {
@@ -58,7 +64,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <ThemeContext.Provider value={{ theme, colorScheme, setTheme }}>
+    <ThemeContext.Provider value={contextValue}>
       {children}
     </ThemeContext.Provider>
   );

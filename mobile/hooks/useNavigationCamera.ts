@@ -39,15 +39,20 @@ export function useNavigationCamera({
     mapRef.current?.animateToRegion(selectedCampus.initialRegion, ANIMATION_DURATION);
   }, [selectedCampus]);
 
-  // Map centers around user's location during navigation
+  // Center on user's location only when navigation first becomes active
+  const didCenterOnStartRef = useRef(false);
   useEffect(() => {
-    if (directionsState.isActive && location) {
+    if (directionsState.isActive && location && !didCenterOnStartRef.current) {
+      didCenterOnStartRef.current = true;
       mapRef.current?.animateToRegion({
         latitude: location.coords.latitude,
         longitude: location.coords.longitude,
         latitudeDelta: 0.005,
         longitudeDelta: 0.005,
       }, ANIMATION_DURATION);
+    }
+    if (!directionsState.isActive) {
+      didCenterOnStartRef.current = false;
     }
   }, [directionsState.isActive, location]);
 
