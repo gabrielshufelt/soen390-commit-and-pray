@@ -1,11 +1,8 @@
 appId: com.commitandpray.soen390project
 ---
 - launchApp:
-    clearState: true
+    clearState: false
 - tapOn: Settings, tab, 2 of 2
-- tapOn:
-    text: "Log out"
-    optional: true
 - tapOn: Sign in with Google
 - tapOn: Continue
 - tapOn: Hawad Ahmad
