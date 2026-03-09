@@ -2,7 +2,7 @@
 
 # This test verifies that the user can select different transport modes in the app and that the UI updates accordingly.
 
-appId: com.yourapp.mobile
+appId: com.commitandpray.soen390project
 
 ---
 - tapOn: "Route"

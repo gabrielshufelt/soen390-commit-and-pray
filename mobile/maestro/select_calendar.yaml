@@ -1,0 +1,14 @@
+appId: com.commitandpray.soen390project
+---
+- launchApp:
+    clearState: false
+- tapOn: Settings, tab, 2 of 2
+- tapOn: Sign in with Google
+- tapOn: Continue
+- tapOn: Hawad Ahmad
+- scrollUntilVisible:
+    element: Continue
+- tapOn: Continue
+- tapOn: OK
+- tapOn: School
+- tapOn: Home, tab, 1 of 2
