@@ -148,7 +148,6 @@ expo-env.d.ts
 # Firebase Analytics
 GoogleService-Info.plist
 google-services.json
-USABILITY_TESTING_SETUP.md
 
 /ios
 /.claude
