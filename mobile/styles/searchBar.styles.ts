@@ -101,8 +101,9 @@ export const styles = StyleSheet.create({
   },
   sheet: {
     flex: 1,
-    paddingHorizontal: 16,
-    paddingTop: Platform.OS === "ios" ? 6 : 10,
+  },
+  scrollContent: {
+    paddingBottom: 16,
   },
 
   // Header: back + title + right menu
@@ -147,7 +148,6 @@ export const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: BORDER,
     marginBottom: 12,
-    marginHorizontal: 14,
   },
   segmentBtn: {
     flex: 1,
@@ -173,7 +173,6 @@ export const styles = StyleSheet.create({
     padding: 14,
     borderWidth: 1,
     borderColor: BORDER,
-    marginHorizontal: 14,
   },
   sectionLabel: {
     fontSize: 12,
@@ -317,7 +316,6 @@ export const styles = StyleSheet.create({
     gap: 10,
     marginTop: 12,
     marginBottom: 10,
-    paddingHorizontal: 18,
   },
   filterChip: {
     flexDirection: "row",
@@ -347,7 +345,6 @@ export const styles = StyleSheet.create({
   // Suggested Buildings section (padding fix)
   suggestedSection: {
     marginTop: 10,
-    paddingHorizontal: 14,
   },
   listHeader: {
     flexDirection: "row",
@@ -355,7 +352,6 @@ export const styles = StyleSheet.create({
     justifyContent: "space-between",
     marginTop: 4,
     marginBottom: 8,
-    paddingHorizontal: 14,
   },
   listTitle: {
     fontSize: 16,
@@ -490,5 +486,32 @@ export const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "700",
     color: MAROON,
+  },
+
+  // ── Shuttle departure stop selector ──────────────────────────
+  shuttleStopOuter: {
+    flexDirection: "row",
+    marginTop: 8,
+    borderRadius: 10,
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: "rgba(145,35,56,0.20)",
+  },
+  shuttleStopBtn: {
+    flex: 1,
+    paddingVertical: 9,
+    alignItems: "center",
+    backgroundColor: "#FFFFFF",
+  },
+  shuttleStopBtnActive: {
+    backgroundColor: MAROON,
+  },
+  shuttleStopText: {
+    fontSize: 13,
+    fontWeight: "800",
+    color: MUTED,
+  },
+  shuttleStopTextActive: {
+    color: "#FFFFFF",
   },
 });
