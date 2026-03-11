@@ -205,16 +205,6 @@
       "accessible": true
     },
     {
-      "id": "H_F1_room_49",
-      "type": "stair_landing",
-      "buildingId": "H",
-      "floor": 1,
-      "x": 237,
-      "y": 616,
-      "label": "",
-      "accessible": true
-    },
-    {
       "id": "H_F1_room_51",
       "type": "doorway",
       "buildingId": "H",
@@ -1202,6 +1192,41 @@
       "type": "hallway",
       "weight": 259,
       "accessible": true
+    },
+    {
+      "source": "H_F1_hallway_waypoint_30",
+      "target": "H_F2_hallway_waypoint_287",
+      "type": "stair",
+      "weight": 0,
+      "accessible": false
+    },
+    {
+      "source": "H_F1_room_33",
+      "target": "H_F2_room_184",
+      "type": "stair",
+      "weight": 0,
+      "accessible": false
+    },
+    {
+      "source": "H_F1_room_18",
+      "target": "H_F2_room_186",
+      "type": "elevator",
+      "weight": 0,
+      "accessible": true
+    },
+    {
+      "source": "H_F1_room_19",
+      "target": "H_F2_room_187",
+      "type": "elevator",
+      "weight": 0,
+      "accessible": true
+    },
+    {
+      "source": "H_F1_room_87",
+      "target": "H_F2_hallway_waypoint_286",
+      "type": "stair",
+      "weight": 0,
+      "accessible": false
     }
   ]
 }
