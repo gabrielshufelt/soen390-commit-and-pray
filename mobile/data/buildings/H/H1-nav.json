@@ -1,4 +1,8 @@
 {
+  "meta": {
+    "buildingId": "H",
+    "floor": 1
+  },
   "nodes": [
     {
       "id": "H_F1_room_13",
