@@ -1134,6 +1134,34 @@
       "type": "stair",
       "weight": 0,
       "accessible": false
+    },
+    {
+      "source": "H_F8_doorway_105",
+      "target": "H_F2_room_182",
+      "type": "stair",
+      "weight": 0,
+      "accessible": false
+    },
+    {
+      "source": "H_F8_doorway_104",
+      "target": "H_F2_room_183",
+      "type": "stair",
+      "weight": 0,
+      "accessible": false
+    },
+    {
+      "source": "H_F8_doorway_106",
+      "target": "H_F2_room_186",
+      "type": "elevator",
+      "weight": 0,
+      "accessible": true
+    },
+    {
+      "source": "H_F8_doorway_107",
+      "target": "H_F2_room_187",
+      "type": "elevator",
+      "weight": 0,
+      "accessible": true
     }
   ]
 }
