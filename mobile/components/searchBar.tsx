@@ -35,8 +35,6 @@ type Props = {
   onUseShuttleChange?: (active: boolean) => void;
 
   onCampusChange?: (campus: "SGW" | "Loyola") => void;
-  shuttleDepartureCampus?: "SGW" | "Loyola";
-  onShuttleDepartureCampusChange?: (campus: "SGW" | "Loyola") => void;
 };
 
 export default function SearchBar({
@@ -59,8 +57,6 @@ export default function SearchBar({
   useShuttle = false,
   onUseShuttleChange,
   onCampusChange,
-  shuttleDepartureCampus = "SGW",
-  onShuttleDepartureCampusChange,
 }: Props) {
   const [expanded, setExpanded] = useState(defaultExpanded);
   const [campus, setCampus] = useState<"SGW" | "Loyola">("SGW");
@@ -96,8 +92,6 @@ export default function SearchBar({
       onUseShuttleChange={onUseShuttleChange}
       campus={campus}
       onCampusSelect={handleCampusSelect}
-      shuttleDepartureCampus={shuttleDepartureCampus}
-      onShuttleDepartureCampusChange={onShuttleDepartureCampusChange}
       onClose={() => setExpanded(false)}
     />
   );

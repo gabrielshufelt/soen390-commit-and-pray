@@ -52,9 +52,6 @@ type Props = {
   campus: "SGW" | "Loyola";
   onCampusSelect: (campus: "SGW" | "Loyola") => void;
 
-  shuttleDepartureCampus?: "SGW" | "Loyola";
-  onShuttleDepartureCampusChange?: (campus: "SGW" | "Loyola") => void;
-
   onClose: () => void;
 };
 
@@ -114,8 +111,6 @@ export default function ExpandedSearchBar({
   onUseShuttleChange,
   campus,
   onCampusSelect,
-  shuttleDepartureCampus = "SGW",
-  onShuttleDepartureCampusChange,
   onClose,
 }: Props) {
   const [seeAllOpen, setSeeAllOpen] = useState(false);
@@ -141,7 +136,7 @@ export default function ExpandedSearchBar({
     if (!startFocused) setStartText(start ? displayName(start) : "");
   }, [start, startFocused]);
 
-  const sameCampus = !!(start && destination && start.campus && destination.campus && start.campus === destination.campus);
+  const sameCampus = !!(start && start.id !== "current-location" && destination && start.campus && destination.campus && start.campus === destination.campus);
 
   useEffect(() => {
     if (sameCampus && useShuttle) onUseShuttleChange?.(false);
@@ -150,15 +145,10 @@ export default function ExpandedSearchBar({
   const destinationQuery = destText.trim().toLowerCase();
   const startQuery = startText.trim().toLowerCase();
 
-  const campusFiltered = useMemo(
-    () => buildings.filter((b) => !b.campus || b.campus === campus),
-    [buildings, campus]
-  );
-
   const suggestions = useMemo(() => {
     if (!destFocused || !destinationQuery || routeActive) return [];
-    return campusFiltered.filter((b) => makeHaystack(b).includes(destinationQuery)).slice(0, 10);
-  }, [campusFiltered, destFocused, destinationQuery, routeActive]);
+    return buildings.filter((b) => makeHaystack(b).includes(destinationQuery)).slice(0, 10);
+  }, [buildings, destFocused, destinationQuery, routeActive]);
 
   const startSuggestions = useMemo(() => {
     if (!startFocused || !startQuery || routeActive) return [];
@@ -188,17 +178,16 @@ export default function ExpandedSearchBar({
   }
 
   const filteredHistory = useMemo(() => {
-    const base = history.filter((h) => !h.campus || h.campus === campus);
-    const hasCategories = base.some((b) => b.category);
-    if (!hasCategories || quickFilter === null) return base;
-    return base.filter((b) => b.category === quickFilter);
-  }, [history, campus, quickFilter]);
+    const hasCategories = history.some((b) => b.category);
+    if (!hasCategories || quickFilter === null) return history;
+    return history.filter((b) => b.category === quickFilter);
+  }, [history, quickFilter]);
 
   const seeAllBuildings = useMemo(() => {
-    return [...campusFiltered].sort((a, b) =>
+    return [...buildings].sort((a, b) =>
       stripCodePrefix(a.name, a.code).localeCompare(stripCodePrefix(b.name, b.code))
     );
-  }, [campusFiltered]);
+  }, [buildings]);
 
   const Separator = () => <View style={styles.sep} />;
 
@@ -231,33 +220,6 @@ export default function ExpandedSearchBar({
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.scrollContent}
           >
-
-          {/* Campus segmented */}
-          <View style={styles.segmentOuter}>
-            <TouchableOpacity
-              style={[styles.segmentBtn, campus === "SGW" && styles.segmentBtnActive]}
-              onPress={() => onCampusSelect("SGW")}
-              activeOpacity={0.9}
-              accessibilityRole="button"
-              accessibilityState={{ selected: campus === "SGW" }}
-            >
-              <Text style={[styles.segmentText, campus === "SGW" && styles.segmentTextActive]}>
-                SGW Campus
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.segmentBtn, campus === "Loyola" && styles.segmentBtnActive]}
-              onPress={() => onCampusSelect("Loyola")}
-              activeOpacity={0.9}
-              accessibilityRole="button"
-              accessibilityState={{ selected: campus === "Loyola" }}
-            >
-              <Text style={[styles.segmentText, campus === "Loyola" && styles.segmentTextActive]}>
-                Loyola Campus
-              </Text>
-            </TouchableOpacity>
-          </View>
 
           {/* Route card */}
           <View style={styles.routeCard}>
@@ -304,7 +266,9 @@ export default function ExpandedSearchBar({
                         accessibilityRole="button"
                       >
                         <Text style={styles.suggestionTitle}>{displayName(item)}</Text>
-                        {!!item.address && <Text style={styles.suggestionSub}>{item.address}</Text>}
+                        <Text style={styles.suggestionSub}>
+                          {item.campus ? `${item.campus} Campus` : ""}{item.address ? (item.campus ? ` · ${item.address}` : item.address) : ""}
+                        </Text>
                       </TouchableOpacity>
                     </React.Fragment>
                   ))}
@@ -355,7 +319,9 @@ export default function ExpandedSearchBar({
                         accessibilityRole="button"
                       >
                         <Text style={styles.suggestionTitle}>{displayName(item)}</Text>
-                        {!!item.address && <Text style={styles.suggestionSub}>{item.address}</Text>}
+                        <Text style={styles.suggestionSub}>
+                          {item.campus ? `${item.campus} Campus` : ""}{item.address ? (item.campus ? ` · ${item.address}` : item.address) : ""}
+                        </Text>
                       </TouchableOpacity>
                     </React.Fragment>
                   ))}
@@ -387,36 +353,6 @@ export default function ExpandedSearchBar({
               <Text style={[styles.shuttleLabelDisabled, { marginTop: 4, marginLeft: 4, fontSize: 12 }]}>
                 Shuttle is only available between SGW and Loyola campuses.
               </Text>
-            )}
-
-            {transportMode === "TRANSIT" && useShuttle && (
-              <View>
-                <Text style={[styles.sectionLabel, { marginTop: 12 }]}>DEPARTURE STOP</Text>
-                <View style={styles.shuttleStopOuter}>
-                  <TouchableOpacity
-                    style={[styles.shuttleStopBtn, shuttleDepartureCampus === "SGW" && styles.shuttleStopBtnActive]}
-                    onPress={() => onShuttleDepartureCampusChange?.("SGW")}
-                    activeOpacity={0.9}
-                    accessibilityRole="button"
-                    accessibilityState={{ selected: shuttleDepartureCampus === "SGW" }}
-                  >
-                    <Text style={[styles.shuttleStopText, shuttleDepartureCampus === "SGW" && styles.shuttleStopTextActive]}>
-                      SGW Stop
-                    </Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[styles.shuttleStopBtn, shuttleDepartureCampus === "Loyola" && styles.shuttleStopBtnActive]}
-                    onPress={() => onShuttleDepartureCampusChange?.("Loyola")}
-                    activeOpacity={0.9}
-                    accessibilityRole="button"
-                    accessibilityState={{ selected: shuttleDepartureCampus === "Loyola" }}
-                  >
-                    <Text style={[styles.shuttleStopText, shuttleDepartureCampus === "Loyola" && styles.shuttleStopTextActive]}>
-                      Loyola Stop
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
             )}
 
             {!routeActive && destination && previewRouteInfo?.durationText && (
@@ -562,7 +498,9 @@ export default function ExpandedSearchBar({
 
                       <View style={{ flex: 1 }}>
                         <Text style={styles.buildingName}>{displayName(item)}</Text>
-                        {!!item.address && <Text style={styles.buildingSub}>{item.address}</Text>}
+                        <Text style={styles.buildingSub}>
+                          {item.campus ? `${item.campus} Campus` : ""}{item.address ? (item.campus ? ` · ${item.address}` : item.address) : ""}
+                        </Text>
                       </View>
 
                       <TouchableOpacity
@@ -602,9 +540,7 @@ export default function ExpandedSearchBar({
                   <Text style={styles.headerBack}>‹</Text>
                 </TouchableOpacity>
 
-                <Text style={styles.headerTitle}>
-                  {campus === "SGW" ? "SGW Buildings" : "Loyola Buildings"}
-                </Text>
+                <Text style={styles.headerTitle}>All Buildings</Text>
 
                 <View style={styles.headerBtnRight} />
               </View>
@@ -632,7 +568,9 @@ export default function ExpandedSearchBar({
 
                       <View style={{ flex: 1 }}>
                         <Text style={styles.buildingName}>{displayName(item)}</Text>
-                        {!!item.address && <Text style={styles.buildingSub}>{item.address}</Text>}
+                        <Text style={styles.buildingSub}>
+                          {item.campus ? `${item.campus} Campus` : ""}{item.address ? (item.campus ? ` · ${item.address}` : item.address) : ""}
+                        </Text>
                       </View>
 
                       <Text style={styles.rowChev}>›</Text>

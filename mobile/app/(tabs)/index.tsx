@@ -102,7 +102,8 @@ export default function Index() {
 
   // Concordia Shuttle option
   const [useShuttle, setUseShuttle] = useState(false);
-  const [shuttleCampus, setShuttleCampus] = useState<"SGW" | "Loyola">("SGW");
+  // Departure campus is always the opposite of the destination building's campus
+  const shuttleCampus: "SGW" | "Loyola" = destChoice?.campus === "Loyola" ? "SGW" : "Loyola";
 
   // fetchTrigger is incremented every time the home screen gains focus so that
   // the next class data is refreshed when the user returns from Settings after
@@ -577,9 +578,6 @@ export default function Index() {
           previewRouteInfo={previewRouteInfo}
           useShuttle={useShuttle}
           onUseShuttleChange={setUseShuttle}
-          onCampusChange={setShuttleCampus}
-          shuttleDepartureCampus={shuttleCampus}
-          onShuttleDepartureCampusChange={setShuttleCampus}
         />
       )}
 
