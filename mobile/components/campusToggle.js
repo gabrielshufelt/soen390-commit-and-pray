@@ -56,7 +56,7 @@ CampusToggle.propTypes = {
 const styles = StyleSheet.create({
   toggleContainer: {
     position: "absolute",
-    top: 16,
+    top: Platform.OS === "ios" ? 72 : 68,
     alignSelf: "center",
     flexDirection: "row",
     backgroundColor: "#fff",

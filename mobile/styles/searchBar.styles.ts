@@ -55,7 +55,7 @@ export const styles = StyleSheet.create({
   // ─────────────────────────────────────────────────────────────
   wrapperCollapsed: {
     position: "absolute",
-    top: Platform.OS === "ios" ? 62 : 48,
+    top: 16,
     left: 12,
     right: 12,
     zIndex: 9999,
