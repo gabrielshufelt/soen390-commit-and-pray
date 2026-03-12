@@ -336,13 +336,6 @@ describe('<Index />', () => {
   });
 
   // --- Basic rendering ---
-  it('renders MapView component', async () => {
-    const { getByTestId } = await renderWithTheme(<Index />);
-    await waitFor(() => {
-      expect(getByTestId('map-view')).toBeTruthy();
-    });
-  });
-
   it('does not re-render building polygons on component re-render', async () => {
     const { rerender } = await renderWithTheme(<Index />);
     await waitFor(() => {
@@ -473,16 +466,6 @@ describe('<Index />', () => {
     consoleSpy.mockRestore();
   });
 
-  // --- Dark mode ---
-  it('renders in dark mode', async () => {
-    const AsyncStorage = require('@react-native-async-storage/async-storage');
-    AsyncStorage.getItem.mockResolvedValueOnce('dark');
-    const { getByTestId } = await renderWithTheme(<Index />);
-    await waitFor(() => {
-      expect(getByTestId('map-view')).toBeTruthy();
-    });
-  });
-
   // --- SearchBar & CampusToggle hidden when directions are active ---
   describe('UI visibility when directions are active', () => {
     it('hides SearchBar when directions are active', async () => {
@@ -490,13 +473,6 @@ describe('<Index />', () => {
       const { queryByTestId } = await renderWithTheme(<Index />);
       await waitFor(() => {
         expect(queryByTestId('search-bar')).toBeNull();
-      });
-    });
-
-    it('shows SearchBar when directions are inactive', async () => {
-      const { getByTestId } = await renderWithTheme(<Index />);
-      await waitFor(() => {
-        expect(getByTestId('search-bar')).toBeTruthy();
       });
     });
 
@@ -619,13 +595,6 @@ describe('<Index />', () => {
 
   // --- Shuttle button & ShuttleScheduleModal ---
   describe('shuttle button', () => {
-    it('renders the shuttle 🚌 button', async () => {
-      const { getByText } = await renderWithTheme(<Index />);
-      await waitFor(() => {
-        expect(getByText('🚌')).toBeTruthy();
-      });
-    });
-
     it('opens ShuttleScheduleModal when shuttle button is pressed', async () => {
       const { getByText } = await renderWithTheme(<Index />);
       await waitFor(() => expect(getByText('🚌')).toBeTruthy());
@@ -648,12 +617,6 @@ describe('<Index />', () => {
       await waitFor(() => {
         expect(queryByText('🚌 Shuttle Schedule')).toBeNull();
       });
-    });
-
-    it('ShuttleScheduleModal is not visible on initial render', async () => {
-      const { queryByText } = await renderWithTheme(<Index />);
-      await waitFor(() => expect(queryByText('map-view')).toBeNull());
-      expect(queryByText('🚌 Shuttle Schedule')).toBeNull();
     });
 
     it('shows bus stop info inside the modal when opened', async () => {

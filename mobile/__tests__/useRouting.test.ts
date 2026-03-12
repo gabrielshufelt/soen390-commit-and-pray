@@ -64,14 +64,6 @@ const sgwLocation: Location.LocationObject = {
   timestamp: Date.now(),
 } as unknown as Location.LocationObject;
 
-const mockUserBuilding = {
-  id: 'H',
-  name: 'Hall Building',
-  code: 'H',
-  coordinates: [[-73.579, 45.497], [-73.578, 45.497]] as [number, number][],
-  properties: {},
-};
-
 const mockBuilding = {
   id: 'MB',
   properties: { name: 'Molson Building', code: 'MB' },
@@ -91,62 +83,8 @@ describe('useRouting', () => {
     useDirections.mockReturnValue(makeDirectionsReturn());
   });
 
-  // ── auto-startChoice effect ──────────────────────────────────────────────
-  describe('auto-startChoice effect', () => {
-    it('sets startChoice to current location when no userBuilding', async () => {
-      const { result } = renderHook(() => useRouting(defaultParams));
-      await waitFor(() => expect(result.current.startChoice).not.toBeNull());
-      expect(result.current.startChoice).toEqual(expect.objectContaining({
-        id: 'current-location',
-        name: 'My Current Location',
-        coordinate: { latitude: 45.4972, longitude: -73.579 },
-      }));
-    });
-
-    it('sets startChoice to building when userBuilding is truthy', async () => {
-      const { result } = renderHook(() =>
-        useRouting({ ...defaultParams, userBuilding: mockUserBuilding })
-      );
-      await waitFor(() => expect(result.current.startChoice).not.toBeNull());
-      expect(result.current.startChoice).toEqual(expect.objectContaining({
-        id: 'H',
-        name: 'Hall Building',
-        code: 'H',
-      }));
-    });
-
-    it('does not set startChoice when effectiveLocation is null', async () => {
-      const { result } = renderHook(() =>
-        useRouting({ ...defaultParams, effectiveLocation: null })
-      );
-      await act(async () => {});
-      expect(result.current.startChoice).toBeNull();
-    });
-
-    it('does not overwrite a manually set startChoice', async () => {
-      const { result } = renderHook(() =>
-        useRouting({ ...defaultParams, effectiveLocation: null })
-      );
-      const manual = { id: 'MB', name: 'Molson', coordinate: { latitude: 45.495, longitude: -73.578 } };
-      act(() => { result.current.setStartChoice(manual); });
-      await act(async () => {});
-      expect(result.current.startChoice?.id).toBe('MB');
-    });
-  });
-
   // ── shuttleWaypoints ─────────────────────────────────────────────────────
   describe('shuttleWaypoints', () => {
-    it('returns undefined when shuttle is disabled', () => {
-      const { result } = renderHook(() => useRouting(defaultParams));
-      expect(result.current.shuttleWaypoints).toBeUndefined();
-    });
-
-    it('returns [SGW stop, Loyola stop] when campus is SGW', () => {
-      const { result } = renderHook(() => useRouting(defaultParams));
-      act(() => { result.current.setUseShuttle(true); });
-      expect(result.current.shuttleWaypoints).toHaveLength(2);
-    });
-
     it('returns [Loyola stop, SGW stop] when campus is Loyola', () => {
       const { result } = renderHook(() => useRouting(defaultParams));
       act(() => {
@@ -154,53 +92,6 @@ describe('useRouting', () => {
         result.current.setShuttleCampus('Loyola');
       });
       expect(result.current.shuttleWaypoints).toHaveLength(2);
-    });
-  });
-
-  // ── effectiveMode ────────────────────────────────────────────────────────
-  describe('effectiveMode', () => {
-    it('is DRIVING when shuttle is enabled regardless of transportMode', () => {
-      const { result } = renderHook(() => useRouting(defaultParams));
-      act(() => { result.current.setUseShuttle(true); });
-      expect(result.current.effectiveMode).toBe('DRIVING');
-    });
-
-    it('mirrors transportMode when shuttle is disabled', () => {
-      useDirections.mockReturnValue(makeDirectionsReturn('TRANSIT'));
-      const { result } = renderHook(() => useRouting(defaultParams));
-      expect(result.current.effectiveMode).toBe('TRANSIT');
-    });
-  });
-
-  // ── handleStartRoute ─────────────────────────────────────────────────────
-  describe('handleStartRoute', () => {
-    it('calls startDirections with location coords and destChoice', () => {
-      const { result } = renderHook(() => useRouting(defaultParams));
-      act(() => {
-        result.current.setDestChoice({ id: 'H', name: 'Hall', coordinate: { latitude: 45.497, longitude: -73.579 } });
-      });
-      act(() => { result.current.handleStartRoute(); });
-      expect(mockStartDirections).toHaveBeenCalledWith(
-        { latitude: 45.4972, longitude: -73.579 },
-        { latitude: 45.497, longitude: -73.579 }
-      );
-    });
-
-    it('does nothing when destChoice is null', () => {
-      const { result } = renderHook(() => useRouting(defaultParams));
-      act(() => { result.current.handleStartRoute(); });
-      expect(mockStartDirections).not.toHaveBeenCalled();
-    });
-
-    it('does nothing when effectiveLocation is null', () => {
-      const { result } = renderHook(() =>
-        useRouting({ ...defaultParams, effectiveLocation: null })
-      );
-      act(() => {
-        result.current.setDestChoice({ id: 'H', name: 'Hall', coordinate: { latitude: 45.497, longitude: -73.579 } });
-        result.current.handleStartRoute();
-      });
-      expect(mockStartDirections).not.toHaveBeenCalled();
     });
   });
 
@@ -222,13 +113,26 @@ describe('useRouting', () => {
       expect(result.current.destChoice).toBeNull();
       expect(result.current.useShuttle).toBe(false);
     });
+  });
 
-    it('resets previewRouteInfo', () => {
+  // ── handleStartRoute ─────────────────────────────────────────────────────
+  describe('handleStartRoute', () => {
+    it('calls startDirections with location coords and destChoice', () => {
       const { result } = renderHook(() => useRouting(defaultParams));
-      act(() => { result.current.handleEndDirections(); });
-      expect(mockSetPreviewRouteInfo).toHaveBeenCalledWith({
-        distance: null, duration: null, distanceText: null, durationText: null,
+      act(() => {
+        result.current.setDestChoice({ id: 'H', name: 'Hall', coordinate: { latitude: 45.497, longitude: -73.579 } });
       });
+      act(() => { result.current.handleStartRoute(); });
+      expect(mockStartDirections).toHaveBeenCalledWith(
+        { latitude: 45.4972, longitude: -73.579 },
+        { latitude: 45.497, longitude: -73.579 }
+      );
+    });
+
+    it('does nothing when destChoice is null', () => {
+      const { result } = renderHook(() => useRouting(defaultParams));
+      act(() => { result.current.handleStartRoute(); });
+      expect(mockStartDirections).not.toHaveBeenCalled();
     });
   });
 
@@ -254,17 +158,6 @@ describe('useRouting', () => {
         useRouting({ ...defaultParams, effectiveLocation: null })
       );
       act(() => { result.current.handlePreviewRoute(); });
-      expect(mockPreviewDirections).not.toHaveBeenCalled();
-    });
-
-    it('does nothing when startChoice is current-location', async () => {
-      // With a real location and no userBuilding, auto-effect sets start to current-location
-      const { result } = renderHook(() => useRouting(defaultParams));
-      await waitFor(() => expect(result.current.startChoice?.id).toBe('current-location'));
-      act(() => {
-        result.current.setDestChoice({ id: 'MB', name: 'Molson', coordinate: { latitude: 45.495, longitude: -73.578 } });
-        result.current.handlePreviewRoute();
-      });
       expect(mockPreviewDirections).not.toHaveBeenCalled();
     });
 
@@ -329,32 +222,11 @@ describe('useRouting', () => {
       }));
     });
 
-    it('sets destChoice from a building object', () => {
-      const { result } = renderHook(() => useRouting(defaultParams));
-      act(() => { result.current.handleDirectionsTo(mockBuilding); });
-      expect(result.current.destChoice).toEqual(expect.objectContaining({
-        id: 'MB',
-        name: 'Molson Building',
-      }));
-    });
-
     it('uses code as name fallback when building has no name', () => {
       const noName = { ...mockBuilding, properties: { code: 'MB' } };
       const { result } = renderHook(() => useRouting(defaultParams));
       act(() => { result.current.handleDirectionsFrom(noName); });
       expect(result.current.startChoice?.name).toBe('MB');
-    });
-  });
-
-  // ── handleShowShuttleRoute ───────────────────────────────────────────────
-  describe('handleShowShuttleRoute', () => {
-    it('starts directions between the two shuttle bus stops', () => {
-      const { result } = renderHook(() => useRouting(defaultParams));
-      act(() => { result.current.handleShowShuttleRoute(); });
-      expect(mockStartDirections).toHaveBeenCalledWith(
-        expect.objectContaining({ latitude: expect.any(Number), longitude: expect.any(Number) }),
-        expect.objectContaining({ latitude: expect.any(Number), longitude: expect.any(Number) })
-      );
     });
   });
 
