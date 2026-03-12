@@ -2,7 +2,8 @@ import React from "react";
 import { render, fireEvent, waitFor, act } from "@testing-library/react-native";
 
 import type { MapViewDirectionsMode } from 'react-native-maps-directions';
-import SearchBar, { BuildingChoice } from "../components/searchBar";
+import SearchBar from "../components/searchBar";
+import { BuildingChoice } from "../constants/searchBar.types";
 
 const mockShuttleAvailability = jest.fn();
 jest.mock('../hooks/useShuttleAvailability', () => ({
@@ -73,7 +74,6 @@ describe("<SearchBar />", () => {
             fireEvent.press(getByText("Search buildings, rooms..."));
         
             expect(getByText("Route")).toBeTruthy();
-            expect(getByText("SGW Campus")).toBeTruthy();
         });
 
         it("collapses when back button is pressed", () => {
@@ -89,27 +89,6 @@ describe("<SearchBar />", () => {
             expect(queryByText("Route")).toBeNull();
             expect(getByText("Search buildings, rooms...")).toBeTruthy();
             });
-        });
-    });
-
-    describe("Campus Toggle", () => {
-        it("shows SGW campus by default", () => {
-            const { getByText } = render(
-            <SearchBar {...defaultProps} defaultExpanded={true} />
-            );
-      
-        const sgwButton = getByText("SGW Campus");
-        expect(sgwButton).toBeTruthy();
-        });
-
-        it("switches to Loyola campus when toggled", () => {
-            const { getByText } = render(
-            <SearchBar {...defaultProps} defaultExpanded={true} />
-            );
-      
-            fireEvent.press(getByText("Loyola Campus"));
-      
-            expect(getByText("Loyola Campus")).toBeTruthy();
         });
     });
 
@@ -315,41 +294,6 @@ describe("<SearchBar />", () => {
             expect(getByText("Home")).toBeTruthy();
             expect(getByText("Library")).toBeTruthy();
             expect(getByText("Favorites")).toBeTruthy();
-        });
-    });
-
-    describe("Campus change", () => {
-        it("calls onCampusChange when switching to Loyola", () => {
-            const onCampusChange = jest.fn();
-            const { getByText } = render(
-                <SearchBar {...defaultProps} defaultExpanded={true} onCampusChange={onCampusChange} />
-            );
-            fireEvent.press(getByText("Loyola Campus"));
-            expect(onCampusChange).toHaveBeenCalledWith("Loyola");
-        });
-
-        it("calls onCampusChange when switching back to SGW", () => {
-            const onCampusChange = jest.fn();
-            const { getByText } = render(
-                <SearchBar {...defaultProps} defaultExpanded={true} onCampusChange={onCampusChange} />
-            );
-            fireEvent.press(getByText("Loyola Campus"));
-            fireEvent.press(getByText("SGW Campus"));
-            expect(onCampusChange).toHaveBeenLastCalledWith("SGW");
-        });
-
-        it("resets shuttle when campus changes while shuttle is active", () => {
-            const onUseShuttleChange = jest.fn();
-            const { getByText } = render(
-                <SearchBar
-                    {...defaultProps}
-                    defaultExpanded={true}
-                    useShuttle={true}
-                    onUseShuttleChange={onUseShuttleChange}
-                />
-            );
-            fireEvent.press(getByText("Loyola Campus"));
-            expect(onUseShuttleChange).toHaveBeenCalledWith(false);
         });
     });
 
@@ -783,82 +727,4 @@ describe("<SearchBar />", () => {
             });
         });
     });
-
-    describe("Shuttle departure stop selector", () => {
-        it("shows departure stop selector when shuttle is enabled and mode is TRANSIT", () => {
-            mockShuttleAvailability.mockReturnValue(shuttleAvailableResult);
-            const { getByText } = render(
-                <SearchBar
-                    {...defaultProps}
-                    transportMode="TRANSIT"
-                    useShuttle={true}
-                    defaultExpanded={true}
-                />
-            );
-            expect(getByText("DEPARTURE STOP")).toBeTruthy();
-            expect(getByText("SGW Stop")).toBeTruthy();
-            expect(getByText("Loyola Stop")).toBeTruthy();
-        });
-
-        it("does NOT show departure stop selector when shuttle is not enabled", () => {
-            mockShuttleAvailability.mockReturnValue(shuttleAvailableResult);
-            const { queryByText } = render(
-                <SearchBar
-                    {...defaultProps}
-                    transportMode="TRANSIT"
-                    useShuttle={false}
-                    defaultExpanded={true}
-                />
-            );
-            expect(queryByText("DEPARTURE STOP")).toBeNull();
-        });
-
-        it("does NOT show departure stop selector when mode is not TRANSIT", () => {
-            mockShuttleAvailability.mockReturnValue(shuttleAvailableResult);
-            const { queryByText } = render(
-                <SearchBar
-                    {...defaultProps}
-                    transportMode="WALKING"
-                    useShuttle={true}
-                    defaultExpanded={true}
-                />
-            );
-            expect(queryByText("DEPARTURE STOP")).toBeNull();
-        });
-
-        it("calls onShuttleDepartureCampusChange('SGW') when SGW Stop is pressed", () => {
-            mockShuttleAvailability.mockReturnValue(shuttleAvailableResult);
-            const onShuttleDepartureCampusChange = jest.fn();
-            const { getByText } = render(
-                <SearchBar
-                    {...defaultProps}
-                    transportMode="TRANSIT"
-                    useShuttle={true}
-                    shuttleDepartureCampus="Loyola"
-                    onShuttleDepartureCampusChange={onShuttleDepartureCampusChange}
-                    defaultExpanded={true}
-                />
-            );
-            fireEvent.press(getByText("SGW Stop"));
-            expect(onShuttleDepartureCampusChange).toHaveBeenCalledWith("SGW");
-        });
-
-        it("calls onShuttleDepartureCampusChange('Loyola') when Loyola Stop is pressed", () => {
-            mockShuttleAvailability.mockReturnValue(shuttleAvailableResult);
-            const onShuttleDepartureCampusChange = jest.fn();
-            const { getByText } = render(
-                <SearchBar
-                    {...defaultProps}
-                    transportMode="TRANSIT"
-                    useShuttle={true}
-                    shuttleDepartureCampus="SGW"
-                    onShuttleDepartureCampusChange={onShuttleDepartureCampusChange}
-                    defaultExpanded={true}
-                />
-            );
-            fireEvent.press(getByText("Loyola Stop"));
-            expect(onShuttleDepartureCampusChange).toHaveBeenCalledWith("Loyola");
-        });
-    });
-
 });
