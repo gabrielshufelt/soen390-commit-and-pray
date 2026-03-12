@@ -85,7 +85,7 @@ npx expo run:android
 
 After the build is done, add this line into AndroidManifest.xml which is found in (`mobile/android/app/src/AndroidManifest.xml`)
 `<meta-data android:name="com.google.android.geo.API_KEY" android:value="AIzaSyA0fCunDGs5GsP4QY9t5zmoWe_S437VFAk"/>`
-Inside the <application> tag
+Inside the `<application>` tag
 You're file should look like this:
 ```<manifest xmlns:android="http://schemas.android.com/apk/res/android">
   <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
