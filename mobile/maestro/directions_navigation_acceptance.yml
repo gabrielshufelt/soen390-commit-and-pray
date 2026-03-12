@@ -1,0 +1,49 @@
+appId: com.commitandpray.soen390project
+---
+- launchApp
+
+# Open route sheet and choose a destination from current location.
+- tapOn: Search buildings, rooms
+- tapOn: Loyola Campus
+- tapOn: Where to?
+- inputText: Rich
+- tapOn: Richard J Renaud Science Complex (SP)
+- assertVisible: Start Directions
+
+# Start turn-by-turn navigation from preview state and go previous and back.
+- tapOn: Start Directions
+- assertVisible: You are off route. Head back to the path.
+- assertVisible: End
+- assertVisible: NEXT
+- assertVisible: Next step
+- assertVisible: Previous step
+- assertVisible: "Step 1 of 47"
+- tapOn: ›
+- tapOn: Step 2 of 47
+- tapOn: ‹
+- assertVisible: "Step 1 of 47"
+- tapOn: End
+- assertVisible: Search buildings, rooms
+
+# Build preview route with explicit origin + destination to validate Exit Preview reset.
+- tapOn: Search buildings, rooms
+- tapOn: Current Location
+- tapOn:
+    id: "route.start.input"
+- doubleTapOn:
+    id: floating_toolbar_menu_item_text
+    index: 4
+    delay: 100
+- eraseText: 1
+- inputText: Ha
+- tapOn: Henry F. Hall Building (H)
+- tapOn: Where to?
+- tapOn: Loyola Campus
+- inputText: Ric
+- tapOn: Richard J Renaud Science Complex (SP)
+- assertVisible: Preview Route
+- tapOn: Preview Route
+- tapOn: Search buildings, rooms
+- assertVisible: Exit Preview
+- tapOn: Exit Preview
+- assertVisible: Search buildings, rooms
