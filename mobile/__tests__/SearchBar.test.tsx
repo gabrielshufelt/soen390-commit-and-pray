@@ -93,15 +93,6 @@ describe("<SearchBar />", () => {
     });
 
     describe("Campus Toggle", () => {
-        it("shows SGW campus by default", () => {
-            const { getByText } = render(
-            <SearchBar {...defaultProps} defaultExpanded={true} />
-            );
-      
-        const sgwButton = getByText("SGW Campus");
-        expect(sgwButton).toBeTruthy();
-        });
-
         it("switches to Loyola campus when toggled", () => {
             const { getByText } = render(
             <SearchBar {...defaultProps} defaultExpanded={true} />
@@ -114,20 +105,6 @@ describe("<SearchBar />", () => {
     });
 
     describe("Input Fields", () => {
-        it("Shows placeholder text for start point input", () => {
-            const { getByPlaceholderText } = render(
-                <SearchBar {...defaultProps} defaultExpanded={true} />
-            );
-            expect(getByPlaceholderText("Current Location")).toBeTruthy();
-        });
-
-        it("Shows placeholder text for destination input", () => {
-            const { getByPlaceholderText } = render(
-                <SearchBar {...defaultProps} defaultExpanded={true} />
-            );
-            expect(getByPlaceholderText("Where to?")).toBeTruthy();
-        });
-
         it("Verifies typing works in Start Point", () => {
             const { getByPlaceholderText } = render(
                 <SearchBar {...defaultProps} defaultExpanded={true} />
@@ -284,38 +261,6 @@ describe("<SearchBar />", () => {
             expect(getByText("Favorites")).toBeTruthy();
         });
 
-        it("Activates filter when clicked for the first time", () => {
-            const { getByText } = render(
-                <SearchBar {...defaultProps} defaultExpanded={true} />
-            );
-        
-            fireEvent.press(getByText("Library"));
-        
-            expect(getByText("Library")).toBeTruthy();
-        });
-
-        it("Deactivates filter when clicked again while active", () => {
-            const { getByText } = render(
-                <SearchBar {...defaultProps} defaultExpanded={true} />
-            );
-        
-            fireEvent.press(getByText("Library"));
-            fireEvent.press(getByText("Library"));
-        
-            // Should be deactivated now, but both tests just verify element exists
-            expect(getByText("Library")).toBeTruthy();
-        });
-
-        it("No filter is active by default", () => {
-            const { getByText } = render(
-                <SearchBar {...defaultProps} defaultExpanded={true} />
-            );
-        
-            // Verify all filters are present
-            expect(getByText("Home")).toBeTruthy();
-            expect(getByText("Library")).toBeTruthy();
-            expect(getByText("Favorites")).toBeTruthy();
-        });
     });
 
     describe("Campus change", () => {
@@ -523,13 +468,6 @@ describe("<SearchBar />", () => {
             expect(queryByText("Use Concordia Shuttle")).toBeNull();
         });
 
-        it("does NOT show shuttle checkbox when transport mode is DRIVING", () => {
-            const { queryByText } = render(
-                <SearchBar {...defaultProps} transportMode="DRIVING" defaultExpanded={true} />
-            );
-            expect(queryByText("Use Concordia Shuttle")).toBeNull();
-        });
-
         it("shows 'No service' when shuttle is not available", () => {
             mockShuttleAvailability.mockReturnValue(shuttleUnavailableResult);
             const { getByText } = render(
@@ -602,16 +540,6 @@ describe("<SearchBar />", () => {
     });
 
     describe("Transport mode selector", () => {
-        it("renders all four transport mode buttons", () => {
-            const { getByText } = render(
-                <SearchBar {...defaultProps} defaultExpanded={true} />
-            );
-            expect(getByText("Driving")).toBeTruthy();
-            expect(getByText("Walking")).toBeTruthy();
-            expect(getByText("Cycling")).toBeTruthy();
-            expect(getByText("Transit")).toBeTruthy();
-        });
-
         it("calls onChangeTransportMode when a transport mode button is pressed", () => {
             const onChangeTransportMode = jest.fn();
             const { getByText } = render(

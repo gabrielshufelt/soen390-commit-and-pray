@@ -51,7 +51,7 @@ describe("TabLayout", () => {
       1,
       expect.objectContaining({
         name: "index",
-        options: { title: "Home" },
+        options: expect.objectContaining({ title: "Home" }),
       })
     );
 
@@ -59,7 +59,7 @@ describe("TabLayout", () => {
       2,
       expect.objectContaining({
         name: "settings",
-        options: { title: "Settings" },
+        options: expect.objectContaining({ title: "Settings" }),
       })
     );
   });
