@@ -6,7 +6,6 @@ export const STROKE_COLOR = "#2196F3";
 export const styles = StyleSheet.create({
   container: { flex: 1, position: "relative" },
   map: { width: "100%", height: "100%" },
-
   overlay: {
     position: "absolute",
     bottom: 24,
@@ -35,7 +34,6 @@ export const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "600",
   },
-
   labelContainer: { backgroundColor: "transparent" },
   buildingLabel: {
     color: "white",
@@ -44,5 +42,38 @@ export const styles = StyleSheet.create({
     textShadowColor: "rgba(0, 0, 0, 0.75",
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 2,
+  },
+  shuttleButton: {
+    position: "absolute",
+    top: 140,
+    left: 16,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: "rgba(0, 0, 0, 0.75)",
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+    zIndex: 1000,
+  },
+  shuttleButtonText: {
+    fontSize: 28,
+  },
+  busStopMarker: {
+    backgroundColor: "white",
+    borderRadius: 20,
+    padding: 6,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+    elevation: 5,
+  },
+  busStopIcon: {
+    fontSize: 24,
   },
 });

@@ -3,7 +3,7 @@ import { useFocusEffect } from "expo-router";
 import * as Location from "expo-location";
 import { useNavigationCamera } from "../../hooks/useNavigationCamera";
 import MapView, { Marker, Polygon, Region } from "react-native-maps";
-import { Alert, StyleSheet, View, Text, TouchableOpacity } from "react-native";
+import { Alert, View, Text, TouchableOpacity } from "react-native";
 import { useTheme } from "../../context/ThemeContext";
 import { CAMPUSES, DEFAULT_CAMPUS, findCampusForCoordinate } from "../../constants/campusLocations";
 import { BUILDING_POLYGON_COLORS } from "../../constants/mapColors";
@@ -22,7 +22,7 @@ import MapViewDirections from "react-native-maps-directions";
 import SearchBar from "@/components/searchBar";
 import { BuildingChoice } from "@/constants/searchBar.types";
 import NavigationSteps from "../../components/NavigationSteps";
-import { HIGHLIGHT_COLOR, STROKE_COLOR } from "@/styles/index.styles";
+import { styles, HIGHLIGHT_COLOR, STROKE_COLOR } from "@/styles/index.styles";
 import { DEV_OVERRIDE_LOCATION } from "../../utils/devConfig";
 import { useNextClass } from "../../hooks/useNextClass";
 import { getRouteLineStyle } from "../../constants/routeStyles";
@@ -34,7 +34,6 @@ const ANCHOR_OFFSET = { x: 0.5, y: 0.5 };
 
 export default function Index() {
   const { colorScheme } = useTheme();
-  const isDark = colorScheme === "dark";
 
   const defaultCampus = CAMPUSES[DEFAULT_CAMPUS];
   const [campusKey, setCampusKey] = useState<string>(DEFAULT_CAMPUS);
@@ -492,7 +491,7 @@ export default function Index() {
         ref={mapRef}
         style={styles.map}
         initialRegion={selectedCampus.initialRegion}
-        userInterfaceStyle={isDark ? "dark" : "light"}
+        userInterfaceStyle={colorScheme}
         showsUserLocation
         onRegionChangeComplete={handleRegionChange}
       >
@@ -595,8 +594,8 @@ export default function Index() {
         onDirectionsFrom={handleDirectionsFrom}
         onDirectionsTo={handleDirectionsTo}
         onGetDirections={(building) => {
-          if (location) {
-            startDirectionsToBuilding(location, building.geometry.coordinates[0]);
+          if (effectiveLocation) {
+            startDirectionsToBuilding(effectiveLocation, building.geometry.coordinates[0]);
           }
           handleCloseModal();
         }}
@@ -610,55 +609,3 @@ export default function Index() {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, position: "relative" },
-  map: { width: "100%", height: "100%" },
-
-  labelContainer: { backgroundColor: "transparent" },
-  buildingLabel: {
-    color: "white",
-    fontWeight: "bold",
-    fontSize: 12,
-    textShadowColor: "black",
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 2,
-  },
-
-  shuttleButton: {
-    position: "absolute",
-    top: 140,
-    left: 16,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: "rgba(0, 0, 0, 0.75)",
-    justifyContent: "center",
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
-    zIndex: 1000,
-  },
-
-  shuttleButtonText: {
-    fontSize: 28,
-  },
-
-  busStopMarker: {
-    backgroundColor: "white",
-    borderRadius: 20,
-    padding: 6,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 3,
-    elevation: 5,
-  },
-
-  busStopIcon: {
-    fontSize: 24,
-  },
-});
