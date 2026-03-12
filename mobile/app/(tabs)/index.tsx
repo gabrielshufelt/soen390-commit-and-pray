@@ -9,14 +9,12 @@ import { CAMPUSES, DEFAULT_CAMPUS } from "../../constants/campusLocations";
 import { useLocationPermissions } from "../../hooks/useLocationPermissions";
 import { useWatchLocation } from "../../hooks/useWatchLocation";
 import { useUserBuilding } from "../../hooks/useUserBuilding";
-import { getInteriorPoint } from "../../utils/geometry";
 import sgwBuildingsData from "../../data/buildings/sgw.json";
 import loyolaBuildingsData from "../../data/buildings/loyola.json";
 import CampusToggle from "../../components/campusToggle";
 import BuildingModal from "../../components/buildingModal";
 import ShuttleScheduleModal from "../../components/shuttleScheduleModal";
 import SearchBar from "@/components/searchBar";
-import { BuildingChoice } from "@/constants/searchBar.types";
 import NavigationSteps from "../../components/NavigationSteps";
 import { styles } from "@/styles/index.styles";
 import { DEV_OVERRIDE_LOCATION } from "../../utils/devConfig";
@@ -26,24 +24,9 @@ import { useRouting } from "../../hooks/useRouting";
 import RouteOverlay from "../../components/RouteOverlay";
 import BuildingLayer from "../../components/BuildingLayer";
 import ShuttleStopMarkers from "../../components/ShuttleStopMarkers";
+import { buildingChoices } from "../../utils/buildingChoices";
 
 const LABEL_ZOOM_THRESHOLD = 0.015;
-
-/** All buildings from both campuses as search choices — static, computed once. */
-const buildingChoices: BuildingChoice[] = (() => {
-  const toChoices = (features: any[], campus: "SGW" | "Loyola") =>
-    features.map((b: any) => ({
-      id: b.id,
-      name: b.properties?.name ?? b.properties?.code ?? "Unknown building",
-      code: b.properties?.code,
-      coordinate: getInteriorPoint(b.geometry.coordinates[0]),
-      campus,
-    }));
-  return [
-    ...toChoices(sgwBuildingsData.features, "SGW"),
-    ...toChoices(loyolaBuildingsData.features, "Loyola"),
-  ];
-})();
 
 export default function Index() {
   const { colorScheme } = useTheme();
