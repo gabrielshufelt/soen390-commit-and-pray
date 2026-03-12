@@ -13,6 +13,168 @@ import {
 } from '../../utils/analytics';
 
 type ThemeOption = 'light' | 'dark' | 'system';
+type AuthUser = ReturnType<typeof useAuth>['user'];
+type CalendarItem = ReturnType<typeof useCalendar>['calendars'][number];
+
+const THEME_OPTIONS: { label: string; value: ThemeOption }[] = [
+  { label: 'Light', value: 'light' },
+  { label: 'Dark', value: 'dark' },
+  { label: 'System', value: 'system' },
+];
+
+// --- Sub-components ---
+
+function AppearanceSection({ isDark, theme, setTheme }: Readonly<{
+  isDark: boolean;
+  theme: ThemeOption;
+  setTheme: (t: ThemeOption) => void;
+}>) {
+  const mutedColor = isDark ? '#8e8e93' : '#6e6e73';
+  const bgColor = isDark ? '#1c1c1e' : '#ffffff';
+  const textColor = isDark ? '#ffffff' : '#000000';
+  const borderColor = isDark ? '#38383a' : '#e5e5ea';
+
+  return (
+    <>
+      <Text style={[styles.sectionTitle, { color: mutedColor }]}>Appearance</Text>
+      <View style={[styles.optionsContainer, { backgroundColor: bgColor }]}>
+        {THEME_OPTIONS.map((option, index) => (
+          <Pressable
+            key={option.value}
+            style={[
+              styles.option,
+              index < THEME_OPTIONS.length - 1 && styles.optionBorder,
+              { borderBottomColor: borderColor },
+            ]}
+            onPress={() => setTheme(option.value)}
+          >
+            <Text style={[styles.optionText, { color: textColor }]}>{option.label}</Text>
+            {theme === option.value && <Text style={styles.checkmark}>✓</Text>}
+          </Pressable>
+        ))}
+      </View>
+    </>
+  );
+}
+
+function CalendarsSection({ isDark, calendars, isLoadingCalendars, selectedCalendarId, onSelect }: Readonly<{
+  isDark: boolean;
+  calendars: CalendarItem[];
+  isLoadingCalendars: boolean;
+  selectedCalendarId: string | null;
+  onSelect: (id: string, name: string) => void;
+}>) {
+  const mutedColor = isDark ? '#8e8e93' : '#6e6e73';
+  const bgColor = isDark ? '#1c1c1e' : '#ffffff';
+  const textColor = isDark ? '#ffffff' : '#000000';
+  const borderColor = isDark ? '#38383a' : '#e5e5ea';
+  const checkboxBorderColor = isDark ? '#636366' : '#c7c7cc';
+
+  function renderContent() {
+    // Only block the UI with a spinner on first load when there is no
+    // cached data yet. Background refreshes are silent.
+    if (isLoadingCalendars && calendars.length === 0) {
+      return <View style={styles.loadingContainer}><ActivityIndicator /></View>;
+    }
+    if (calendars.length === 0) {
+      return (
+        <View style={styles.option}>
+          <Text style={[styles.optionText, { color: mutedColor }]}>No calendars found</Text>
+        </View>
+      );
+    }
+    return calendars.map((cal, index) => (
+      <Pressable
+        key={cal.id}
+        testID={`calendar-item-${cal.id}`}
+        style={[
+          styles.option,
+          index < calendars.length - 1 && styles.optionBorder,
+          { borderBottomColor: borderColor },
+        ]}
+        onPress={() => onSelect(cal.id, cal.summary)}
+      >
+        <View style={styles.checkboxRow}>
+          <View
+            style={[
+              styles.checkbox,
+              {
+                borderColor: checkboxBorderColor,
+                backgroundColor: selectedCalendarId === cal.id ? '#912338' : 'transparent',
+              },
+            ]}
+          >
+            {selectedCalendarId === cal.id && <Text style={styles.checkboxTick}>✓</Text>}
+          </View>
+          <Text style={[styles.optionText, { color: textColor, marginLeft: 12 }]}>
+            {cal.summary}
+          </Text>
+        </View>
+      </Pressable>
+    ));
+  }
+
+  return (
+    <>
+      <Text style={[styles.sectionTitle, { color: mutedColor, marginTop: 30 }]}>Calendars</Text>
+      <View style={[styles.optionsContainer, { backgroundColor: bgColor }]}>
+        {renderContent()}
+      </View>
+    </>
+  );
+}
+
+function AccountSection({ isDark, user, isLoading, calendars, isLoadingCalendars, selectedCalendarId, onCalendarSelect, onSignOut }: Readonly<{
+  isDark: boolean;
+  user: AuthUser;
+  isLoading: boolean;
+  calendars: CalendarItem[];
+  isLoadingCalendars: boolean;
+  selectedCalendarId: string | null;
+  onCalendarSelect: (id: string, name: string) => void;
+  onSignOut: () => void;
+}>) {
+  const mutedColor = isDark ? '#8e8e93' : '#6e6e73';
+  const bgColor = isDark ? '#1c1c1e' : '#ffffff';
+  const textColor = isDark ? '#ffffff' : '#000000';
+
+  if (isLoading) {
+    return <View style={styles.loadingContainer}><ActivityIndicator /></View>;
+  }
+  if (!user) {
+    return <SignInGoogle />;
+  }
+
+  return (
+    <View>
+      <View style={[styles.optionsContainer, { backgroundColor: bgColor }]}>
+        <View style={styles.userInfoContainer}>
+          {user.photo && <Image source={{ uri: user.photo }} style={styles.profileImage} />}
+          <View style={styles.userTextContainer}>
+            <Text style={[styles.userName, { color: textColor }]}>{user.name}</Text>
+            <Text style={[styles.userEmail, { color: mutedColor }]}>{user.email}</Text>
+          </View>
+        </View>
+      </View>
+
+      <CalendarsSection
+        isDark={isDark}
+        calendars={calendars}
+        isLoadingCalendars={isLoadingCalendars}
+        selectedCalendarId={selectedCalendarId}
+        onSelect={onCalendarSelect}
+      />
+
+      <View style={[styles.optionsContainer, { backgroundColor: bgColor, marginTop: 16, marginBottom: 40 }]}>
+        <Pressable style={styles.option} onPress={onSignOut}>
+          <Text style={[styles.optionText, { color: '#ff3b30' }]}>Log Out</Text>
+        </Pressable>
+      </View>
+    </View>
+  );
+}
+
+// --- Main Screen ---
 
 export default function SettingsScreen() {
   const { theme, setTheme, colorScheme } = useTheme();
@@ -68,145 +230,28 @@ export default function SettingsScreen() {
     }
   };
 
-  const themeOptions: { label: string; value: ThemeOption }[] = [
-    { label: 'Light', value: 'light' },
-    { label: 'Dark', value: 'dark' },
-    { label: 'System', value: 'system' },
-  ];
+  const bgColor = isDark ? '#000000' : '#f2f2f7';
+  const mutedColor = isDark ? '#8e8e93' : '#6e6e73';
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: isDark ? '#000000' : '#f2f2f7' }]}>
-      <Text style={[styles.sectionTitle, { color: isDark ? '#8e8e93' : '#6e6e73' }]}>
-        Appearance
-      </Text>
-      <View style={[styles.optionsContainer, { backgroundColor: isDark ? '#1c1c1e' : '#ffffff' }]}>
-        {themeOptions.map((option, index) => (
-          <Pressable
-            key={option.value}
-            style={[
-              styles.option,
-              index < themeOptions.length - 1 && styles.optionBorder,
-              { borderBottomColor: isDark ? '#38383a' : '#e5e5ea' },
-            ]}
-            onPress={() => {
-              setTheme(option.value);
-              // log which appearance setting the user picked
-              logAppearanceChanged(option.value);
-            }}
-          >
-            <Text style={[styles.optionText, { color: isDark ? '#ffffff' : '#000000' }]}>
-              {option.label}
-            </Text>
-            {theme === option.value && (
-              <Text style={styles.checkmark}>✓</Text>
-            )}
-          </Pressable>
-        ))}
-      </View>
+    <ScrollView style={[styles.container, { backgroundColor: bgColor }]}>
+      <AppearanceSection
+        isDark={isDark}
+        theme={theme}
+        setTheme={(t) => { setTheme(t); logAppearanceChanged(t); }}
+      />
 
-      <Text style={[styles.sectionTitle, { color: isDark ? '#8e8e93' : '#6e6e73', marginTop: 30 }]}>
-        Account
-      </Text>
-      
-      {isLoading ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator />
-        </View>
-      ) : user ? (
-        <View>
-          <View style={[styles.optionsContainer, { backgroundColor: isDark ? '#1c1c1e' : '#ffffff' }]}>
-            <View style={styles.userInfoContainer}>
-              {user.photo && (
-                <Image 
-                  source={{ uri: user.photo }} 
-                  style={styles.profileImage}
-                />
-              )}
-              <View style={styles.userTextContainer}>
-              <Text style={[styles.userName, { color: isDark ? '#ffffff' : '#000000' }]}>
-                {user.name}
-              </Text>
-              <Text style={[styles.userEmail, { color: isDark ? '#8e8e93' : '#6e6e73' }]}>
-                {user.email}
-              </Text>
-              </View>
-            </View>
-          </View>
-          
-          {/* Calendars section */}
-          <Text style={[styles.sectionTitle, { color: isDark ? '#8e8e93' : '#6e6e73', marginTop: 30 }]}>
-            Calendars
-          </Text>
-          <View style={[styles.optionsContainer, { backgroundColor: isDark ? '#1c1c1e' : '#ffffff' }]}>
-            {isLoadingCalendars && calendars.length === 0 ? (
-              // Only block the UI with a spinner on first load when there is no
-              // cached data yet. Background refreshes are silent.
-              <View style={styles.loadingContainer}>
-                <ActivityIndicator />
-              </View>
-            ) : calendars.length === 0 ? (
-              <View style={styles.option}>
-                <Text style={[styles.optionText, { color: isDark ? '#8e8e93' : '#6e6e73' }]}>
-                  No calendars found
-                </Text>
-              </View>
-            ) : (
-              calendars.map((cal, index) => (
-                <Pressable
-                  key={cal.id}
-                  testID={`calendar-item-${cal.id}`}
-                  style={[
-                    styles.option,
-                    index < calendars.length - 1 && styles.optionBorder,
-                    { borderBottomColor: isDark ? '#38383a' : '#e5e5ea' },
-                  ]}
-                  onPress={() => handleCalendarSelect(cal.id, cal.summary)}
-                >
-                  <View style={styles.checkboxRow}>
-                    <View
-                      style={[
-                        styles.checkbox,
-                        {
-                          borderColor: isDark ? '#636366' : '#c7c7cc',
-                          backgroundColor:
-                            selectedCalendarId === cal.id
-                              ? '#912338'
-                              : 'transparent',
-                        },
-                      ]}
-                    >
-                      {selectedCalendarId === cal.id && (
-                        <Text style={styles.checkboxTick}>✓</Text>
-                      )}
-                    </View>
-                    <Text
-                      style={[
-                        styles.optionText,
-                        { color: isDark ? '#ffffff' : '#000000', marginLeft: 12 },
-                      ]}
-                    >
-                      {cal.summary}
-                    </Text>
-                  </View>
-                </Pressable>
-              ))
-            )}
-          </View>
-
-          <View style={[styles.optionsContainer, { backgroundColor: isDark ? '#1c1c1e' : '#ffffff', marginTop: 16, marginBottom: 40 }]}>
-            <Pressable
-              style={styles.option}
-              onPress={handleSignOut}
-            >
-              <Text style={[styles.optionText, { color: '#ff3b30' }]}>
-                Log Out
-              </Text>
-            </Pressable>
-          </View>
-        </View>
-      ) : (
-        <SignInGoogle />
-      )}
+      <Text style={[styles.sectionTitle, { color: mutedColor, marginTop: 30 }]}>Account</Text>
+      <AccountSection
+        isDark={isDark}
+        user={user}
+        isLoading={isLoading}
+        calendars={calendars}
+        isLoadingCalendars={isLoadingCalendars}
+        selectedCalendarId={selectedCalendarId}
+        onCalendarSelect={handleCalendarSelect}
+        onSignOut={handleSignOut}
+      />
     </ScrollView>
   );
 }

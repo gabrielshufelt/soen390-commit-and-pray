@@ -25,7 +25,9 @@ import NavigationSteps from "../../components/NavigationSteps";
 import { HIGHLIGHT_COLOR, STROKE_COLOR } from "@/styles/index.styles";
 import { DEV_OVERRIDE_LOCATION } from "../../utils/devConfig";
 import { useNextClass } from "../../hooks/useNextClass";
+import { getRouteLineStyle } from "../../constants/routeStyles";
 import NextClassModal from "../../components/NextClassModal";
+import { getBuildingCoordinate } from "../../utils/buildingCoordinates";
 import {
   logBuildingSelected,
   logDirectionsStarted,
@@ -62,17 +64,17 @@ export default function Index() {
   // navigation start).  Set it to null in devConfig.ts to use real GPS.
   const effectiveLocation: Location.LocationObject | null = DEV_OVERRIDE_LOCATION
     ? ({
-        coords: {
-          latitude: DEV_OVERRIDE_LOCATION.latitude,
-          longitude: DEV_OVERRIDE_LOCATION.longitude,
-          altitude: null,
-          accuracy: null,
-          altitudeAccuracy: null,
-          heading: null,
-          speed: null,
-        },
-        timestamp: Date.now(),
-      } as unknown as Location.LocationObject)
+      coords: {
+        latitude: DEV_OVERRIDE_LOCATION.latitude,
+        longitude: DEV_OVERRIDE_LOCATION.longitude,
+        altitude: null,
+        accuracy: null,
+        altitudeAccuracy: null,
+        heading: null,
+        speed: null,
+      },
+      timestamp: Date.now(),
+    } as unknown as Location.LocationObject)
     : location; // DO NOT CHANGE AS IT WILL CRASH IF DEV_OVERRIDE_LOCATION IS NULL
   // END DEVELOPPER CONFIG
 
@@ -127,7 +129,7 @@ export default function Index() {
     nextClass,
     status: nextClassStatus,
     isLoading: nextClassLoading,
-  } = useNextClass(effectiveLocation, fetchTrigger);
+  } = useNextClass(effectiveLocation, fetchTrigger, userBuilding?.code);
 
   /**
    * Waypoints to inject into MapViewDirections when the shuttle option is
@@ -167,6 +169,20 @@ export default function Index() {
     startDirections({ latitude: effectiveLocation.coords.latitude, longitude: effectiveLocation.coords.longitude }, destChoice.coordinate);
   };
 
+  const handleNextClassDirections = (buildingCode: string) => {
+    if (!effectiveLocation) return;
+
+    const buildingCoord = getBuildingCoordinate(buildingCode);
+    if (buildingCoord) {
+      startDirections(
+        { latitude: effectiveLocation.coords.latitude, longitude: effectiveLocation.coords.longitude },
+        buildingCoord
+      );
+    } else {
+      Alert.alert("Error", "Could not find coordinates for this building.");
+    }
+  };
+
   const handlePreviewRoute = () => {
     if (!destChoice || !startChoice || startChoice.id === "current-location") return;
 
@@ -179,14 +195,14 @@ export default function Index() {
     previewDirections(startChoice?.coordinate, destChoice?.coordinate);
   }
 
-  const handleRoutePreviewReady = (result: any) => {
+  const handleRoutePreviewReady = useCallback((result: any) => {
     setPreviewRouteInfo({
       distance: result.distance,
       duration: result.duration,
       distanceText: result.distance ? `${result.distance.toFixed(1)} km` : null,
       durationText: result.duration ? `${Math.round(result.duration)} min` : null,
     });
-  };
+  }, [setPreviewRouteInfo]);
 
   const handleShowShuttleRoute = () => {
     const loyolaStop = shuttleData.busStops.loyola.coordinate;
@@ -197,9 +213,9 @@ export default function Index() {
   };
 
 
-  const handleRegionChange = (region: Region) => {
+  const handleRegionChange = useCallback((region: Region) => {
     setShowLabels(region.latitudeDelta <= LABEL_ZOOM_THRESHOLD);
-  };
+  }, []);
 
   const handleBuildingSelect = (buildingId: string, buildingData: any) => {
     setSelectedBuilding(buildingId);
@@ -253,6 +269,30 @@ export default function Index() {
     onRouteReady,
     checkProgress,
   });
+
+  // Stable callbacks for MapViewDirections — prevents re-renders when
+  // unrelated state (e.g. showLabels) changes, which is the root cause of
+  // the route polyline disappearing on zoom-out.
+  const handleActiveRouteReady = useCallback((result: any) => {
+    handleRoutePreviewReady(result);
+    handleRouteReady(result);
+  }, [handleRoutePreviewReady, handleRouteReady]);
+
+  const handleActiveRouteError = useCallback((error: any) => {
+    console.error("[Index] MapViewDirections ERROR:", error);
+  }, []);
+
+  const handleLeg1Error = useCallback((error: any) => {
+    console.error("[Index] MapViewDirections leg1 ERROR:", error);
+  }, []);
+
+  const handleLeg2Error = useCallback((error: any) => {
+    console.error("[Index] MapViewDirections leg2 ERROR:", error);
+  }, []);
+
+  const handleLeg3Error = useCallback((error: any) => {
+    console.error("[Index] MapViewDirections leg3 ERROR:", error);
+  }, []);
 
   React.useEffect(() => {
     if (!startChoice && effectiveLocation) {
@@ -356,6 +396,128 @@ export default function Index() {
     return [...toChoices(sgwBuildingsData.features, "SGW"), ...toChoices(loyolaBuildingsData.features, "Loyola")];
   }, []);
 
+  // Memoised route overlays — isolated from showLabels / buildingPolygons
+  // re-renders so the native Polyline is never torn down during a zoom change.
+  const activeRouteElement = useMemo(() => {
+    if (!directionsState.isActive || !directionsState.origin || !directionsState.destination) {
+      return null;
+    }
+    if (useShuttle && shuttleWaypoints) {
+      return (
+        <React.Fragment>
+          {/* Leg 1: origin → shuttle departure stop */}
+          <MapViewDirections
+            key={`active-leg1-${directionsState.origin.latitude}-${shuttleWaypoints[0].latitude}-${useShuttle}-${directionsState.transportMode}`}
+            origin={directionsState.origin}
+            destination={shuttleWaypoints[0]}
+            apikey={apiKey}
+            mode={directionsState.transportMode}
+            {...getRouteLineStyle(directionsState.transportMode)}
+            onReady={handleRouteReady}
+            onError={handleLeg1Error}
+          />
+          {/* Leg 2: shuttle departure stop → arrival stop (shuttle bus) */}
+          <MapViewDirections
+            key={`active-leg2-${shuttleWaypoints[0].latitude}-${shuttleWaypoints[1].latitude}-${useShuttle}-${directionsState.transportMode}`}
+            origin={shuttleWaypoints[0]}
+            destination={shuttleWaypoints[1]}
+            apikey={apiKey}
+            mode="DRIVING"
+            {...getRouteLineStyle('SHUTTLE')}
+            onError={handleLeg2Error}
+          />
+          {/* Leg 3: shuttle arrival stop → destination */}
+          <MapViewDirections
+            key={`active-leg3-${shuttleWaypoints[1].latitude}-${directionsState.destination.latitude}-${useShuttle}-${directionsState.transportMode}`}
+            origin={shuttleWaypoints[1]}
+            destination={directionsState.destination}
+            apikey={apiKey}
+            mode={directionsState.transportMode}
+            {...getRouteLineStyle(directionsState.transportMode)}
+            onError={handleLeg3Error}
+          />
+        </React.Fragment>
+      );
+    }
+    return (
+      <MapViewDirections
+        key={`${campusKey}-${directionsState.origin?.latitude ?? "x"}-${directionsState.destination?.latitude ?? "y"}-${effectiveMode}`}
+        origin={directionsState.origin}
+        destination={directionsState.destination}
+        apikey={apiKey}
+        mode={effectiveMode}
+        {...getRouteLineStyle(effectiveMode)}
+        onReady={handleActiveRouteReady}
+        onError={handleActiveRouteError}
+      />
+    );
+  }, [
+    directionsState.isActive, directionsState.origin, directionsState.destination,
+    directionsState.transportMode, useShuttle, shuttleWaypoints, campusKey,
+    apiKey, effectiveMode, handleRouteReady, handleActiveRouteReady,
+    handleActiveRouteError, handleLeg1Error, handleLeg2Error, handleLeg3Error,
+  ]);
+
+  const previewRouteElement = useMemo(() => {
+    if (directionsState.isActive || !destChoice) return null;
+    if (!startChoice && !effectiveLocation) return null;
+
+    if (useShuttle && shuttleWaypoints) {
+      const origin = startChoice?.coordinate || { latitude: effectiveLocation!.coords.latitude, longitude: effectiveLocation!.coords.longitude };
+      return (
+        <React.Fragment>
+          {/* Leg 1: origin → shuttle departure stop */}
+          <MapViewDirections
+            key={`preview-leg1-${(startChoice?.coordinate.latitude || effectiveLocation?.coords.latitude) ?? "x"}-${shuttleWaypoints[0].latitude}-${useShuttle}-${directionsState.transportMode}`}
+            origin={origin}
+            destination={shuttleWaypoints[0]}
+            apikey={apiKey}
+            mode={directionsState.transportMode}
+            {...getRouteLineStyle(directionsState.transportMode)}
+            onReady={handleRoutePreviewReady}
+          />
+          {/* Leg 2: shuttle departure stop → arrival stop (shuttle bus) */}
+          <MapViewDirections
+            key={`preview-leg2-${shuttleWaypoints[0].latitude}-${shuttleWaypoints[1].latitude}-${useShuttle}-${directionsState.transportMode}`}
+            origin={shuttleWaypoints[0]}
+            destination={shuttleWaypoints[1]}
+            apikey={apiKey}
+            mode="DRIVING"
+            {...getRouteLineStyle('SHUTTLE')}
+            onReady={handleRoutePreviewReady}
+          />
+          {/* Leg 3: shuttle arrival stop → destination */}
+          <MapViewDirections
+            key={`preview-leg3-${shuttleWaypoints[1].latitude}-${destChoice.coordinate.latitude}-${useShuttle}-${directionsState.transportMode}`}
+            origin={shuttleWaypoints[1]}
+            destination={destChoice.coordinate}
+            apikey={apiKey}
+            mode={directionsState.transportMode}
+            {...getRouteLineStyle(directionsState.transportMode)}
+            onReady={handleRoutePreviewReady}
+          />
+        </React.Fragment>
+      );
+    }
+
+    const origin = startChoice?.coordinate || { latitude: effectiveLocation!.coords.latitude, longitude: effectiveLocation!.coords.longitude };
+    return (
+      <MapViewDirections
+        key={`preview-${(startChoice?.coordinate.latitude || effectiveLocation?.coords.latitude) ?? "x"}-${destChoice.coordinate.latitude}-${effectiveMode}`}
+        origin={origin}
+        destination={destChoice.coordinate}
+        apikey={apiKey}
+        mode={effectiveMode}
+        {...getRouteLineStyle(effectiveMode)}
+        onReady={handleRoutePreviewReady}
+      />
+    );
+  }, [
+    directionsState.isActive, directionsState.transportMode, destChoice,
+    startChoice, effectiveLocation, useShuttle, shuttleWaypoints,
+    apiKey, effectiveMode, handleRoutePreviewReady,
+  ]);
+
   return (
     <View style={styles.container}>
       <MapView
@@ -398,112 +560,8 @@ export default function Index() {
           </View>
         </Marker>
 
-        {directionsState.isActive && directionsState.origin && directionsState.destination && (
-          useShuttle && shuttleWaypoints ? (
-            <React.Fragment>
-              {/* Leg 1: origin → shuttle departure stop */}
-              <MapViewDirections
-                key={`active-leg1-${directionsState.origin.latitude}-${shuttleWaypoints[0].latitude}-${useShuttle}`}
-                origin={directionsState.origin}
-                destination={shuttleWaypoints[0]}
-                apikey={apiKey}
-                mode={directionsState.transportMode}
-                strokeWidth={5}
-                strokeColor={STROKE_COLOR}
-                onReady={handleRouteReady}
-                onError={(error) => console.error("[Index] MapViewDirections leg1 ERROR:", error)}
-              />
-              {/* Leg 2: shuttle departure stop → arrival stop (red = shuttle bus) */}
-              <MapViewDirections
-                key={`active-leg2-${shuttleWaypoints[0].latitude}-${shuttleWaypoints[1].latitude}-${useShuttle}`}
-                origin={shuttleWaypoints[0]}
-                destination={shuttleWaypoints[1]}
-                apikey={apiKey}
-                mode="DRIVING"
-                strokeWidth={5}
-                strokeColor="#D32F2F"
-                onError={(error) => console.error("[Index] MapViewDirections leg2 ERROR:", error)}
-              />
-              {/* Leg 3: shuttle arrival stop → destination */}
-              <MapViewDirections
-                key={`active-leg3-${shuttleWaypoints[1].latitude}-${directionsState.destination.latitude}-${useShuttle}`}
-                origin={shuttleWaypoints[1]}
-                destination={directionsState.destination}
-                apikey={apiKey}
-                mode={directionsState.transportMode}
-                strokeWidth={5}
-                strokeColor={STROKE_COLOR}
-                onError={(error) => console.error("[Index] MapViewDirections leg3 ERROR:", error)}
-              />
-            </React.Fragment>
-          ) : (
-            <MapViewDirections
-              key={`${campusKey}-${directionsState.origin?.latitude ?? "x"}-${directionsState.destination?.latitude ?? "y"}-${effectiveMode}`}
-              origin={directionsState.origin}
-              destination={directionsState.destination}
-              apikey={apiKey}
-              mode={effectiveMode}
-              strokeWidth={5}
-              strokeColor={STROKE_COLOR}
-              onReady={(result) => {
-                handleRoutePreviewReady(result);
-                handleRouteReady(result);
-              }}
-              onError={(error) => console.error("[Index] MapViewDirections ERROR:", error)}
-            />
-          )
-        )}
-
-        {!directionsState.isActive && destChoice && (startChoice || (effectiveLocation && !startChoice)) && (
-          useShuttle && shuttleWaypoints ? (
-            <React.Fragment>
-              {/* Leg 1: origin → shuttle departure stop */}
-              <MapViewDirections
-                key={`preview-leg1-${(startChoice?.coordinate.latitude || effectiveLocation?.coords.latitude) ?? "x"}-${shuttleWaypoints[0].latitude}-${useShuttle}`}
-                origin={startChoice?.coordinate || { latitude: effectiveLocation!.coords.latitude, longitude: effectiveLocation!.coords.longitude }}
-                destination={shuttleWaypoints[0]}
-                apikey={apiKey}
-                mode={directionsState.transportMode}
-                strokeWidth={5}
-                strokeColor={STROKE_COLOR}
-                onReady={handleRoutePreviewReady}
-              />
-              {/* Leg 2: shuttle departure stop → arrival stop (red = shuttle bus) */}
-              <MapViewDirections
-                key={`preview-leg2-${shuttleWaypoints[0].latitude}-${shuttleWaypoints[1].latitude}-${useShuttle}`}
-                origin={shuttleWaypoints[0]}
-                destination={shuttleWaypoints[1]}
-                apikey={apiKey}
-                mode="DRIVING"
-                strokeWidth={5}
-                strokeColor="#D32F2F"
-                onReady={handleRoutePreviewReady}
-              />
-              {/* Leg 3: shuttle arrival stop → destination */}
-              <MapViewDirections
-                key={`preview-leg3-${shuttleWaypoints[1].latitude}-${destChoice.coordinate.latitude}-${useShuttle}`}
-                origin={shuttleWaypoints[1]}
-                destination={destChoice.coordinate}
-                apikey={apiKey}
-                mode={directionsState.transportMode}
-                strokeWidth={5}
-                strokeColor={STROKE_COLOR}
-                onReady={handleRoutePreviewReady}
-              />
-            </React.Fragment>
-          ) : (
-            <MapViewDirections
-              key={`preview-${(startChoice?.coordinate.latitude || effectiveLocation?.coords.latitude) ?? "x"}-${destChoice.coordinate.latitude}-${effectiveMode}`}
-              origin={startChoice?.coordinate || { latitude: effectiveLocation!.coords.latitude, longitude: effectiveLocation!.coords.longitude }}
-              destination={destChoice.coordinate}
-              apikey={apiKey}
-              mode={effectiveMode}
-              strokeWidth={5}
-              strokeColor={STROKE_COLOR}
-              onReady={handleRoutePreviewReady}
-            />
-          )
-        )}
+        {activeRouteElement}
+        {previewRouteElement}
       </MapView>
 
       {!directionsState.isActive && (
@@ -541,6 +599,7 @@ export default function Index() {
           nextClass={nextClass}
           status={nextClassStatus}
           isLoading={nextClassLoading}
+          onGetDirections={handleNextClassDirections}
         />
       )}
 
@@ -587,7 +646,9 @@ export default function Index() {
         onDirectionsFrom={handleDirectionsFrom}
         onDirectionsTo={handleDirectionsTo}
         onGetDirections={(building) => {
-          startDirectionsToBuilding(building);
+          if (location) {
+            startDirectionsToBuilding(location, building.geometry.coordinates[0]);
+          }
           handleCloseModal();
         }}
       />

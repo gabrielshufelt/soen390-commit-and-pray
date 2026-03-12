@@ -111,3 +111,119 @@ body {
 .ios-toggle:checked ~ .toggle-dot {
   transform: translateX(20px);
 }
+
+/* Floor View Layout */
+.floor-view-layout {
+  position: relative;
+  display: flex;
+  height: 100vh;
+  width: 100%;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.floor-map-stage {
+  position: relative;
+  display: flex;
+  height: 100%;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.floor-map-card {
+  position: relative;
+  display: flex;
+  aspect-ratio: 3 / 4;
+  width: 100%;
+  max-width: 28rem;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  gap: 0.5rem;
+  border-radius: 0.5rem;
+  border: 1px solid rgb(226 232 240);
+  background-color: rgb(255 255 255);
+  padding: 1rem;
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+}
+
+.dark .floor-map-card {
+  border-color: rgb(51 65 85);
+  background-color: rgb(30 41 59);
+}
+
+.map-floating-controls {
+  position: absolute;
+  right: 1rem;
+  bottom: 9rem;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.map-action-btn {
+  display: flex;
+  height: 3rem;
+  width: 3rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.5rem;
+  border: 1px solid rgb(226 232 240);
+  background-color: rgb(255 255 255);
+  color: rgb(51 65 85);
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+}
+
+.dark .map-action-btn {
+  border-color: rgb(51 65 85);
+  background-color: rgb(30 41 59);
+  color: rgb(226 232 240);
+}
+
+.map-action-btn-primary {
+  color: #800000;
+}
+/* Campus Selector */
+.campus-selector {
+  display: flex;
+  height: 2.75rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.75rem;
+  background-color: rgba(255, 255, 255, 0.9);
+  padding: 0.25rem;
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+}
+
+.dark .campus-selector {
+  background-color: rgba(42, 42, 42, 0.9);
+}
+
+.campus-selector label {
+  display: flex;
+  cursor: pointer;
+  height: 100%;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border-radius: 0.5rem;
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+  color: #5e8d89;
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1;
+  transition: all 150ms ease;
+}
+
+.campus-selector label:has(input:checked) {
+  background-color: #800000;
+  color: white;
+}
+
+.campus-selector input {
+  display: none;
+}

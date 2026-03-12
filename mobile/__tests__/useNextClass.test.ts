@@ -347,4 +347,27 @@ describe('useNextClass', () => {
     const { result } = renderHook(() => useNextClass(null, 0));
     expect(result.current.isLoading).toBe(true);
   });
+
+  it('sets walkingMinutes to 0 immediately if user is already in the building', async () => {
+    (fetchEvents as jest.Mock).mockResolvedValueOnce([futureEvent]);
+
+    const { result } = renderHook(() => useNextClass(mockUserLocation, 0, 'CJ'));
+
+    await waitFor(() => expect(result.current.status).toBe('found'));
+    
+    expect(result.current.nextClass!.walkingMinutes).toBe(0);
+    expect(mockFetch).not.toHaveBeenCalled(); 
+  });
+
+  it('returns null for walkingMinutes if the Google API fetch throws an error', async () => {
+    (fetchEvents as jest.Mock).mockResolvedValueOnce([futureEvent]);
+    
+    mockFetch.mockRejectedValueOnce(new Error('Network Error'));
+
+    const { result } = renderHook(() => useNextClass(mockUserLocation, 0));
+
+    await waitFor(() => expect(result.current.status).toBe('found'));
+    
+    expect(result.current.nextClass!.walkingMinutes).toBeNull();
+  });
 });

@@ -1,7 +1,52 @@
-appId: com.anonymous.mobile
+appId: com.commitandpray.soen390project
 ---
-
+# 1) Inside Concordia Building:
+- launchApp
 - setLocation:
-    latitude: -73.6104
-    longitude: 45.4972
-- assertVisible: '.*Loyola.*'
+    latitude: 45.49726
+    longitude: -73.57888
+- tapOn: "Search buildings, rooms..."
+- tapOn: "Route"
+- assertVisible: "Henry F. Hall Building (H)"
+
+# 2) Outside Campus:
+- launchApp
+- setLocation:
+    latitude: 0
+    longitude: 0
+- tapOn: "Search buildings, rooms..."
+- tapOn: "Route"
+- assertVisible: "My Current Location"
+
+# 3) Manual Override:
+- launchApp
+- setLocation:
+    latitude: 45.49726
+    longitude: -73.57888
+- tapOn: "Search buildings, rooms..."
+- tapOn: "Route"
+- tapOn:
+    id: "route.start.input"
+- doubleTapOn:
+    id: floating_toolbar_menu_item_text
+    index: 4
+    delay: 100
+- eraseText: 1
+- inputText: "Joh"
+- tapOn: "John Molson School of Business (MB)"
+- assertVisible: "John Molson School of Business (MB)"
+
+# 4) Validation:
+- launchApp
+- setLocation:
+    latitude: 45.49726
+    longitude: -73.57888
+- tapOn: "Search buildings, rooms..."
+- tapOn: "Route"
+- tapOn: "Where to?"
+- inputText: "Hen"
+- tapOn:
+    text: Henry F. Hall Building (H)
+    index: -1
+- tapOn: "Preview Route"
+- assertVisible: "Start and destination cannot be the same building."

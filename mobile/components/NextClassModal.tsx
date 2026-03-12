@@ -18,6 +18,7 @@ interface NextClassModalProps {
   nextClass: ParsedNextClass | null;
   status: NextClassStatus;
   isLoading: boolean;
+  onGetDirections: (buildingCode: string) => void;
 }
 
 // Helpers
@@ -50,7 +51,50 @@ function formattedTimeUntil(minutes: number): string {
 
 // End of helpers
 
-export default function NextClassModal({ nextClass, status, isLoading }: NextClassModalProps) {
+// Renders status-based states (loading, errors, no-class, etc.).
+// Returns undefined when the main card should be rendered instead.
+function renderStatusCard(
+  status: NextClassStatus,
+  isLoading: boolean,
+  isDark: boolean,
+): React.ReactElement | null | undefined {
+  const cardStyle = [styles.card, isDark ? styles.cardDark : styles.cardLight];
+  const textStyle = isDark ? styles.textDark : styles.textMain;
+
+  if (isLoading || status === 'loading') {
+    return (
+      <View style={cardStyle}>
+        <ActivityIndicator color="#922338" style={{ marginVertical: 12 }} />
+      </View>
+    );
+  }
+  if (status === 'no_calendar') return null;
+  if (status === 'done_today') {
+    return (
+      <View style={cardStyle}>
+        <View style={styles.doneRow}>
+          <Ionicons name="checkmark-circle" size={22} color="#16a34a" />
+          <Text style={[styles.doneText, textStyle]}>School day finished. See you tomorrow!</Text>
+        </View>
+      </View>
+    );
+  }
+  if (status === 'no_class') {
+    if (NO_CLASS_BEHAVIOR === 'hide') return null;
+    return (
+      <View style={cardStyle}>
+        <View style={styles.doneRow}>
+          <Ionicons name="calendar-outline" size={22} color="#6B7280" />
+          <Text style={[styles.doneText, textStyle]}>No classes today</Text>
+        </View>
+      </View>
+    );
+  }
+  if (status === 'error') return null;
+  return undefined;
+}
+
+export default function NextClassModal({ nextClass, status, isLoading, onGetDirections }: NextClassModalProps) {
   const { colorScheme } = useTheme();
   const isDark = colorScheme === 'dark';
 
@@ -70,62 +114,37 @@ export default function NextClassModal({ nextClass, status, isLoading }: NextCla
     return () => clearInterval(id);
   }, [nextClass]);
 
-  // Loading state
-  if (isLoading || status === 'loading') {
-    return (
-      <View style={[styles.card, isDark ? styles.cardDark : styles.cardLight]}>
-        <ActivityIndicator color="#922338" style={{ marginVertical: 12 }} />
-      </View>
-    );
-  }
+  const statusCard = renderStatusCard(status, isLoading, isDark);
+  if (statusCard !== undefined) return statusCard;
+  if (!nextClass) return null;
 
-  // No calendar selected state
-  if (status === 'no_calendar') {
-    return null; // Silent. User simply hasn't picked a calendar yet
-  }
+  // logic for late warning and "already there" check
+  const isAlreadyThere = nextClass.walkingMinutes !== null && nextClass.walkingMinutes < 1;
+  const isLate = nextClass.walkingMinutes !== null && nextClass.walkingMinutes > minutesUntil && !isAlreadyThere;
+  const hasStarted = minutesUntil <= 0;
 
-  // School day finished state
-  if (status === 'done_today') {
-    return (
-      <View style={[styles.card, isDark ? styles.cardDark : styles.cardLight]}>
-        <View style={styles.doneRow}>
-          <Ionicons name="checkmark-circle" size={22} color="#16a34a" />
-          <Text style={[styles.doneText, isDark ? styles.textDark : styles.textMain]}>
-            School day finished. See you tomorrow!
-          </Text>
-        </View>
-      </View>
-    );
-  }
-
-  // No classes today state
-  if (status === 'no_class') {
-    if (NO_CLASS_BEHAVIOR === 'hide') return null;
-    return (
-      <View style={[styles.card, isDark ? styles.cardDark : styles.cardLight]}>
-        <View style={styles.doneRow}>
-          <Ionicons name="calendar-outline" size={22} color="#6B7280" />
-          <Text style={[styles.doneText, isDark ? styles.textDark : styles.textMain]}>
-            No classes today
-          </Text>
-        </View>
-      </View>
-    );
-  }
-
-  // Error state
-  if (status === 'error' || !nextClass) {
-    return null;
-  }
+  // Precompute theme-dependent styles to avoid ternaries in JSX
+  const cardStyle = [styles.card, isDark ? styles.cardDark : styles.cardLight];
+  const textStyle = isDark ? styles.textDark : styles.textMain;
+  const mutedStyle = isDark ? styles.textMutedDark : styles.textMuted;
+  const dividerStyle = isDark ? styles.dividerDark : styles.dividerLight;
+  const walkIconColor = isDark ? '#D1D5DB' : '#374151';
+  const timeIconColor = isDark ? '#9CA3AF' : '#6B7280';
 
   // Next class found
   const buildingLabel = nextClass.buildingCode || '?';
   const roomLabel = nextClass.room
     ? `${nextClass.buildingCode}-${nextClass.room}`
     : nextClass.buildingCode;
+  const countdownLabel = minutesUntil <= 0 ? 'Starting now' : `In ${formattedTimeUntil(minutesUntil)}`;
+  const walkLabel = isAlreadyThere 
+    ? " You are here" 
+    : nextClass.walkingMinutes != null
+      ? ` ${formattedTimeUntil(nextClass.walkingMinutes)} walk`
+      : ' Walk time unavailable';
 
   return (
-    <View style={[styles.card, isDark ? styles.cardDark : styles.cardLight]}>
+    <View style={cardStyle}>
 
       <View style={styles.topSection}>
 
@@ -146,34 +165,37 @@ export default function NextClassModal({ nextClass, status, isLoading }: NextCla
 
           {/* "NEXT CLASS"  ·  "In X mins" */}
           <View style={styles.headerRow}>
-            <Text style={[styles.labelText, isDark ? styles.textMutedDark : styles.textMuted]}>
-              NEXT CLASS
-            </Text>
-            <Text style={[styles.countdownText, isDark ? styles.textMutedDark : styles.textMuted]}>
-              {minutesUntil <= 0 ? 'Starting now' : `In ${formattedTimeUntil(minutesUntil)}`}
-            </Text>
+            <Text style={[styles.labelText, mutedStyle]}>NEXT CLASS</Text>
+	    <Text style={[styles.countdownText, (isLate || hasStarted) ? { color: '#ff3b30' } : mutedStyle]}>
+  	      {hasStarted ? 'STARTED' : countdownLabel}
+	    </Text>
           </View>
+	  {/* LATE WARNING */}
+          {hasStarted ? (
+	    <Text style={{ color: '#ef4444', fontSize: 10, fontWeight: '700', marginBottom: 2 }}>
+    	      ⚠️ CLASS HAS STARTED
+            </Text>
+          ) : isLate ? (
+            <Text style={{ color: '#f59e0b', fontSize: 10, fontWeight: '700', marginBottom: 2 }}>
+    	      ⚠️ YOU WILL BE LATE ({formattedTimeUntil(nextClass.walkingMinutes ?? 0)} WALK)
+            </Text>
+          ) : null}
 
           {/* Class name */}
-          <Text
-            style={[styles.className, isDark ? styles.textDark : styles.textMain]}
-            numberOfLines={1}
-          >
+          <Text style={[styles.className, textStyle]} numberOfLines={1}>
             {nextClass.title || 'Unknown Class'}
           </Text>
 
           {/* Room + time range */}
           <View style={styles.detailRow}>
-            <Text style={[styles.roomText, isDark ? styles.textMutedDark : styles.textMuted]}>
-              {roomLabel}
-            </Text>
+            <Text style={[styles.roomText, mutedStyle]}>{roomLabel}</Text>
             <Ionicons
               name="time-outline"
               size={13}
-              color={isDark ? '#9CA3AF' : '#6B7280'}
+              color={timeIconColor}
               style={{ marginLeft: 8, marginRight: 3 }}
             />
-            <Text style={[styles.timeText, isDark ? styles.textMutedDark : styles.textMuted]}>
+            <Text style={[styles.timeText, mutedStyle]}>
               {formatTime(nextClass.startTime)} – {formatTime(nextClass.endTime)}
             </Text>
           </View>
@@ -181,30 +203,26 @@ export default function NextClassModal({ nextClass, status, isLoading }: NextCla
         </View>
       </View>
 
-      <View style={[styles.divider, isDark ? styles.dividerDark : styles.dividerLight]} />
+      <View style={[styles.divider, dividerStyle]} />
 
       {/* Bottom section: walk time + button*/}
       <View style={styles.bottomSection}>
         <View style={styles.walkTimeRow}>
-          <Ionicons name="walk-outline" size={16} color={isDark ? '#D1D5DB' : '#374151'} />
-          <Text style={[styles.walkText, isDark ? styles.textDark : styles.textMain]}>
-            {nextClass.walkingMinutes != null
-              ? ` ${formattedTimeUntil(nextClass.walkingMinutes)} walk`
-              : ' Walk time unavailable'}
-          </Text>
+          <Ionicons name="walk-outline" size={16} color={walkIconColor} />
+          <Text style={[styles.walkText, textStyle]}>{walkLabel}</Text>
         </View>
 
-        {/* Get Directions: placeholder, no functionality yet */}
-        <TouchableOpacity
-          style={styles.directionsButton}
-          activeOpacity={0.8}
-          onPress={() => {
-            // TODO: implement indoor/outdoor navigation to next class
-          }}
-        >
-          <Ionicons name="navigate" size={14} color="#FFFFFF" style={{ marginRight: 5 }} />
-          <Text style={styles.directionsButtonText}>Get Directions</Text>
-        </TouchableOpacity>
+	{/*Hide button if already there, otherwise trigger navigation */}
+        {!isAlreadyThere && (
+          <TouchableOpacity
+            style={styles.directionsButton}
+            activeOpacity={0.8}
+            onPress={() => onGetDirections(nextClass.buildingCode)}
+          >
+            <Ionicons name="navigate" size={14} color="#FFFFFF" style={{ marginRight: 5 }} />
+            <Text style={styles.directionsButtonText}>Get Directions</Text>
+          </TouchableOpacity>
+        )}
       </View>
 
     </View>

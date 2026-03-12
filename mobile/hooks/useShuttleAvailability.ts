@@ -14,6 +14,7 @@
 
 import { useMemo } from 'react';
 import shuttleData from '../data/shuttleSchedule.json';
+import { DEV_OVERRIDE_TIME } from '../utils/devConfig';
 
 export type ShuttleCampus = 'SGW' | 'Loyola';
 
@@ -91,7 +92,7 @@ export function useShuttleAvailability(
   fromCampus: ShuttleCampus
 ): ShuttleAvailability {
   return useMemo(() => {
-    const now = new Date();
+    const now = DEV_OVERRIDE_TIME ?? new Date();
     const nowMinutes = now.getHours() * 60 + now.getMinutes();
 
     const departures = getDepartureTimes(fromCampus, now);
