@@ -1,0 +1,36 @@
+appId: com.commitandpray.soen390project
+---
+- launchApp
+
+
+- setLocation:
+    latitude: 45.49726
+    longitude: -73.57888
+
+# Cross-campus route setup: Loyola -> SGW
+- tapOn: "Search buildings, rooms"
+- tapOn: "Loyola Campus"
+- tapOn: "Where to?"
+- inputText: "lo"
+- tapOn: Loyola Jesuit Hall and Conference Center (RF)
+
+# Shuttle option should appear for Transit mode.
+- tapOn: "Transit"
+- assertVisible: "Use Concordia Shuttle"
+- tapOn: Use Concordia Shuttle
+- assertVisible: "Next: 12:30"
+- tapOn: Go back
+
+# Open shuttle schedule modal and validate stops + schedule content from JSON.
+- tapOn: "🚌"
+- assertVisible: 🚌 Shuttle Schedule
+- assertVisible: ⚠️ The following departure times are approximate and may vary due to unexpected circumstances, traffic and weather.
+- assertVisible: "Bus Stops"
+- assertVisible: "Loyola Chapel"
+- assertVisible: "Henry F. Hall Building"
+- assertVisible: "Loyola Departures"
+- assertVisible: "SGW Departures"
+- assertVisible: "9:15"
+
+# Show shuttle route on map.
+- tapOn: 🗺️ Show Shuttle Route on Map
