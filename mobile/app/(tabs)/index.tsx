@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useCallback } from "react";
+import React, { useMemo, useState, useCallback, useRef, useEffect } from "react";
 import { useFocusEffect } from "expo-router";
 import * as Location from "expo-location";
 import { useNavigationCamera } from "../../hooks/useNavigationCamera";
@@ -102,7 +102,8 @@ export default function Index() {
 
   // Concordia Shuttle option
   const [useShuttle, setUseShuttle] = useState(false);
-  const [shuttleCampus, setShuttleCampus] = useState<"SGW" | "Loyola">("SGW");
+  // Departure campus is always the opposite of the destination building's campus
+  const shuttleCampus: "SGW" | "Loyola" = destChoice?.campus === "Loyola" ? "SGW" : "Loyola";
 
   // fetchTrigger is incremented every time the home screen gains focus so that
   // the next class data is refreshed when the user returns from Settings after
@@ -187,6 +188,32 @@ export default function Index() {
       durationText: result.duration ? `${Math.round(result.duration)} min` : null,
     });
   }, [setPreviewRouteInfo]);
+
+  // Accumulate all 3 shuttle preview leg results before updating the time estimate.
+  const shuttlePreviewLegs = useRef<({ distance: number; duration: number } | null)[]>([null, null, null]);
+
+  useEffect(() => {
+    shuttlePreviewLegs.current = [null, null, null];
+  }, [useShuttle, shuttleWaypoints, destChoice, startChoice]);
+
+  const handlePreviewLegReady = useCallback((legIndex: 0 | 1 | 2, result: any) => {
+    shuttlePreviewLegs.current[legIndex] = { distance: result.distance ?? 0, duration: result.duration ?? 0 };
+    const all = shuttlePreviewLegs.current;
+    if (all[0] && all[1] && all[2]) {
+      const totalDist = all[0].distance + all[1].distance + all[2].distance;
+      const totalDur = all[0].duration + all[1].duration + all[2].duration;
+      setPreviewRouteInfo({
+        distance: totalDist,
+        duration: totalDur,
+        distanceText: `${totalDist.toFixed(1)} km`,
+        durationText: `${Math.round(totalDur)} min`,
+      });
+    }
+  }, [setPreviewRouteInfo]);
+
+  const handlePreviewLeg1Ready = useCallback((result: any) => handlePreviewLegReady(0, result), [handlePreviewLegReady]);
+  const handlePreviewLeg2Ready = useCallback((result: any) => handlePreviewLegReady(1, result), [handlePreviewLegReady]);
+  const handlePreviewLeg3Ready = useCallback((result: any) => handlePreviewLegReady(2, result), [handlePreviewLegReady]);
 
   const handleShowShuttleRoute = () => {
     const loyolaStop = shuttleData.busStops.loyola.coordinate;
@@ -442,7 +469,7 @@ export default function Index() {
             apikey={apiKey}
             mode={directionsState.transportMode}
             {...getRouteLineStyle(directionsState.transportMode)}
-            onReady={handleRoutePreviewReady}
+            onReady={handlePreviewLeg1Ready}
           />
           {/* Leg 2: shuttle departure stop → arrival stop (shuttle bus) */}
           <MapViewDirections
@@ -452,7 +479,7 @@ export default function Index() {
             apikey={apiKey}
             mode="DRIVING"
             {...getRouteLineStyle('SHUTTLE')}
-            onReady={handleRoutePreviewReady}
+            onReady={handlePreviewLeg2Ready}
           />
           {/* Leg 3: shuttle arrival stop → destination */}
           <MapViewDirections
@@ -462,7 +489,7 @@ export default function Index() {
             apikey={apiKey}
             mode={directionsState.transportMode}
             {...getRouteLineStyle(directionsState.transportMode)}
-            onReady={handleRoutePreviewReady}
+            onReady={handlePreviewLeg3Ready}
           />
         </React.Fragment>
       );
@@ -484,6 +511,7 @@ export default function Index() {
     directionsState.isActive, directionsState.transportMode, destChoice,
     startChoice, effectiveLocation, useShuttle, shuttleWaypoints,
     apiKey, effectiveMode, handleRoutePreviewReady,
+    handlePreviewLeg1Ready, handlePreviewLeg2Ready, handlePreviewLeg3Ready,
   ]);
 
   return (
@@ -550,7 +578,6 @@ export default function Index() {
           previewRouteInfo={previewRouteInfo}
           useShuttle={useShuttle}
           onUseShuttleChange={setUseShuttle}
-          onCampusChange={setShuttleCampus}
         />
       )}
 
