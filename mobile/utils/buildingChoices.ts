@@ -3,7 +3,7 @@ import loyolaBuildingsData from "../data/buildings/loyola.json";
 import { getInteriorPoint } from "./geometry";
 import { BuildingChoice } from "../constants/searchBar.types";
 
-const toChoices = (features: any[], campus: "SGW" | "Loyola"): BuildingChoice[] =>
+export const toChoices = (features: any[], campus: "SGW" | "Loyola"): BuildingChoice[] =>
   features.map((b: any) => ({
     id: b.id,
     name: b.properties?.name ?? b.properties?.code ?? "Unknown building",

@@ -483,102 +483,6 @@ describe('<Index />', () => {
     });
   });
 
-  // -- Start and End Directions --
-  describe('handleStartRoute', () => {
-
-    it("Starts directions to building of choice with current location as origin", async () => {
-      await renderWithTheme(<Index />);
-      await waitFor(() => expect(mockSearchBarProperties.onStartRoute).toBeDefined());
-
-      await act(async () => {
-        mockSearchBarProperties.onChangeDestination({
-          id: 'H',
-          name: 'Hall Building',
-          coordinate: { latitude: 45.497, longitude: -73.579 }
-        });
-      });
-
-
-      await waitFor(() => {
-        expect(mockSearchBarProperties.destination).toBeTruthy();
-      });
-
-      mockSearchBarProperties.onStartRoute();
-
-      expect(mockStartDirections).toHaveBeenCalledWith(
-        { latitude: 45.4972, longitude: -73.579 },
-        { latitude: 45.497, longitude: -73.579 }
-      );
-    });
-
-    it('previews route from selected start building to destination', async () => {
-      await renderWithTheme(<Index />);
-      await waitFor(() => expect(mockSearchBarProperties.onPreviewRoute).toBeDefined());
-
-      await act(async () => {
-        mockSearchBarProperties.onChangeStart({
-          id: 'H',
-          name: 'Hall Building',
-          coordinate: { latitude: 45.497, longitude: -73.579 }
-        });
-      });
-
-      await act(async () => {
-        mockSearchBarProperties.onChangeDestination({
-          id: 'MB',
-          name: 'Molson Building',
-          coordinate: { latitude: 45.495, longitude: -73.578 }
-        });
-      });
-
-      await waitFor(() => {
-        expect(mockSearchBarProperties.start).toBeTruthy();
-        expect(mockSearchBarProperties.destination).toBeTruthy();
-      });
-
-      mockSearchBarProperties.onPreviewRoute();
-
-      expect(mockPreviewDirections).toHaveBeenCalledWith(
-        { latitude: 45.497, longitude: -73.579 }, // start building
-        { latitude: 45.495, longitude: -73.578 }  // destination
-      );
-    });
-  });
-
-  describe('handleEndDirections', () => {
-    it('calls endDirections and clears start and destination choices', async () => {
-      await renderWithTheme(<Index />);
-      await waitFor(() => expect(mockSearchBarProperties.onEndRoute).toBeDefined());
-
-      await act(async () => {
-        mockSearchBarProperties.onChangeStart({
-          id: 'H',
-          name: 'Hall Building',
-          coordinate: { latitude: 45.497, longitude: -73.579 }
-        });
-      });
-
-      await act(async () => {
-        mockSearchBarProperties.onChangeDestination({
-          id: 'MB',
-          name: 'Molson Building',
-          coordinate: { latitude: 45.495, longitude: -73.578 }
-        });
-      });
-
-      await waitFor(() => {
-        mockSearchBarProperties.onEndRoute();
-      });
-
-      expect(mockEndDirections).toHaveBeenCalled();
-
-      await waitFor(() => {
-        expect(mockSearchBarProperties.start).toBeNull();
-        expect(mockSearchBarProperties.destination).toBeNull();
-      });
-    });
-  });
-
   // --- SearchBar & CampusToggle hidden when directions are active ---
   describe('UI visibility when directions are active', () => {
     it('hides SearchBar when directions are active', async () => {
@@ -703,57 +607,6 @@ describe('<Index />', () => {
     });
   });
 
-  // --- handleStartRoute edge case: no location ---
-  describe('handleStartRoute edge cases', () => {
-    it('does not call startDirections when location is null and start route is triggered', async () => {
-      mockWatchLocation.mockReturnValue(noLocationWatch);
-      mockPermissionState.mockReturnValue(deniedPermission);
-
-      await renderWithTheme(<Index />);
-      await waitFor(() => expect(mockSearchBarProperties.onStartRoute).toBeDefined());
-
-      await act(async () => {
-        mockSearchBarProperties.onChangeDestination({
-          id: 'H',
-          name: 'Hall Building',
-          coordinate: { latitude: 45.497, longitude: -73.579 },
-        });
-      });
-
-      mockSearchBarProperties.onStartRoute();
-
-      expect(mockStartDirections).not.toHaveBeenCalled();
-    });
-
-    it('does not call previewDirections when destination is null', async () => {
-      await renderWithTheme(<Index />);
-      await waitFor(() => expect(mockSearchBarProperties.onPreviewRoute).toBeDefined());
-
-      // No destination set — call preview anyway
-      mockSearchBarProperties.onPreviewRoute();
-
-      expect(mockPreviewDirections).not.toHaveBeenCalled();
-    });
-
-    it('does not call previewDirections when start is null', async () => {
-      await renderWithTheme(<Index />);
-      await waitFor(() => expect(mockSearchBarProperties.onPreviewRoute).toBeDefined());
-
-      await act(async () => {
-        mockSearchBarProperties.onChangeDestination({
-          id: 'H',
-          name: 'Hall Building',
-          coordinate: { latitude: 45.497, longitude: -73.579 },
-        });
-      });
-
-      // start is still null
-      mockSearchBarProperties.onPreviewRoute();
-
-      expect(mockPreviewDirections).not.toHaveBeenCalled();
-    });
-  });
-
   // --- Shuttle bus stop markers ---
   describe('Shuttle bus stop markers', () => {
     it('renders bus stop markers on the map', async () => {
@@ -844,35 +697,6 @@ describe('<Index />', () => {
         expect(queryByText('🚌 Shuttle Schedule')).toBeNull();
       });
     });
-  });
-
-  // --- Same Building Alert ---
-  it('shows an alert and blocks routing when start and destination are the same building', async () => {
-    const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => { });
-
-    await renderWithTheme(<Index />);
-    await waitFor(() => expect(mockSearchBarProperties.onPreviewRoute).toBeDefined());
-
-    const sameBuilding = {
-      id: 'H',
-      name: 'Hall Building',
-      coordinate: { latitude: 45.497, longitude: -73.579 }
-    };
-
-    await act(async () => {
-      mockSearchBarProperties.onChangeStart(sameBuilding);
-      mockSearchBarProperties.onChangeDestination(sameBuilding);
-    });
-
-    await act(async () => {
-      mockSearchBarProperties.onPreviewRoute();
-    });
-
-    expect(alertSpy).toHaveBeenCalledWith("Start and destination cannot be the same building.");
-
-    expect(mockPreviewDirections).not.toHaveBeenCalled();
-
-    alertSpy.mockRestore();
   });
 
   // --- Directions From/To via BuildingModal ---

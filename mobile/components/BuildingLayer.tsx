@@ -38,7 +38,6 @@ const BuildingLayer = React.memo(function BuildingLayer({
         return (
           <React.Fragment key={building.id}>
             <Polygon
-              testID={`building-${building.id}`}
               coordinates={coordinates}
               fillColor={fillColor}
               strokeColor={strokeColor}
