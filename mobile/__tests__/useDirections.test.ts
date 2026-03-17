@@ -1,5 +1,5 @@
 import { renderHook, act } from '@testing-library/react-native';
-import { useDirections, locationToCoordinates } from '../hooks/useDirections';
+import { useDirections } from '../hooks/useDirections';
 import * as Location from 'expo-location';
 
 jest.mock('expo-constants', () => ({
@@ -42,17 +42,6 @@ describe('useDirections', () => {
   const mockOrigin = { latitude: 45.4972, longitude: -73.579 };
   const mockDestination = { latitude: 45.495, longitude: -73.577 };
 
-  describe('locationToCoordinates', () => {
-    it('extracts latitude and longitude from LocationObject', () => {
-      const result = locationToCoordinates(mockLocation);
-
-      expect(result).toEqual({
-        latitude: 45.4972,
-        longitude: -73.579,
-      });
-    });
-  });
-
   describe('initial state', () => {
     it('returns initial state with no active directions', () => {
       const { result } = renderHook(() => useDirections());
@@ -77,11 +66,6 @@ describe('useDirections', () => {
       });
     });
 
-    it('returns the API key from config', () => {
-      const { result } = renderHook(() => useDirections());
-
-      expect(result.current.apiKey).toBe('test-api-key');
-    });
   });
 
   describe('startDirections', () => {
