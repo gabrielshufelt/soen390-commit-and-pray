@@ -6,6 +6,7 @@ import {
   TextInput,
   TouchableOpacity,
   FlatList,
+  ScrollView,
   Keyboard,
   TouchableWithoutFeedback,
   Modal,
@@ -135,18 +136,19 @@ export default function ExpandedSearchBar({
     if (!startFocused) setStartText(start ? displayName(start) : "");
   }, [start, startFocused]);
 
+  const sameCampus = !!(start && start.id !== "current-location" && destination && start.campus && destination.campus && start.campus === destination.campus);
+
+  useEffect(() => {
+    if (sameCampus && useShuttle) onUseShuttleChange?.(false);
+  }, [sameCampus, useShuttle, onUseShuttleChange]);
+
   const destinationQuery = destText.trim().toLowerCase();
   const startQuery = startText.trim().toLowerCase();
 
-  const campusFiltered = useMemo(
-    () => buildings.filter((b) => !b.campus || b.campus === campus),
-    [buildings, campus]
-  );
-
   const suggestions = useMemo(() => {
     if (!destFocused || !destinationQuery || routeActive) return [];
-    return campusFiltered.filter((b) => makeHaystack(b).includes(destinationQuery)).slice(0, 10);
-  }, [campusFiltered, destFocused, destinationQuery, routeActive]);
+    return buildings.filter((b) => makeHaystack(b).includes(destinationQuery)).slice(0, 10);
+  }, [buildings, destFocused, destinationQuery, routeActive]);
 
   const startSuggestions = useMemo(() => {
     if (!startFocused || !startQuery || routeActive) return [];
@@ -176,17 +178,16 @@ export default function ExpandedSearchBar({
   }
 
   const filteredHistory = useMemo(() => {
-    const base = history.filter((h) => !h.campus || h.campus === campus);
-    const hasCategories = base.some((b) => b.category);
-    if (!hasCategories || quickFilter === null) return base;
-    return base.filter((b) => b.category === quickFilter);
-  }, [history, campus, quickFilter]);
+    const hasCategories = history.some((b) => b.category);
+    if (!hasCategories || quickFilter === null) return history;
+    return history.filter((b) => b.category === quickFilter);
+  }, [history, quickFilter]);
 
   const seeAllBuildings = useMemo(() => {
-    return [...campusFiltered].sort((a, b) =>
+    return [...buildings].sort((a, b) =>
       stripCodePrefix(a.name, a.code).localeCompare(stripCodePrefix(b.name, b.code))
     );
-  }, [campusFiltered]);
+  }, [buildings]);
 
   const Separator = () => <View style={styles.sep} />;
 
@@ -213,32 +214,12 @@ export default function ExpandedSearchBar({
 
           </View>
 
-          {/* Campus segmented */}
-          <View style={styles.segmentOuter}>
-            <TouchableOpacity
-              style={[styles.segmentBtn, campus === "SGW" && styles.segmentBtnActive]}
-              onPress={() => onCampusSelect("SGW")}
-              activeOpacity={0.9}
-              accessibilityRole="button"
-              accessibilityState={{ selected: campus === "SGW" }}
-            >
-              <Text style={[styles.segmentText, campus === "SGW" && styles.segmentTextActive]}>
-                SGW Campus
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.segmentBtn, campus === "Loyola" && styles.segmentBtnActive]}
-              onPress={() => onCampusSelect("Loyola")}
-              activeOpacity={0.9}
-              accessibilityRole="button"
-              accessibilityState={{ selected: campus === "Loyola" }}
-            >
-              <Text style={[styles.segmentText, campus === "Loyola" && styles.segmentTextActive]}>
-                Loyola Campus
-              </Text>
-            </TouchableOpacity>
-          </View>
+          <ScrollView
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="on-drag"
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.scrollContent}
+          >
 
           {/* Route card */}
           <View style={styles.routeCard}>
@@ -274,24 +255,24 @@ export default function ExpandedSearchBar({
 
             {startSuggestions.length > 0 && (
               <View testID="route.start.suggestions" style={styles.suggestionsBox}>
-                <FlatList
-                  keyboardShouldPersistTaps="handled"
-                  keyboardDismissMode="on-drag"
-                  data={startSuggestions}
-                  keyExtractor={(b) => b.id}
-                  ItemSeparatorComponent={Separator}
-                  renderItem={({ item }) => (
-                    <TouchableOpacity
-                      style={styles.suggestionItem}
-                      onPress={() => pickStart(item)}
-                      activeOpacity={0.85}
-                      accessibilityRole="button"
-                    >
-                      <Text style={styles.suggestionTitle}>{displayName(item)}</Text>
-                      {!!item.address && <Text style={styles.suggestionSub}>{item.address}</Text>}
-                    </TouchableOpacity>
-                  )}
-                />
+                <ScrollView keyboardShouldPersistTaps="handled" nestedScrollEnabled>
+                  {startSuggestions.map((item, idx) => (
+                    <React.Fragment key={item.id}>
+                      {idx > 0 && <Separator />}
+                      <TouchableOpacity
+                        style={styles.suggestionItem}
+                        onPress={() => pickStart(item)}
+                        activeOpacity={0.85}
+                        accessibilityRole="button"
+                      >
+                        <Text style={styles.suggestionTitle}>{displayName(item)}</Text>
+                        <Text style={styles.suggestionSub}>
+                          {item.campus ? `${item.campus} Campus` : ""}{item.address ? (item.campus ? ` · ${item.address}` : item.address) : ""}
+                        </Text>
+                      </TouchableOpacity>
+                    </React.Fragment>
+                  ))}
+                </ScrollView>
               </View>
             )}
 
@@ -327,24 +308,24 @@ export default function ExpandedSearchBar({
 
             {suggestions.length > 0 && (
               <View testID="route.dest.suggestions" style={styles.suggestionsBox}>
-                <FlatList
-                  keyboardShouldPersistTaps="handled"
-                  keyboardDismissMode="on-drag"
-                  data={suggestions}
-                  keyExtractor={(b) => b.id}
-                  ItemSeparatorComponent={Separator}
-                  renderItem={({ item }) => (
-                    <TouchableOpacity
-                      style={styles.suggestionItem}
-                      onPress={() => pickDestination(item)}
-                      activeOpacity={0.85}
-                      accessibilityRole="button"
-                    >
-                      <Text style={styles.suggestionTitle}>{displayName(item)}</Text>
-                      {!!item.address && <Text style={styles.suggestionSub}>{item.address}</Text>}
-                    </TouchableOpacity>
-                  )}
-                />
+                <ScrollView keyboardShouldPersistTaps="handled" nestedScrollEnabled>
+                  {suggestions.map((item, idx) => (
+                    <React.Fragment key={item.id}>
+                      {idx > 0 && <Separator />}
+                      <TouchableOpacity
+                        style={styles.suggestionItem}
+                        onPress={() => pickDestination(item)}
+                        activeOpacity={0.85}
+                        accessibilityRole="button"
+                      >
+                        <Text style={styles.suggestionTitle}>{displayName(item)}</Text>
+                        <Text style={styles.suggestionSub}>
+                          {item.campus ? `${item.campus} Campus` : ""}{item.address ? (item.campus ? ` · ${item.address}` : item.address) : ""}
+                        </Text>
+                      </TouchableOpacity>
+                    </React.Fragment>
+                  ))}
+                </ScrollView>
               </View>
             )}
 
@@ -362,10 +343,16 @@ export default function ExpandedSearchBar({
             {transportMode === "TRANSIT" && (
               <ShuttleCheckbox
                 checked={useShuttle}
-                available={shuttleAvailability.available}
-                nextDeparture={shuttleAvailability.nextDeparture}
+                available={shuttleAvailability.available && !sameCampus}
+                nextDeparture={sameCampus ? null : shuttleAvailability.nextDeparture}
                 onToggle={() => onUseShuttleChange?.(!useShuttle)}
               />
+            )}
+
+            {transportMode === "TRANSIT" && sameCampus && (
+              <Text style={[styles.shuttleLabelDisabled, { marginTop: 4, marginLeft: 4, fontSize: 12 }]}>
+                Shuttle is only available between SGW and Loyola campuses.
+              </Text>
             )}
 
             {!routeActive && destination && previewRouteInfo?.durationText && (
@@ -495,14 +482,10 @@ export default function ExpandedSearchBar({
                 <Text style={styles.emptySub}>Search a building above and it will show here.</Text>
               </View>
             ) : (
-              <FlatList
-                data={filteredHistory}
-                keyExtractor={(b) => b.id}
-                keyboardDismissMode="on-drag"
-                keyboardShouldPersistTaps="handled"
-                contentContainerStyle={styles.suggestedListContent}
-                renderItem={({ item }) => (
+              <View style={styles.suggestedListContent}>
+                {filteredHistory.map((item) => (
                   <TouchableOpacity
+                    key={item.id}
                     style={styles.buildingCard}
                     activeOpacity={0.9}
                     onPress={() => pickDestination(item)}
@@ -515,7 +498,9 @@ export default function ExpandedSearchBar({
 
                       <View style={{ flex: 1 }}>
                         <Text style={styles.buildingName}>{displayName(item)}</Text>
-                        {!!item.address && <Text style={styles.buildingSub}>{item.address}</Text>}
+                        <Text style={styles.buildingSub}>
+                          {item.campus ? `${item.campus} Campus` : ""}{item.address ? (item.campus ? ` · ${item.address}` : item.address) : ""}
+                        </Text>
                       </View>
 
                       <TouchableOpacity
@@ -529,10 +514,12 @@ export default function ExpandedSearchBar({
                       </TouchableOpacity>
                     </View>
                   </TouchableOpacity>
-                )}
-              />
+                ))}
+              </View>
             )}
           </View>
+
+          </ScrollView>
 
           {/* See All modal */}
           <Modal
@@ -553,9 +540,7 @@ export default function ExpandedSearchBar({
                   <Text style={styles.headerBack}>‹</Text>
                 </TouchableOpacity>
 
-                <Text style={styles.headerTitle}>
-                  {campus === "SGW" ? "SGW Buildings" : "Loyola Buildings"}
-                </Text>
+                <Text style={styles.headerTitle}>All Buildings</Text>
 
                 <View style={styles.headerBtnRight} />
               </View>
@@ -583,7 +568,9 @@ export default function ExpandedSearchBar({
 
                       <View style={{ flex: 1 }}>
                         <Text style={styles.buildingName}>{displayName(item)}</Text>
-                        {!!item.address && <Text style={styles.buildingSub}>{item.address}</Text>}
+                        <Text style={styles.buildingSub}>
+                          {item.campus ? `${item.campus} Campus` : ""}{item.address ? (item.campus ? ` · ${item.address}` : item.address) : ""}
+                        </Text>
                       </View>
 
                       <Text style={styles.rowChev}>›</Text>
