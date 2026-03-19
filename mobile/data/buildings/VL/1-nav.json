@@ -156,7 +156,17 @@
     },
     {
       "id": "VL_F1_room_38",
-      "type": "building_entry_exit",
+      "type": "building_entry",
+      "buildingId": "VL",
+      "floor": 1,
+      "x": 976,
+      "y": 1913,
+      "label": "",
+      "accessible": true
+    },
+    {
+      "id": "VL_F1_room_38_exit",
+      "type": "building_exit",
       "buildingId": "VL",
       "floor": 1,
       "x": 976,

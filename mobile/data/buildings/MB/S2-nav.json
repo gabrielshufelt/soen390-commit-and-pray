@@ -1256,7 +1256,17 @@
     },
     {
       "id": "MB_F-2_doorway_49",
-      "type": "building_entry_exit",
+      "type": "building_entry",
+      "buildingId": "MB",
+      "floor": -2,
+      "x": 335,
+      "y": 889,
+      "label": "",
+      "accessible": true
+    },
+    {
+      "id": "MB_F-2_doorway_49_exit",
+      "type": "building_exit",
       "buildingId": "MB",
       "floor": -2,
       "x": 335,
