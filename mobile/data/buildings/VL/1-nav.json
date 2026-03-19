@@ -161,6 +161,10 @@
       "floor": 1,
       "x": 976,
       "y": 1913,
+      "coordinates": {
+        "latitude": 45.459073760236066, 
+        "longitude": -73.63892445678594
+      },
       "label": "",
       "accessible": true
     },
