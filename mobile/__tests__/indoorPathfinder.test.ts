@@ -49,7 +49,7 @@ describe('IndoorPathfinder Logic Tests', () => {
     const pathfinder = new IndoorPathfinder(stairMock);
     const path = pathfinder.findShortestPath('Start', 'End');
     
-    expect(path).toHaveLength(0);
+    expect(path).toBeNull();
   });
 });
 

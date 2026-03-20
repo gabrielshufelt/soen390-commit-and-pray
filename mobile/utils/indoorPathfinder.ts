@@ -7,6 +7,7 @@ export interface IndoorNode {
   x: number;
   y: number;
   label: string;
+  buildingId: string;
   accessible: boolean;
 }
 
@@ -30,13 +31,13 @@ export class IndoorPathfinder {
   constructor(allFloorData: FloorData[]) {
     // 1. Load all nodes
     allFloorData.forEach((floor) => {
-      if (!floor || !floor.nodes) return;
+      if (!floor?.nodes) return;
       floor.nodes.forEach((node) => this.nodes.set(node.id, node));
     });
 
-    // 2. Load edges and force bi-directionality
+    // 2. Load all JSON edges (Ensure bi-directionality)
     allFloorData.forEach((floor) => {
-      if (!floor || !floor.edges) return;
+      if (!floor?.edges) return;
       floor.edges.forEach((edge) => {
         this.addEdge(edge);
         this.addEdge({
@@ -49,26 +50,65 @@ export class IndoorPathfinder {
       });
     });
 
-    // 3. SMART BRIDGE: Connect elevators/stairs across floors by proximity
-    const nodesArray = Array.from(this.nodes.values());
-    const connectors = nodesArray.filter(n => n.type === 'elevator_door' || n.type === 'stair_landing');
+    // 3. System-wide bridges and data healing
+    this.bridgeFloorsByCoordinates();
+    this.healBrokenData();
+  }
 
-    connectors.forEach(nodeA => {
-      connectors.forEach(nodeB => {
-        // If they are in the same building, different floors, and same (x,y) location
-        if (nodeA.buildingId === nodeB.buildingId && 
-            nodeA.floor !== nodeB.floor && 
-            nodeA.x === nodeB.x && nodeA.y === nodeB.y) {
-          
-          this.addEdge({
-            source: nodeA.id,
-            target: nodeB.id,
-            type: nodeA.type === 'elevator_door' ? 'elevator' : 'stair',
-            weight: 0,
-            accessible: true
-          });
+  private bridgeFloorsByCoordinates() {
+    const nodesArray = Array.from(this.nodes.values());
+    const connectors = nodesArray.filter(
+      (n) => n.type.includes('elevator') || n.type.includes('stair')
+    );
+
+    connectors.forEach((nodeA) => {
+      connectors.forEach((nodeB) => {
+        if (nodeA.buildingId === nodeB.buildingId && nodeA.floor !== nodeB.floor) {
+          const dist = Math.sqrt(Math.pow(nodeA.x - nodeB.x, 2) + Math.pow(nodeA.y - nodeB.y, 2));
+          if (dist < 50) {
+            this.addEdge({
+              source: nodeA.id,
+              target: nodeB.id,
+              type: nodeA.type.includes('elevator') ? 'elevator' : 'stair',
+              weight: 0,
+              accessible: true,
+            });
+          }
         }
       });
+    });
+  }
+
+  private healBrokenData() {
+    const allNodes = Array.from(this.nodes.values());
+    const rooms = allNodes.filter(n => n.type === 'room');
+    const waypoints = allNodes.filter(n => n.type.includes('waypoint') || n.type.includes('doorway'));
+
+    rooms.forEach(room => {
+      let closest = null;
+      let minEntryDist = 200;
+
+      waypoints.forEach(wp => {
+        if (room.buildingId === wp.buildingId && room.floor === wp.floor) {
+          const d = Math.sqrt(Math.pow(room.x - wp.x, 2) + Math.pow(room.y - wp.y, 2));
+          if (d < minEntryDist) {
+            minEntryDist = d;
+            closest = wp;
+          }
+        }
+      });
+
+      if (closest) {
+        const edge = {
+          source: room.id,
+          target: (closest as any).id,
+          type: 'auto_connect',
+          weight: minEntryDist,
+          accessible: true
+        };
+        this.addEdge(edge);
+        this.addEdge({ ...edge, source: edge.target, target: edge.source });
+      }
     });
   }
 
@@ -80,27 +120,22 @@ export class IndoorPathfinder {
   }
 
   private getEdgeWeight(edge: IndoorEdge): number {
-    if (edge.type === 'stair' || !edge.accessible) {
-      return Infinity;
-    }
-    if (edge.type === 'elevator') {
-      return 0;
-    }
-    return edge.weight;
+    if (edge.type === 'stair' || !edge.accessible) return Infinity;
+    return edge.type === 'elevator' ? 0 : edge.weight;
   }
 
-  public findShortestPath(startRoomLabel: string, endRoomLabel: string): IndoorNode[] | null {
-    const startTarget = startRoomLabel.trim();
-    const endTarget = endRoomLabel.trim();
+  public findShortestPath(startLabel: string, endLabel: string): IndoorNode[] | null {
+    const nodes = Array.from(this.nodes.values());
 
-    const startNode = Array.from(this.nodes.values()).find(
-      (n) => n.label.trim() === startTarget && n.type === 'room'
-    );
-    const endNode = Array.from(this.nodes.values()).find(
-      (n) => n.label.trim() === endTarget && n.type === 'room'
-    );
+    const startNode = nodes.find(n => n.label.trim() === startLabel.trim() && n.type === 'room');
+    if (!startNode) return null;
 
-    if (!startNode || !endNode) return null;
+    const endNode = nodes.find(n => 
+      n.label.trim() === endLabel.trim() && 
+      n.type === 'room' && 
+      n.buildingId === startNode.buildingId
+    );
+    if (!endNode) return null;
 
     const distances: Record<string, number> = {};
     const previous: Record<string, string | null> = {};
@@ -119,7 +154,6 @@ export class IndoorPathfinder {
       if (currentId === endNode.id) break;
 
       const neighbors = this.adjacencyList.get(currentId) || [];
-
       for (const edge of neighbors) {
         const weight = this.getEdgeWeight(edge);
         if (weight === Infinity) continue;
@@ -133,7 +167,8 @@ export class IndoorPathfinder {
       }
     }
 
-    return this.reconstructPath(previous, endNode.id);
+    const path = this.reconstructPath(previous, endNode.id);
+    return path.length > 1 ? path : null;
   }
 
   private reconstructPath(previous: Record<string, string | null>, endId: string): IndoorNode[] {
@@ -144,6 +179,6 @@ export class IndoorPathfinder {
       if (node) path.unshift(node);
       curr = previous[curr];
     }
-    return path.length > 1 ? path : [];
+    return path;
   }
 }
