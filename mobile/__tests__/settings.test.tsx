@@ -7,11 +7,23 @@ import { useAuth } from '../context/AuthContext';
 import { useCalendar } from '../context/CalendarContext';
 import { useFocusEffect } from 'expo-router';
 
-jest.mock('expo-router', () => ({
-  // No-op: settings tests cover rendering, not the on-focus calendar-refresh
-  // side effect.
-  useFocusEffect: jest.fn(),
+jest.mock('@expo/vector-icons', () => ({
+  Ionicons: 'Ionicons',
+  MaterialIcons: 'MaterialIcons',
 }));
+
+jest.mock('expo-router', () => {
+  const { View } = require('react-native');
+  return {
+    useFocusEffect: jest.fn(),
+    useRouter: jest.fn(() => ({
+      push: jest.fn(),
+    })),
+    Link: (props: any) => <View {...props} />, 
+  };
+});
+
+global.__DEV__ = true;
 
 jest.mock('../context/ThemeContext', () => ({
   useTheme: jest.fn(() => ({
