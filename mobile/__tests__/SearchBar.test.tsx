@@ -2,7 +2,8 @@ import React from "react";
 import { render, fireEvent, waitFor, act } from "@testing-library/react-native";
 
 import type { MapViewDirectionsMode } from 'react-native-maps-directions';
-import SearchBar, { BuildingChoice } from "../components/searchBar";
+import SearchBar from "../components/searchBar";
+import { BuildingChoice } from "../constants/searchBar.types";
 
 const mockShuttleAvailability = jest.fn();
 jest.mock('../hooks/useShuttleAvailability', () => ({
@@ -73,7 +74,6 @@ describe("<SearchBar />", () => {
             fireEvent.press(getByText("Search buildings, rooms..."));
         
             expect(getByText("Route")).toBeTruthy();
-            expect(getByText("SGW Campus")).toBeTruthy();
         });
 
         it("collapses when back button is pressed", () => {
@@ -89,27 +89,6 @@ describe("<SearchBar />", () => {
             expect(queryByText("Route")).toBeNull();
             expect(getByText("Search buildings, rooms...")).toBeTruthy();
             });
-        });
-    });
-
-    describe("Campus Toggle", () => {
-        it("shows SGW campus by default", () => {
-            const { getByText } = render(
-            <SearchBar {...defaultProps} defaultExpanded={true} />
-            );
-      
-        const sgwButton = getByText("SGW Campus");
-        expect(sgwButton).toBeTruthy();
-        });
-
-        it("switches to Loyola campus when toggled", () => {
-            const { getByText } = render(
-            <SearchBar {...defaultProps} defaultExpanded={true} />
-            );
-      
-            fireEvent.press(getByText("Loyola Campus"));
-      
-            expect(getByText("Loyola Campus")).toBeTruthy();
         });
     });
 
@@ -315,41 +294,6 @@ describe("<SearchBar />", () => {
             expect(getByText("Home")).toBeTruthy();
             expect(getByText("Library")).toBeTruthy();
             expect(getByText("Favorites")).toBeTruthy();
-        });
-    });
-
-    describe("Campus change", () => {
-        it("calls onCampusChange when switching to Loyola", () => {
-            const onCampusChange = jest.fn();
-            const { getByText } = render(
-                <SearchBar {...defaultProps} defaultExpanded={true} onCampusChange={onCampusChange} />
-            );
-            fireEvent.press(getByText("Loyola Campus"));
-            expect(onCampusChange).toHaveBeenCalledWith("Loyola");
-        });
-
-        it("calls onCampusChange when switching back to SGW", () => {
-            const onCampusChange = jest.fn();
-            const { getByText } = render(
-                <SearchBar {...defaultProps} defaultExpanded={true} onCampusChange={onCampusChange} />
-            );
-            fireEvent.press(getByText("Loyola Campus"));
-            fireEvent.press(getByText("SGW Campus"));
-            expect(onCampusChange).toHaveBeenLastCalledWith("SGW");
-        });
-
-        it("resets shuttle when campus changes while shuttle is active", () => {
-            const onUseShuttleChange = jest.fn();
-            const { getByText } = render(
-                <SearchBar
-                    {...defaultProps}
-                    defaultExpanded={true}
-                    useShuttle={true}
-                    onUseShuttleChange={onUseShuttleChange}
-                />
-            );
-            fireEvent.press(getByText("Loyola Campus"));
-            expect(onUseShuttleChange).toHaveBeenCalledWith(false);
         });
     });
 
@@ -681,4 +625,106 @@ describe("<SearchBar />", () => {
         });
     });
 
+    describe("Same-campus shuttle disabling", () => {
+        it("disables shuttle checkbox when start and destination are on the same campus", () => {
+            mockShuttleAvailability.mockReturnValue(shuttleAvailableResult);
+            const start: BuildingChoice = mockBuildings[0]; // SGW
+            const destination: BuildingChoice = mockBuildings[1]; // SGW
+            const { getByTestId } = render(
+                <SearchBar
+                    {...defaultProps}
+                    transportMode="TRANSIT"
+                    start={start}
+                    destination={destination}
+                    defaultExpanded={true}
+                />
+            );
+            expect(getByTestId("shuttle.checkbox").props.accessibilityState.disabled).toBe(true);
+        });
+
+        it("shows 'No service' when start and destination are on the same campus", () => {
+            mockShuttleAvailability.mockReturnValue(shuttleAvailableResult);
+            const start: BuildingChoice = mockBuildings[0]; // SGW
+            const destination: BuildingChoice = mockBuildings[1]; // SGW
+            const { getByText } = render(
+                <SearchBar
+                    {...defaultProps}
+                    transportMode="TRANSIT"
+                    start={start}
+                    destination={destination}
+                    defaultExpanded={true}
+                />
+            );
+            expect(getByText("No service")).toBeTruthy();
+        });
+
+        it("shows explanatory message when same-campus buildings are selected", () => {
+            mockShuttleAvailability.mockReturnValue(shuttleAvailableResult);
+            const start: BuildingChoice = mockBuildings[0]; // SGW
+            const destination: BuildingChoice = mockBuildings[1]; // SGW
+            const { getByText } = render(
+                <SearchBar
+                    {...defaultProps}
+                    transportMode="TRANSIT"
+                    start={start}
+                    destination={destination}
+                    defaultExpanded={true}
+                />
+            );
+            expect(getByText("Shuttle is only available between SGW and Loyola campuses.")).toBeTruthy();
+        });
+
+        it("does NOT show same-campus message when buildings are on different campuses", () => {
+            mockShuttleAvailability.mockReturnValue(shuttleAvailableResult);
+            const start: BuildingChoice = mockBuildings[0]; // SGW
+            const destination: BuildingChoice = mockBuildings[2]; // Loyola
+            const { queryByText } = render(
+                <SearchBar
+                    {...defaultProps}
+                    transportMode="TRANSIT"
+                    start={start}
+                    destination={destination}
+                    defaultExpanded={true}
+                />
+            );
+            expect(queryByText("Shuttle is only available between SGW and Loyola campuses.")).toBeNull();
+        });
+
+        it("enables shuttle when start and destination are on different campuses", () => {
+            mockShuttleAvailability.mockReturnValue(shuttleAvailableResult);
+            const start: BuildingChoice = mockBuildings[0]; // SGW
+            const destination: BuildingChoice = mockBuildings[2]; // Loyola
+            const { getByTestId } = render(
+                <SearchBar
+                    {...defaultProps}
+                    transportMode="TRANSIT"
+                    start={start}
+                    destination={destination}
+                    defaultExpanded={true}
+                />
+            );
+            expect(getByTestId("shuttle.checkbox").props.accessibilityState.disabled).toBe(false);
+        });
+
+        it("calls onUseShuttleChange(false) when same-campus buildings are selected while shuttle is active", async () => {
+            mockShuttleAvailability.mockReturnValue(shuttleAvailableResult);
+            const onUseShuttleChange = jest.fn();
+            const start: BuildingChoice = mockBuildings[0]; // SGW
+            const destination: BuildingChoice = mockBuildings[1]; // SGW
+            render(
+                <SearchBar
+                    {...defaultProps}
+                    transportMode="TRANSIT"
+                    useShuttle={true}
+                    onUseShuttleChange={onUseShuttleChange}
+                    start={start}
+                    destination={destination}
+                    defaultExpanded={true}
+                />
+            );
+            await waitFor(() => {
+                expect(onUseShuttleChange).toHaveBeenCalledWith(false);
+            });
+        });
+    });
 });
