@@ -28,9 +28,11 @@ import { useNextClass } from "../../hooks/useNextClass";
 import { getRouteLineStyle } from "../../constants/routeStyles";
 import NextClassModal from "../../components/NextClassModal";
 import { getBuildingCoordinate } from "../../utils/buildingCoordinates";
+import IndoorMapModal from "../../components/indoorMapModal";
 
 const LABEL_ZOOM_THRESHOLD = 0.015;
 const ANCHOR_OFFSET = { x: 0.5, y: 0.5 };
+const SUPPORTED_INDOOR_BUILDINGS = new Set(["H", "MB", "VL", "CC"]);
 
 export default function Index() {
   const { colorScheme } = useTheme();
@@ -99,6 +101,8 @@ export default function Index() {
   const [startChoice, setStartChoice] = useState<BuildingChoice | null>(null);
   const [destChoice, setDestChoice] = useState<BuildingChoice | null>(null);
   const [showShuttleModal, setShowShuttleModal] = useState(false);
+  const [showIndoorMapModal, setShowIndoorMapModal] = useState(false);
+  const [indoorBuildingCode, setIndoorBuildingCode] = useState<string | null>(null);
 
   // Concordia Shuttle option
   const [useShuttle, setUseShuttle] = useState(false);
@@ -221,6 +225,16 @@ export default function Index() {
 
     startDirections(loyolaStop, sgwStop);
   };
+  const handleOpenIndoorMap = (building: BuildingChoice) => {
+      const extractedCode = building.code ?? building.name.match(/\(([A-Za-z0-9]+)\)\s*$/)?.[1];
+      const normalizedCode = extractedCode?.toUpperCase();
+      if (!normalizedCode) return;
+
+      if (!SUPPORTED_INDOOR_BUILDINGS.has(normalizedCode)) return;
+
+      setIndoorBuildingCode(normalizedCode);
+      setShowIndoorMapModal(true);
+    };
 
 
   const handleRegionChange = useCallback((region: Region) => {
@@ -578,8 +592,15 @@ export default function Index() {
           previewRouteInfo={previewRouteInfo}
           useShuttle={useShuttle}
           onUseShuttleChange={setUseShuttle}
+          onOpenBuilding={handleOpenIndoorMap}
         />
       )}
+
+        <IndoorMapModal
+          visible={showIndoorMapModal}
+          initialBuildingCode={indoorBuildingCode}
+          onClose={() => setShowIndoorMapModal(false)}
+         />
 
       {!directionsState.isActive && (
         <NextClassModal
