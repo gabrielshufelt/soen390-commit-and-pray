@@ -641,10 +641,8 @@
       "floor": 1,
       "x": 692,
       "y": 1808,
-      "coordinates": {
-        "latitude": 45.4955008664397, 
-        "longitude": -73.57915690500853
-      },
+      "latitude": 45.4955008664397, 
+      "longitude": -73.57915690500853,
       "label": "",
       "accessible": true
     },
@@ -905,10 +903,8 @@
       "floor": 1,
       "x": 501,
       "y": 209,
-      "coordinates": {
-        "latitude": 45.495217933169, 
-        "longitude": -73.57857958459395
-      },
+      "latitude": 45.495217933169, 
+      "longitude": -73.57857958459395,
       "label": "",
       "accessible": true
     },
