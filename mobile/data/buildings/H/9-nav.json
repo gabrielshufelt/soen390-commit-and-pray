@@ -1,4 +1,8 @@
 {
+  "meta": {
+    "buildingId": "H",
+    "floor": 9
+  },
   "nodes": [
     {
       "id": "H_F9_room_82",
@@ -2802,6 +2806,76 @@
       "target": "H_F9_doorway_133",
       "type": "door_to_hallway",
       "weight": 20,
+      "accessible": true
+    },
+    {
+      "source": "H_F9_doorway_115",
+      "target": "H_F8_doorway_101",
+      "type": "stair",
+      "weight": 0,
+      "accessible": false
+    },
+    {
+      "source": "H_F8_doorway_100",
+      "target": "H_F9_doorway_110",
+      "type": "stair",
+      "weight": 0,
+      "accessible": false
+    },
+    {
+      "source": "H_F8_doorway_103",
+      "target": "H_F9_doorway_111",
+      "type": "stair",
+      "weight": 0,
+      "accessible": false
+    },
+    {
+      "source": "H_F8_doorway_102",
+      "target": "H_F9_doorway_114",
+      "type": "stair",
+      "weight": 0,
+      "accessible": false
+    },
+    {
+      "source": "H_F9_doorway_112",
+      "target": "H_F8_doorway_104",
+      "type": "stair",
+      "weight": 0,
+      "accessible": false
+    },
+    {
+      "source": "H_F8_doorway_105",
+      "target": "H_F9_doorway_113",
+      "type": "stair",
+      "weight": 0,
+      "accessible": false
+    },
+    {
+      "source": "H_F8_doorway_106",
+      "target": "H_F9_doorway_116",
+      "type": "elevator",
+      "weight": 0,
+      "accessible": true
+    },
+    {
+      "source": "H_F8_doorway_107",
+      "target": "H_F9_doorway_117",
+      "type": "elevator",
+      "weight": 0,
+      "accessible": true
+    },
+    {
+      "source": "H_F8_doorway_108",
+      "target": "H_F9_doorway_119",
+      "type": "elevator",
+      "weight": 0,
+      "accessible": true
+    },
+    {
+      "source": "H_F8_doorway_109",
+      "target": "H_F9_doorway_118",
+      "type": "elevator",
+      "weight": 0,
       "accessible": true
     }
   ]
