@@ -4,480 +4,378 @@ import {
   View,
   Text,
   TouchableOpacity,
-  StyleSheet,
+  Image,
   ScrollView,
+  TextInput,
+  FlatList,
 } from "react-native";
+import type { DimensionValue } from "react-native";
 
 import {
-  getSupportedIndoorBuildings,
-  IndoorBuildingMap,
-  IndoorFloorMap,
-  IndoorPoint,
-  IndoorRoom,
-} from "../data/indoorMaps";
+  getBuildingIndoorMap,
+  getFloorLabel,
+  type IndoorNode,
+  type IndoorFloorMap,
+} from "@/utils/indoorMapData";
+import { styles } from "@/styles/indoorMapModal.styles";
 
-type Props = {
+type IndoorMapModalProps = {
   visible: boolean;
-  initialBuildingCode?: string | null;
+  initialBuildingCode: string | null;
   onClose: () => void;
 };
 
-type SelectionMode = "start" | "destination";
+const ROOM_NODE_TYPE = "room";
+const ACCESSIBILITY_ICONS = {
+  water: "💧",
+  washroom: "🚻",
+  elevator: "🛗",
+  food: "🍽️",
+};
 
-function clampPercent(value: number): number {
-  return Math.max(0, Math.min(100, value));
-}
+type AccessibilityFilter = keyof typeof ACCESSIBILITY_ICONS;
 
-function floorSort(a: IndoorFloorMap, b: IndoorFloorMap): number {
-  return a.floor - b.floor;
-}
+const getRoomNodes = (nodes: IndoorNode[]): IndoorNode[] => {
+  return nodes.filter((node) => node.type === ROOM_NODE_TYPE && !!node.label?.trim());
+};
 
-function pointToPercent(point: IndoorPoint, bounds: { minX: number; maxX: number; minY: number; maxY: number }) {
-  const width = Math.max(1, bounds.maxX - bounds.minX);
-  const height = Math.max(1, bounds.maxY - bounds.minY);
+const getNodeAccessibility = (node: IndoorNode): AccessibilityFilter | null => {
+  const type = node.type.toLowerCase();
+  const label = node.label.toLowerCase();
 
-  return {
-    left: clampPercent(((point.x - bounds.minX) / width) * 100),
-    top: clampPercent(((point.y - bounds.minY) / height) * 100),
-  };
-}
+  if (type.includes("elevator") || label.includes("elevator")) return "elevator";
+  if (type.includes("washroom") || label.includes("washroom") || label.includes("bathroom")) {
+    return "washroom";
+  }
+  if (type.includes("water") || label.includes("water") || label.includes("fountain")) {
+    return "water";
+  }
+  if (label.includes("cafe") || label.includes("food")) return "food";
 
-function asPercent(value: number): `${number}%` {
-  return `${value}%` as `${number}%`;
-}
+  return null;
+};
 
-function polygonBoxToPercent(points: IndoorPoint[], bounds: { minX: number; maxX: number; minY: number; maxY: number }) {
-  const xs = points.map((point) => point.x);
-  const ys = points.map((point) => point.y);
+const getFacilityNodes = (nodes: IndoorNode[]): IndoorNode[] => {
+  return nodes.filter((node) => node.type !== ROOM_NODE_TYPE && getNodeAccessibility(node) !== null);
+};
 
-  const minX = Math.min(...xs);
-  const maxX = Math.max(...xs);
-  const minY = Math.min(...ys);
-  const maxY = Math.max(...ys);
+const extractAccessibility = (roomLabel: string): AccessibilityFilter[] => {
+  const accessibilities: AccessibilityFilter[] = [];
+  const labelLower = roomLabel.toLowerCase();
 
-  const topLeft = pointToPercent({ x: minX, y: minY }, bounds);
-  const bottomRight = pointToPercent({ x: maxX, y: maxY }, bounds);
+  if (labelLower.includes("washroom") || labelLower.includes("bathroom")) accessibilities.push("washroom");
+  if (labelLower.includes("water")) accessibilities.push("water");
+  if (labelLower.includes("elevator")) accessibilities.push("elevator");
+  if (labelLower.includes("cafe") || labelLower.includes("food")) accessibilities.push("food");
 
-  return {
-    left: asPercent(topLeft.left),
-    top: asPercent(topLeft.top),
-    width: asPercent(Math.max(1.5, bottomRight.left - topLeft.left)),
-    height: asPercent(Math.max(1.5, bottomRight.top - topLeft.top)),
-  };
-}
+  return accessibilities;
+};
 
-export default function IndoorMapModal({ visible, initialBuildingCode, onClose }: Props) {
-  const buildings = useMemo(() => getSupportedIndoorBuildings(), []);
+const getNodeDisplayLabel = (node: IndoorNode): string => {
+  if (node.label?.trim()) return node.label;
+  const facility = getNodeAccessibility(node);
+  if (!facility) return "Unknown";
+  return facility.charAt(0).toUpperCase() + facility.slice(1);
+};
 
-  const [selectedBuildingCode, setSelectedBuildingCode] = useState<string>(buildings[0]?.buildingCode ?? "");
-  const [selectedFloor, setSelectedFloor] = useState<number>(buildings[0]?.floors?.[0]?.floor ?? 0);
-  const [selectionMode, setSelectionMode] = useState<SelectionMode>("destination");
-  const [selectedStartRoom, setSelectedStartRoom] = useState<IndoorRoom | null>(null);
-  const [selectedDestinationRoom, setSelectedDestinationRoom] = useState<IndoorRoom | null>(null);
+export default function IndoorMapModal({
+  visible,
+  initialBuildingCode,
+  onClose,
+}: IndoorMapModalProps) {
+  const indoorMap = useMemo(() => {
+    if (!initialBuildingCode) return null;
+    return getBuildingIndoorMap(initialBuildingCode);
+  }, [initialBuildingCode]);
 
-  useEffect(() => {
-    if (!visible || !initialBuildingCode) return;
-
-    const matchingBuilding = buildings.find((building) => building.buildingCode === initialBuildingCode.toUpperCase());
-    if (!matchingBuilding) return;
-
-    setSelectedBuildingCode(matchingBuilding.buildingCode);
-    setSelectedFloor(matchingBuilding.floors.sort(floorSort)[0]?.floor ?? 0);
-    setSelectedStartRoom(null);
-    setSelectedDestinationRoom(null);
-  }, [visible, initialBuildingCode, buildings]);
-
-  const selectedBuilding: IndoorBuildingMap | undefined = useMemo(
-    () => buildings.find((building) => building.buildingCode === selectedBuildingCode),
-    [buildings, selectedBuildingCode]
-  );
-
-  const floors = useMemo(() => (selectedBuilding?.floors ?? []).slice().sort(floorSort), [selectedBuilding]);
-
-  const currentFloorMap = useMemo(
-    () => floors.find((floor) => floor.floor === selectedFloor) ?? floors[0],
-    [floors, selectedFloor]
-  );
-
-  const roomLookup = useMemo(() => {
-    const map = new Map<string, IndoorRoom>();
-    currentFloorMap?.rooms.forEach((room) => map.set(room.id, room));
-    return map;
-  }, [currentFloorMap]);
+  const [floorIndex, setFloorIndex] = useState(0);
+  const [selectedRoom, setSelectedRoom] = useState<IndoorNode | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [activeFilters, setActiveFilters] = useState<AccessibilityFilter[]>([]);
+  const [viewMode, setViewMode] = useState<"map" | "search">("map");
 
   useEffect(() => {
-    if (!currentFloorMap) return;
-
-    if (selectedStartRoom && !roomLookup.has(selectedStartRoom.id)) {
-      setSelectedStartRoom(null);
-    }
-
-    if (selectedDestinationRoom && !roomLookup.has(selectedDestinationRoom.id)) {
-      setSelectedDestinationRoom(null);
-    }
-  }, [currentFloorMap, roomLookup, selectedStartRoom, selectedDestinationRoom]);
-
-  const mapBounds = useMemo(() => {
-    if (!currentFloorMap) {
-      return { minX: 0, maxX: 1, minY: 0, maxY: 1 };
-    }
-
-    const xs = currentFloorMap.hallwayPolygon.map((point) => point.x);
-    const ys = currentFloorMap.hallwayPolygon.map((point) => point.y);
-
-    return {
-      minX: Math.min(...xs),
-      maxX: Math.max(...xs),
-      minY: Math.min(...ys),
-      maxY: Math.max(...ys),
-    };
-  }, [currentFloorMap]);
-
-  function applyRoomSelection(room: IndoorRoom): void {
-    if (selectionMode === "start") {
-      setSelectedStartRoom(room);
+    if (!indoorMap) {
+      setFloorIndex(0);
       return;
     }
 
-    setSelectedDestinationRoom(room);
-  }
+    const firstFloorIndex = Math.max(
+      0,
+      indoorMap.floors.findIndex((floor) => floor.floor === 1)
+    );
+    setFloorIndex(firstFloorIndex);
+  }, [indoorMap]);
 
-  function renderRoom(room: IndoorRoom) {
-    const marker = pointToPercent(room.center, mapBounds);
-    const box = polygonBoxToPercent(room.polygon, mapBounds);
+  const currentFloor = indoorMap?.floors[floorIndex] ?? null;
 
-    const isStart = selectedStartRoom?.id === room.id;
-    const isDestination = selectedDestinationRoom?.id === room.id;
+  const rooms = useMemo(() => {
+    return currentFloor ? getRoomNodes(currentFloor.nodes) : [];
+  }, [currentFloor]);
+
+  const facilities = useMemo(() => {
+    return currentFloor ? getFacilityNodes(currentFloor.nodes) : [];
+  }, [currentFloor]);
+
+  const searchableNodes = useMemo(() => {
+    return [...rooms, ...facilities];
+  }, [rooms, facilities]);
+
+  const filteredRooms = useMemo(() => {
+    return searchableNodes.filter((node) => {
+      const nodeLabel = getNodeDisplayLabel(node).toLowerCase();
+      const matchesSearch = searchQuery === "" || nodeLabel.includes(searchQuery.toLowerCase());
+
+      if (activeFilters.length === 0) return matchesSearch;
+
+      const nodeAccessibility = getNodeAccessibility(node);
+      const roomAccessibilities = [
+        ...(nodeAccessibility ? [nodeAccessibility] : []),
+        ...extractAccessibility(node.label),
+      ];
+      const matchesFilters = activeFilters.some((filter) =>
+        roomAccessibilities.includes(filter)
+      );
+
+      return matchesSearch && matchesFilters;
+    });
+  }, [searchableNodes, searchQuery, activeFilters]);
+
+  const toggleFilter = (filter: AccessibilityFilter) => {
+    setActiveFilters((prev) =>
+      prev.includes(filter) ? prev.filter((f) => f !== filter) : [...prev, filter]
+    );
+  };
+
+  const handleRoomPress = (room: IndoorNode) => {
+    if (selectedRoom?.id === room.id) {
+      // Single click to unselect
+      setSelectedRoom(null);
+    } else {
+      // Single click to select
+      setSelectedRoom(room);
+    }
+  };
+
+  const onNextFloor = () => {
+    if (!indoorMap || indoorMap.floors.length <= 1) return;
+    setFloorIndex((prev) => (prev + 1) % indoorMap.floors.length);
+  };
+
+  const onPrevFloor = () => {
+    if (!indoorMap || indoorMap.floors.length <= 1) return;
+    setFloorIndex((prev) => (prev - 1 + indoorMap.floors.length) % indoorMap.floors.length);
+  };
+
+  const renderRoomDot = (room: IndoorNode, floor: IndoorFloorMap, isSelected: boolean) => {
+    const scaleX = floor.scaleX ?? 1;
+    const scaleY = floor.scaleY ?? 1;
+    const offsetX = floor.offsetX ?? 0;
+    const offsetY = floor.offsetY ?? 0;
+
+    const leftPct = ((room.x * scaleX + offsetX) / floor.canvasWidth) * 100;
+    const topPct = ((room.y * scaleY + offsetY) / floor.canvasHeight) * 100;
+
+    const left = `${Math.max(0, Math.min(100, leftPct))}%` as DimensionValue;
+    const top = `${Math.max(0, Math.min(100, topPct))}%` as DimensionValue;
+
+    const facility = getNodeAccessibility(room);
+    const isFacility = facility !== null && room.type !== ROOM_NODE_TYPE;
 
     return (
-      <React.Fragment key={room.id}>
-        <View style={[styles.roomPolygon, box]} />
-        <TouchableOpacity
-          testID={`indoor.room.marker.${room.id}`}
+      <TouchableOpacity
+        key={room.id}
+        style={[
+          styles.roomDotContainer,
+          { left, top },
+          isSelected && styles.roomDotContainerSelected,
+        ]}
+        onPress={() => handleRoomPress(room)}
+      >
+        <View
           style={[
-            styles.roomMarker,
-            { left: `${marker.left}%`, top: `${marker.top}%` },
-            isStart && styles.roomMarkerStart,
-            isDestination && styles.roomMarkerDestination,
+            styles.roomDot,
+            isFacility && styles.facilityDot,
+            isSelected && styles.roomDotSelected,
           ]}
-          onPress={() => applyRoomSelection(room)}
-          accessibilityRole="button"
-          accessibilityLabel={`Room ${room.label}`}
-        >
-          <Text style={styles.roomMarkerText}>{room.label}</Text>
-        </TouchableOpacity>
-      </React.Fragment>
+        />
+        <Text style={[styles.roomLabel, isSelected && styles.roomLabelSelected]}>
+          {isFacility && facility ? `${ACCESSIBILITY_ICONS[facility]} ${getNodeDisplayLabel(room)}` : room.label}
+        </Text>
+      </TouchableOpacity>
     );
-  }
+  };
+
+  const renderRoomCard = (room: IndoorNode) => {
+    const isSelected = selectedRoom?.id === room.id;
+    const facility = getNodeAccessibility(room);
+    const label = getNodeDisplayLabel(room);
+    return (
+      <TouchableOpacity
+        key={room.id}
+        style={[styles.roomCard, isSelected && styles.roomCardSelected]}
+        onPress={() => handleRoomPress(room)}
+      >
+        <Text style={[styles.roomCardCode, isSelected && styles.roomCardCodeSelected]}>
+          {facility ? `${ACCESSIBILITY_ICONS[facility]} ${label}` : label}
+        </Text>
+        <Text style={styles.roomCardMeta}>
+          {facility
+            ? `${facility.charAt(0).toUpperCase() + facility.slice(1)} facility`
+            : room.accessible
+            ? "Accessible"
+            : "Not accessible"}
+        </Text>
+      </TouchableOpacity>
+    );
+  };
 
   return (
-    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
-      <View style={styles.backdrop}>
-        <View style={styles.container}>
-          <View style={styles.header}>
-            <Text style={styles.title}>Indoor Map</Text>
-            <TouchableOpacity testID="indoor.close" style={styles.closeButton} onPress={onClose}>
-              <Text style={styles.closeText}>Close</Text>
-            </TouchableOpacity>
-          </View>
-
-          <Text style={styles.sectionTitle}>Building</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.selectorRow}>
-            {buildings.map((building) => {
-              const active = building.buildingCode === selectedBuildingCode;
-              return (
-                <TouchableOpacity
-                  key={building.buildingCode}
-                  testID={`indoor.building.${building.buildingCode}`}
-                  style={[styles.selectorChip, active && styles.selectorChipActive]}
-                  onPress={() => {
-                    setSelectedBuildingCode(building.buildingCode);
-                    setSelectedFloor(building.floors.slice().sort(floorSort)[0]?.floor ?? 0);
-                    setSelectedStartRoom(null);
-                    setSelectedDestinationRoom(null);
-                  }}
-                >
-                  <Text style={[styles.selectorChipText, active && styles.selectorChipTextActive]}>
-                    {building.buildingCode}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </ScrollView>
-
-          <Text style={styles.sectionTitle}>Floor</Text>
-          <View style={styles.flatFloorRow}>
-            {floors.map((floor) => {
-              const active = floor.floor === currentFloorMap?.floor;
-              return (
-                <TouchableOpacity
-                  key={`${selectedBuildingCode}-${floor.floor}`}
-                  testID={`indoor.floor.${floor.floorLabel}`}
-                  style={[styles.floorChip, active && styles.floorChipActive]}
-                  onPress={() => setSelectedFloor(floor.floor)}
-                >
-                  <Text style={[styles.floorChipText, active && styles.floorChipTextActive]}>
-                    {`Floor ${floor.floorLabel}`}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-
-          <Text style={styles.sectionTitle}>Rooms</Text>
-          <View style={styles.selectionModeRow}>
-            <TouchableOpacity
-              testID="indoor.mode.start"
-              style={[styles.modeButton, selectionMode === "start" && styles.modeButtonActive]}
-              onPress={() => setSelectionMode("start")}
-            >
-              <Text style={[styles.modeButtonText, selectionMode === "start" && styles.modeButtonTextActive]}>
-                Pick Start
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              testID="indoor.mode.destination"
-              style={[styles.modeButton, selectionMode === "destination" && styles.modeButtonActive]}
-              onPress={() => setSelectionMode("destination")}
-            >
-              <Text style={[styles.modeButtonText, selectionMode === "destination" && styles.modeButtonTextActive]}>
-                Pick Destination
-              </Text>
-            </TouchableOpacity>
-          </View>
-
-          <View testID="indoor.canvas" style={styles.canvas}>
-            <View testID="indoor.hallway" style={styles.hallway} />
-            {currentFloorMap?.rooms.map(renderRoom)}
-          </View>
-
-          <View style={styles.selectedSummary}>
-            <Text testID="indoor.selection.start" style={styles.selectedText}>
-              {`Start: ${selectedStartRoom?.label ?? "None"}`}
-            </Text>
-            <Text testID="indoor.selection.destination" style={styles.selectedText}>
-              {`Destination: ${selectedDestinationRoom?.label ?? "None"}`}
-            </Text>
-          </View>
-
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.roomChipRow}>
-            {(currentFloorMap?.rooms ?? []).map((room) => {
-              const isSelected = selectedStartRoom?.id === room.id || selectedDestinationRoom?.id === room.id;
-              return (
-                <TouchableOpacity
-                  key={`room-selector-${room.id}`}
-                  testID={`indoor.room.selector.${room.id}`}
-                  style={[styles.roomChip, isSelected && styles.roomChipSelected]}
-                  onPress={() => applyRoomSelection(room)}
-                >
-                  <Text style={[styles.roomChipText, isSelected && styles.roomChipTextSelected]}>{room.label}</Text>
-                </TouchableOpacity>
-              );
-            })}
-          </ScrollView>
+    <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>
+            {indoorMap ? `${indoorMap.buildingId} Indoor Map` : "Indoor Map"}
+          </Text>
+          <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+            <Text style={styles.closeButtonText}>Close</Text>
+          </TouchableOpacity>
         </View>
+
+        {!indoorMap || !currentFloor ? (
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyStateTitle}>No indoor floor map available.</Text>
+            <Text style={styles.emptyStateSubtitle}>
+              Please choose a building that has indoor map data.
+            </Text>
+          </View>
+        ) : (
+          <>
+            <View style={styles.tabBar}>
+              <TouchableOpacity
+                style={[styles.tab, viewMode === "map" && styles.tabActive]}
+                onPress={() => setViewMode("map")}
+              >
+                <Text style={[styles.tabText, viewMode === "map" && styles.tabTextActive]}>
+                  Map
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.tab, viewMode === "search" && styles.tabActive]}
+                onPress={() => setViewMode("search")}
+              >
+                <Text style={[styles.tabText, viewMode === "search" && styles.tabTextActive]}>
+                  Rooms
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            {viewMode === "map" ? (
+              <>
+                <View style={styles.floorControls}>
+                  <TouchableOpacity style={styles.floorArrowButton} onPress={onPrevFloor}>
+                    <Text style={styles.floorArrowText}>◀</Text>
+                  </TouchableOpacity>
+
+                  <View style={styles.floorInfoPill}>
+                    <Text style={styles.floorInfoText}>Floor {getFloorLabel(currentFloor.floor)}</Text>
+                  </View>
+
+                  <TouchableOpacity style={styles.floorArrowButton} onPress={onNextFloor}>
+                    <Text style={styles.floorArrowText}>▶</Text>
+                  </TouchableOpacity>
+                </View>
+
+                <View style={styles.mapCard}>
+                  <Image source={currentFloor.image} style={styles.floorImage} resizeMode="stretch" />
+                  <View style={styles.roomOverlay}>
+                    {[...rooms, ...facilities].map((room) =>
+                      renderRoomDot(room, currentFloor, selectedRoom?.id === room.id)
+                    )}
+                  </View>
+                </View>
+
+                {selectedRoom && (
+                  <View style={styles.selectedRoomCard}>
+                    <Text style={styles.selectedRoomLabel}>{selectedRoom.label}</Text>
+                    <TouchableOpacity style={styles.directionsButton}>
+                      <Text style={styles.directionsButtonText}>🧭 Get Directions</Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+              </>
+            ) : (
+              <>
+                <View style={styles.searchContainer}>
+                  <TextInput
+                    style={styles.searchInput}
+                    placeholder="Search rooms, facilities..."
+                    value={searchQuery}
+                    onChangeText={setSearchQuery}
+                    placeholderTextColor="#999"
+                  />
+                </View>
+
+                <View style={styles.filterContainer}>
+                  {(Object.keys(ACCESSIBILITY_ICONS) as AccessibilityFilter[]).map((filter) => (
+                    <TouchableOpacity
+                      key={filter}
+                      style={[
+                        styles.filterButton,
+                        activeFilters.includes(filter) && styles.filterButtonActive,
+                      ]}
+                      onPress={() => toggleFilter(filter)}
+                    >
+                      <Text style={styles.filterIcon}>{ACCESSIBILITY_ICONS[filter]}</Text>
+                      <Text
+                        style={[
+                          styles.filterLabel,
+                          activeFilters.includes(filter) && styles.filterLabelActive,
+                        ]}
+                      >
+                        {filter.charAt(0).toUpperCase() + filter.slice(1)}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+
+                <View style={styles.floorTabsContainer}>
+                  {indoorMap.floors.map((floor, index) => (
+                    <TouchableOpacity
+                      key={floor.floor}
+                      style={[
+                        styles.floorTab,
+                        floorIndex === index && styles.floorTabActive,
+                      ]}
+                      onPress={() => setFloorIndex(index)}
+                    >
+                      <Text
+                        style={[
+                          styles.floorTabText,
+                          floorIndex === index && styles.floorTabTextActive,
+                        ]}
+                      >
+                        {getFloorLabel(floor.floor)}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+
+                <FlatList
+                  data={filteredRooms}
+                  keyExtractor={(item) => item.id}
+                  renderItem={({ item }) => renderRoomCard(item)}
+                  numColumns={2}
+                  columnWrapperStyle={styles.roomGridRow}
+                  contentContainerStyle={styles.roomGridContent}
+                  scrollEnabled={true}
+                  style={styles.roomGrid}
+                />
+              </>
+            )}
+          </>
+        )}
       </View>
     </Modal>
   );
 }
-
-const styles = StyleSheet.create({
-  backdrop: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.35)",
-    justifyContent: "flex-end",
-  },
-  container: {
-    height: "88%",
-    backgroundColor: "#F8F7F5",
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    paddingHorizontal: 16,
-    paddingTop: 14,
-    paddingBottom: 18,
-  },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 10,
-  },
-  title: {
-    fontSize: 22,
-    fontWeight: "800",
-    color: "#111827",
-  },
-  closeButton: {
-    backgroundColor: "#E5E7EB",
-    borderRadius: 10,
-    paddingHorizontal: 10,
-    paddingVertical: 7,
-  },
-  closeText: {
-    color: "#111827",
-    fontWeight: "700",
-  },
-  sectionTitle: {
-    marginTop: 10,
-    marginBottom: 8,
-    fontSize: 13,
-    fontWeight: "800",
-    color: "#4B5563",
-    letterSpacing: 0.2,
-    textTransform: "uppercase",
-  },
-  selectorRow: {
-    gap: 8,
-    paddingRight: 6,
-  },
-  selectorChip: {
-    borderRadius: 10,
-    paddingVertical: 8,
-    paddingHorizontal: 14,
-    backgroundColor: "#FFFFFF",
-    borderWidth: 1,
-    borderColor: "#D1D5DB",
-  },
-  selectorChipActive: {
-    backgroundColor: "#912338",
-    borderColor: "#912338",
-  },
-  selectorChipText: {
-    fontWeight: "700",
-    color: "#1F2937",
-  },
-  selectorChipTextActive: {
-    color: "#FFFFFF",
-  },
-  flatFloorRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 8,
-  },
-  floorChip: {
-    borderRadius: 10,
-    paddingVertical: 7,
-    paddingHorizontal: 10,
-    backgroundColor: "#FFFFFF",
-    borderWidth: 1,
-    borderColor: "#D1D5DB",
-  },
-  floorChipActive: {
-    borderColor: "#912338",
-    backgroundColor: "rgba(145,35,56,0.12)",
-  },
-  floorChipText: {
-    color: "#1F2937",
-    fontWeight: "700",
-  },
-  floorChipTextActive: {
-    color: "#912338",
-  },
-  selectionModeRow: {
-    flexDirection: "row",
-    gap: 8,
-    marginBottom: 10,
-  },
-  modeButton: {
-    flex: 1,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: "#CBD5E1",
-    paddingVertical: 8,
-    alignItems: "center",
-    backgroundColor: "#FFFFFF",
-  },
-  modeButtonActive: {
-    borderColor: "#912338",
-    backgroundColor: "rgba(145,35,56,0.12)",
-  },
-  modeButtonText: {
-    fontWeight: "700",
-    color: "#334155",
-  },
-  modeButtonTextActive: {
-    color: "#912338",
-  },
-  canvas: {
-    height: 270,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: "#9CA3AF",
-    overflow: "hidden",
-    backgroundColor: "#EEF2F7",
-    position: "relative",
-  },
-  hallway: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "#FFFFFF",
-  },
-  roomPolygon: {
-    position: "absolute",
-    backgroundColor: "#9CA3AF",
-    borderColor: "#6B7280",
-    borderWidth: 1,
-    borderRadius: 2,
-  },
-  roomMarker: {
-    position: "absolute",
-    transform: [{ translateX: -18 }, { translateY: -10 }],
-    minWidth: 36,
-    minHeight: 20,
-    borderRadius: 10,
-    paddingHorizontal: 6,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#111827",
-  },
-  roomMarkerStart: {
-    backgroundColor: "#0F766E",
-  },
-  roomMarkerDestination: {
-    backgroundColor: "#912338",
-  },
-  roomMarkerText: {
-    color: "#FFFFFF",
-    fontSize: 11,
-    fontWeight: "800",
-  },
-  selectedSummary: {
-    marginTop: 10,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#D1D5DB",
-    backgroundColor: "#FFFFFF",
-    gap: 3,
-  },
-  selectedText: {
-    color: "#111827",
-    fontWeight: "700",
-    fontSize: 13,
-  },
-  roomChipRow: {
-    marginTop: 10,
-    gap: 7,
-    paddingRight: 4,
-  },
-  roomChip: {
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: "#D1D5DB",
-    backgroundColor: "#FFFFFF",
-    paddingVertical: 7,
-    paddingHorizontal: 10,
-  },
-  roomChipSelected: {
-    borderColor: "#912338",
-    backgroundColor: "rgba(145,35,56,0.12)",
-  },
-  roomChipText: {
-    color: "#1F2937",
-    fontWeight: "700",
-    fontSize: 12,
-  },
-  roomChipTextSelected: {
-    color: "#912338",
-  },
-});
