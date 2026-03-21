@@ -82,7 +82,12 @@ export class IndoorPathfinder {
   private healBrokenData() {
     const allNodes = Array.from(this.nodes.values());
     const rooms = allNodes.filter(n => n.type === 'room');
-    const waypoints = allNodes.filter(n => n.type.includes('waypoint') || n.type.includes('doorway'));
+    const waypoints = allNodes.filter(n => 
+      n.type.includes('waypoint') || 
+      n.type.includes('doorway') || 
+      n.type === 'building_entry' || 
+      n.type === 'building_exit'
+    );
 
     rooms.forEach(room => {
       let closest = null;
