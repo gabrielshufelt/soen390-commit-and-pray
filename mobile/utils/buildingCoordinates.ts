@@ -44,11 +44,12 @@ export function getBuildingEntryCoordinates(buildingCode: string): BuildingCoord
   try {
     const navData = require(`../data/buildings/${buildingCode.toUpperCase()}/1-nav.json`);
 
-    if (!navData || !navData.nodes || !Array.isArray(navData.nodes)) {
+    const nodes = navData?.nodes;
+    if (!Array.isArray(nodes)) {
       return null;
     }
 
-    const entryNode = navData.nodes.find(
+    const entryNode = nodes.find(
       (node: Record<string, unknown>) => node.type === 'building_entry'
     );
 
