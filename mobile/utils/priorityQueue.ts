@@ -1,5 +1,5 @@
 export class PriorityQueue<T> {
-  private values: { val: T; priority: number }[] = [];
+  private readonly values: { val: T; priority: number }[] = [];
 
   enqueue(val: T, priority: number) {
     this.values.push({ val, priority });
