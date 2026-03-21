@@ -10,29 +10,7 @@ import mbFloorS2Nav from "../data/buildings/MB/S2-nav.json";
 import vlFloor1Nav from "../data/buildings/VL/1-nav.json";
 import vlFloor2Nav from "../data/buildings/VL/2-nav.json";
 
-/**
- * INDOOR FLOOR MAP CALIBRATION GUIDE:
- *
- * Each floor can be calibrated to match room markers with the floor image.
- * Pass a calibration object as the 3rd argument to buildFloor():
- *
- * Example:
- *   buildFloor(mbFloor1Nav, require("path/to/image.png"), {
- *     offsetX: 50,    // shift right by 50px
- *     offsetY: -30,   // shift up by 30px
- *     scaleX: 1.05,   // stretch horizontally by 5%
- *     scaleY: 0.98,   // compress vertically by 2%
- *   })
- *
- * How to calibrate:
- * 1. Enable DEV_OVERRIDE_LOCATION in devConfig.ts for a building
- * 2. Open the Indoor button → tap the floor you're calibrating
- * 3. Check if room markers align with actual rooms on the image
- * 4. Adjust the calibration object and reload to retest
- * 5. Once perfect, the calibration persists in this file
- *
- * Canvas size: All floors use 2048x2048 coordinate space
- */
+
 
 export type IndoorNode = {
   id: string;
@@ -159,42 +137,3 @@ export const getFloorLabel = (floor: number): string => {
   return `${floor}`;
 };
 
-/**
- * Debug helper: Returns calibration status for all floors.
- * Useful for checking which floors have been calibrated.
- */
-export const getCalibrationStatus = (): Array<{
-  building: string;
-  floor: string;
-  calibrated: boolean;
-  offset: { x: number; y: number };
-  scale: { x: number; y: number };
-}> => {
-  const status: Array<{
-    building: string;
-    floor: string;
-    calibrated: boolean;
-    offset: { x: number; y: number };
-    scale: { x: number; y: number };
-  }> = [];
-
-  for (const [buildingCode, building] of Object.entries(INDOOR_BUILDING_MAPS)) {
-    for (const floorMap of building.floors) {
-      const hasOffsetOrScale =
-        (floorMap.offsetX !== 0 && floorMap.offsetX !== undefined) ||
-        (floorMap.offsetY !== 0 && floorMap.offsetY !== undefined) ||
-        (floorMap.scaleX !== 1 && floorMap.scaleX !== undefined) ||
-        (floorMap.scaleY !== 1 && floorMap.scaleY !== undefined);
-
-      status.push({
-        building: buildingCode,
-        floor: getFloorLabel(floorMap.floor),
-        calibrated: hasOffsetOrScale,
-        offset: { x: floorMap.offsetX ?? 0, y: floorMap.offsetY ?? 0 },
-        scale: { x: floorMap.scaleX ?? 1, y: floorMap.scaleY ?? 1 },
-      });
-    }
-  }
-
-  return status;
-};
