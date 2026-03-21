@@ -168,7 +168,7 @@ function AccountSection({ isDark, user, isLoading, calendars, isLoadingCalendars
   );
 }
 
-function DebugSection({ isDark }: { isDark: boolean }) {
+function DebugSection({ isDark }: Readonly<{ isDark: boolean }>) {
   if (!__DEV__) return null;
   const mutedColor = isDark ? '#8e8e93' : '#6e6e73';
   const bgColor = isDark ? '#1c1c1e' : '#ffffff';
