@@ -39,3 +39,29 @@ for (const feature of allFeatures) {
 export function getBuildingCoordinate(buildingCode: string): BuildingCoordinate | null {
   return coordinateMap[buildingCode.toUpperCase()] ?? null;
 }
+
+export function getBuildingEntryCoordinates(buildingCode: string): BuildingCoordinate | null {
+  try {
+    const navData = require(`../data/buildings/${buildingCode.toUpperCase()}/1-nav.json`);
+
+    const nodes = navData?.nodes;
+    if (!Array.isArray(nodes)) {
+      return null;
+    }
+
+    const entryNode = nodes.find(
+      (node: Record<string, unknown>) => node.type === 'building_entry'
+    );
+
+    if (!entryNode || typeof entryNode.latitude !== 'number' || typeof entryNode.longitude !== 'number') {
+      return null;
+    }
+
+    return {
+      latitude: entryNode.latitude as number,
+      longitude: entryNode.longitude as number,
+    };
+  } catch {
+    return null;
+  }
+}

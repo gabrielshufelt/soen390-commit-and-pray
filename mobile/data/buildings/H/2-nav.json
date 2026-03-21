@@ -216,7 +216,17 @@
     },
     {
       "id": "H_F2_doorway_250",
-      "type": "building_entry_exit",
+      "type": "building_entry",
+      "buildingId": "H",
+      "floor": 2,
+      "x": 240,
+      "y": 895,
+      "label": "",
+      "accessible": true
+    },
+    {
+      "id": "H_F2_doorway_250_exit",
+      "type": "building_exit",
       "buildingId": "H",
       "floor": 2,
       "x": 240,
@@ -446,7 +456,17 @@
     },
     {
       "id": "H_F2_hallway_waypoint_253",
-      "type": "building_entry_exit",
+      "type": "building_entry",
+      "buildingId": "H",
+      "floor": 2,
+      "x": 574,
+      "y": 400,
+      "label": "",
+      "accessible": true
+    },
+    {
+      "id": "H_F2_hallway_waypoint_253_exit",
+      "type": "building_exit",
       "buildingId": "H",
       "floor": 2,
       "x": 574,

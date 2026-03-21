@@ -216,7 +216,19 @@
     },
     {
       "id": "CC_F1_doorway_69",
-      "type": "building_entry_exit",
+      "type": "building_entry",
+      "buildingId": "CC",
+      "floor": 1,
+      "x": 88,
+      "y": 904,
+      "latitude": 45.45850012191065, 
+      "longitude": -73.64074316181494,
+      "label": "",
+      "accessible": true
+    },
+    {
+      "id": "CC_F1_doorway_69_exit",
+      "type": "building_exit",
       "buildingId": "CC",
       "floor": 1,
       "x": 88,
@@ -226,7 +238,19 @@
     },
     {
       "id": "CC_F1_doorway_70",
-      "type": "building_entry_exit",
+      "type": "building_entry",
+      "buildingId": "CC",
+      "floor": 1,
+      "x": 1948,
+      "y": 985,
+      "latitude": 45.45815018667116, 
+      "longitude": -73.63990818920387,
+      "label": "",
+      "accessible": true
+    },
+    {
+      "id": "CC_F1_doorway_70_exit",
+      "type": "building_exit",
       "buildingId": "CC",
       "floor": 1,
       "x": 1948,
@@ -376,7 +400,19 @@
     },
     {
       "id": "CC_F1_doorway_85",
-      "type": "building_entry_exit",
+      "type": "building_entry",
+      "buildingId": "CC",
+      "floor": 1,
+      "x": 83,
+      "y": 1072,
+      "latitude": 45.45844917381449, 
+      "longitude": -73.64078404319054,
+      "label": "",
+      "accessible": true
+    },
+    {
+      "id": "CC_F1_doorway_85_exit",
+      "type": "building_exit",
       "buildingId": "CC",
       "floor": 1,
       "x": 83,
@@ -496,7 +532,19 @@
     },
     {
       "id": "CC_F1_doorway_98",
-      "type": "building_entry_exit",
+      "type": "building_entry",
+      "buildingId": "CC",
+      "floor": 1,
+      "x": 1948,
+      "y": 1066,
+      "latitude": 45.458115149767515, 
+      "longitude": -73.63992578340687,
+      "label": "",
+      "accessible": true
+    },
+    {
+      "id": "CC_F1_doorway_98_exit",
+      "type": "building_exit",
       "buildingId": "CC",
       "floor": 1,
       "x": 1948,
