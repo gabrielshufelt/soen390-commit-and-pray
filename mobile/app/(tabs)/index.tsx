@@ -29,6 +29,7 @@ import { getRouteLineStyle } from "../../constants/routeStyles";
 import NextClassModal from "../../components/NextClassModal";
 import { getBuildingCoordinate } from "../../utils/buildingCoordinates";
 import IndoorMapModal from "../../components/indoorMapModal";
+import { getBuildingIndoorMap, getIndoorBuildingCodes } from "@/utils/indoorMapData";
 
 const LABEL_ZOOM_THRESHOLD = 0.015;
 const ANCHOR_OFFSET = { x: 0.5, y: 0.5 };
@@ -225,12 +226,42 @@ export default function Index() {
 
     startDirections(loyolaStop, sgwStop);
   };
+
+   const resolveIndoorBuildingCode = (): string | null => {
+      const candidates = [
+        indoorBuildingCode,
+        selectedBuildingData?.properties?.code,
+        destChoice?.code,
+        startChoice?.code,
+        userBuilding?.code,
+      ];
+
+      for (const candidate of candidates) {
+        const normalized = typeof candidate === "string" ? candidate.toUpperCase() : null;
+        if (normalized && getBuildingIndoorMap(normalized)) {
+          return normalized;
+        }
+      }
+
+      return getIndoorBuildingCodes()[0] ?? null;
+    };
+
+    const handleOpenIndoorQuickAccess = () => {
+      const fallbackCode = resolveIndoorBuildingCode();
+      if (!fallbackCode) {
+        Alert.alert("Indoor map unavailable", "No indoor map data is configured yet.");
+        return;
+      }
+
+      setIndoorBuildingCode(fallbackCode);
+      setShowIndoorMapModal(true);
+    };
   const handleOpenIndoorMap = (building: BuildingChoice) => {
       const extractedCode = building.code ?? building.name.match(/\(([A-Za-z0-9]+)\)\s*$/)?.[1];
       const normalizedCode = extractedCode?.toUpperCase();
       if (!normalizedCode) return;
 
-      if (!SUPPORTED_INDOOR_BUILDINGS.has(normalizedCode)) return;
+      if (!getBuildingIndoorMap(normalizedCode)) return;
 
       setIndoorBuildingCode(normalizedCode);
       setShowIndoorMapModal(true);
@@ -614,6 +645,13 @@ export default function Index() {
       {!directionsState.isActive && (
         <CampusToggle selectedCampus={campusKey} onCampusChange={setCampusKey} />
       )}
+        <TouchableOpacity
+           style={styles.indoorButton}
+           onPress={handleOpenIndoorQuickAccess}
+           activeOpacity={0.85}
+        >
+             <Text style={styles.indoorButtonText}>Indoor</Text>
+        </TouchableOpacity>
 
       <TouchableOpacity
         style={styles.shuttleButton}
@@ -690,6 +728,32 @@ const styles = StyleSheet.create({
     elevation: 5,
     zIndex: 1000,
   },
+  indoorButton: {
+      position: "absolute",
+      top: 204,
+      left: 16,
+      minWidth: 56,
+      height: 42,
+      borderRadius: 21,
+      backgroundColor: "#8B0000",
+      borderWidth: 1,
+      borderColor: "#6E0000",
+      justifyContent: "center",
+      alignItems: "center",
+      paddingHorizontal: 12,
+      shadowColor: "#000",
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.25,
+      shadowRadius: 3.84,
+      elevation: 5,
+      zIndex: 1000,
+    },
+
+    indoorButtonText: {
+      fontSize: 13,
+      fontWeight: "700",
+      color: "#FFFFFF",
+    },
 
   shuttleButtonText: {
     fontSize: 28,
