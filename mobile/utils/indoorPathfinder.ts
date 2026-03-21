@@ -25,8 +25,8 @@ export interface FloorData {
 }
 
 export class IndoorPathfinder {
-  private nodes: Map<string, IndoorNode> = new Map();
-  private adjacencyList: Map<string, IndoorEdge[]> = new Map();
+  private readonly nodes: Map<string, IndoorNode> = new Map();
+  private readonly adjacencyList: Map<string, IndoorEdge[]> = new Map();
 
   constructor(allFloorData: FloorData[]) {
     // 1. Load all nodes
