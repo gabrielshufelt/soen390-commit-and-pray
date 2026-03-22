@@ -1,9 +1,15 @@
 import { StyleSheet } from "react-native";
 
+export const CONCORDIA_RED = '#922338';
+export const WHITE = '#FFFFFF';
+export const BLACK = '#000000';
+export const MUTED = "#6B7280";
+export const MUTED_LIGHT = "#9CA3AF";
+
 export const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#F6F8FB",
+    backgroundColor: WHITE,
     paddingHorizontal: 0,
     paddingTop: 0,
   },
@@ -14,23 +20,23 @@ export const styles = StyleSheet.create({
     marginBottom: 0,
     paddingHorizontal: 16,
     paddingVertical: 14,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: WHITE,
     borderBottomWidth: 1,
-    borderBottomColor: "#E0E6F0",
+    borderBottomColor: MUTED_LIGHT,
   },
   headerTitle: {
     fontSize: 20,
     fontWeight: "700",
-    color: "#16213A",
+    color: BLACK,
   },
   closeButton: {
     paddingHorizontal: 12,
     paddingVertical: 8,
-    backgroundColor: "#8B0000",
+    backgroundColor: CONCORDIA_RED,
     borderRadius: 8,
   },
   closeButtonText: {
-    color: "#FFFFFF",
+    color: WHITE,
     fontWeight: "600",
     fontSize: 12,
   },
@@ -43,12 +49,12 @@ export const styles = StyleSheet.create({
   emptyStateTitle: {
     fontSize: 18,
     fontWeight: "700",
-    color: "#1E2A47",
+    color: BLACK,
     textAlign: "center",
   },
   emptyStateSubtitle: {
     fontSize: 14,
-    color: "#58627A",
+    color: MUTED,
     marginTop: 8,
     textAlign: "center",
   },
@@ -56,9 +62,9 @@ export const styles = StyleSheet.create({
   // Tab Bar
   tabBar: {
     flexDirection: "row",
-    backgroundColor: "#FFFFFF",
+    backgroundColor: WHITE,
     borderBottomWidth: 1,
-    borderBottomColor: "#E0E6F0",
+    borderBottomColor: MUTED_LIGHT,
     paddingHorizontal: 16,
   },
   tab: {
@@ -69,38 +75,38 @@ export const styles = StyleSheet.create({
     borderBottomColor: "transparent",
   },
   tabActive: {
-    borderBottomColor: "#8B0000",
+    borderBottomColor: CONCORDIA_RED,
   },
   tabText: {
     fontSize: 14,
     fontWeight: "600",
-    color: "#8A94A6",
+    color: MUTED,
   },
   tabTextActive: {
-    color: "#8B0000",
+    color: CONCORDIA_RED,
   },
 
   // Search & Filters
   searchContainer: {
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: WHITE,
   },
   searchInput: {
     borderRadius: 12,
     paddingHorizontal: 12,
     paddingVertical: 10,
-    backgroundColor: "#F0F3F8",
+    backgroundColor: WHITE,
     fontSize: 14,
-    color: "#333",
+    color: BLACK,
     borderWidth: 1,
-    borderColor: "#E0E6F0",
+    borderColor: MUTED_LIGHT,
   },
   filterContainer: {
     flexDirection: "row",
     paddingHorizontal: 16,
     paddingVertical: 10,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: WHITE,
     gap: 8,
     flexWrap: "wrap",
   },
@@ -110,14 +116,14 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 16,
-    backgroundColor: "#F0F3F8",
+    backgroundColor: WHITE,
     borderWidth: 1,
-    borderColor: "#D0D8E8",
+    borderColor: MUTED_LIGHT,
     gap: 4,
   },
   filterButtonActive: {
-    backgroundColor: "#FFE6E6",
-    borderColor: "#8B0000",
+    backgroundColor: WHITE,
+    borderColor: CONCORDIA_RED,
   },
   filterIcon: {
     fontSize: 14,
@@ -125,10 +131,10 @@ export const styles = StyleSheet.create({
   filterLabel: {
     fontSize: 11,
     fontWeight: "600",
-    color: "#5A6B85",
+    color: MUTED,
   },
   filterLabelActive: {
-    color: "#8B0000",
+    color: CONCORDIA_RED,
   },
 
   // Floor Tabs
@@ -136,28 +142,28 @@ export const styles = StyleSheet.create({
     flexDirection: "row",
     paddingHorizontal: 16,
     paddingVertical: 10,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: WHITE,
     gap: 8,
   },
   floorTab: {
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 8,
-    backgroundColor: "#F0F3F8",
+    backgroundColor: WHITE,
     borderWidth: 1,
-    borderColor: "#D0D8E8",
+    borderColor: MUTED_LIGHT,
   },
   floorTabActive: {
-    backgroundColor: "#E7EEFF",
-    borderColor: "#183E9F",
+    backgroundColor: WHITE,
+    borderColor: CONCORDIA_RED,
   },
   floorTabText: {
     fontSize: 12,
     fontWeight: "600",
-    color: "#5A6B85",
+    color: MUTED,
   },
   floorTabTextActive: {
-    color: "#183E9F",
+    color: CONCORDIA_RED,
   },
 
   // Room Grid
@@ -179,13 +185,13 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 12,
     borderRadius: 12,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: WHITE,
     borderWidth: 1,
-    borderColor: "#E4E8F2",
+    borderColor: MUTED_LIGHT,
   },
   roomCardSelected: {
-    backgroundColor: "#FFE6E6",
-    borderColor: "#8B0000",
+    backgroundColor: WHITE,
+    borderColor: CONCORDIA_RED,
     borderWidth: 2,
     paddingHorizontal: 11,
     paddingVertical: 11,
@@ -193,15 +199,15 @@ export const styles = StyleSheet.create({
   roomCardCode: {
     fontSize: 16,
     fontWeight: "700",
-    color: "#18284B",
+    color: BLACK,
     marginBottom: 4,
   },
   roomCardCodeSelected: {
-    color: "#8B0000",
+    color: CONCORDIA_RED,
   },
   roomCardMeta: {
     fontSize: 11,
-    color: "#5D6D90",
+    color: MUTED,
     fontWeight: "600",
   },
 
@@ -209,27 +215,41 @@ export const styles = StyleSheet.create({
   selectedRoomCard: {
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: WHITE,
     borderTopWidth: 1,
-    borderTopColor: "#E0E6F0",
+    borderTopColor: MUTED_LIGHT,
     gap: 8,
   },
   selectedRoomLabel: {
     fontSize: 16,
     fontWeight: "700",
-    color: "#18284B",
+    color: BLACK,
   },
-  directionsButton: {
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 12,
-    backgroundColor: "#8B0000",
+  directionButton: {
+    flexDirection: "row",
     alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 14,
+    borderRadius: 12,
   },
-  directionsButtonText: {
-    color: "#FFFFFF",
-    fontWeight: "700",
-    fontSize: 14,
+  directionButtonFrom: {
+    borderWidth: 1.5,
+    backgroundColor: "transparent",
+    borderColor: CONCORDIA_RED,
+  },
+  directionButtonTo: {
+    borderWidth: 0,
+    backgroundColor: CONCORDIA_RED,
+  },
+  directionButtonFromText: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: CONCORDIA_RED,
+  },
+  directionButtonToText: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: "#ffffff",
   },
 
   // Floor Controls
@@ -241,39 +261,91 @@ export const styles = StyleSheet.create({
     marginBottom: 10,
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: WHITE,
   },
   floorArrowButton: {
     width: 42,
     height: 42,
     borderRadius: 21,
-    backgroundColor: "#122B77",
+    backgroundColor: CONCORDIA_RED,
     justifyContent: "center",
     alignItems: "center",
   },
   floorArrowText: {
     fontSize: 16,
-    color: "#FFFFFF",
+    color: WHITE,
     fontWeight: "800",
   },
   floorInfoPill: {
-    backgroundColor: "#E7EEFF",
+    backgroundColor: WHITE,
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 20,
   },
   floorInfoText: {
-    color: "#183E9F",
+    color: CONCORDIA_RED,
     fontWeight: "700",
+  },
+  mapViewContainer: {
+    flex: 1,
+    overflow: "hidden",
+    backgroundColor: MUTED_LIGHT,
+  },
+  mapScrollContainer: {
+    flex: 1,
+    backgroundColor: MUTED_LIGHT,
+    overflow: "hidden",
   },
   mapCard: {
     width: "100%",
     aspectRatio: 1,
     borderRadius: 0,
     overflow: "hidden",
-    backgroundColor: "#D9E3FB",
+    backgroundColor: MUTED_LIGHT,
     marginBottom: 0,
     borderWidth: 0,
+  },
+  zoomControlsContainer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    backgroundColor: WHITE,
+    borderTopWidth: 1,
+    borderTopColor: MUTED_LIGHT,
+  },
+  zoomButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: CONCORDIA_RED,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  resetButtonText: {
+    width: 60,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: CONCORDIA_RED,
+    color: WHITE,
+    justifyContent: "center",
+    alignItems: "center",
+    textAlign: "center",
+    padding: 10,
+  },
+  zoomButtonText: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: WHITE,
+  },
+  zoomLevelText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: BLACK,
+    minWidth: 40,
+    textAlign: "center",
   },
   floorImage: {
     width: "100%",
@@ -307,9 +379,9 @@ export const styles = StyleSheet.create({
     width: 12,
     height: 12,
     borderRadius: 6,
-    backgroundColor: "#8B0000",
+    backgroundColor: CONCORDIA_RED,
     borderWidth: 2,
-    borderColor: "#FFFFFF",
+    borderColor: WHITE,
   },
   roomLabel: {
     fontSize: 11,
@@ -320,8 +392,8 @@ export const styles = StyleSheet.create({
     borderRadius: 4,
   },
   roomLabelSelected: {
-    backgroundColor: "#8B0000",
-    color: "#FFFFFF",
+    backgroundColor: CONCORDIA_RED,
+    color: WHITE,
     paddingHorizontal: 6,
     fontSize: 12,
     fontWeight: "700",
