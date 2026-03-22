@@ -359,7 +359,7 @@
       "type": "stair_landing",
       "buildingId": "H",
       "floor": 9,
-      "x": 1427,
+      "x": 1426,
       "y": 631,
       "label": "",
       "accessible": true
@@ -1679,7 +1679,7 @@
       "target": "H_F9_doorway_115",
       "type": "door_to_hallway",
       "weight": 72,
-      "accessible": true
+      "accessible": false
     },
     {
       "source": "H_F9_hallway_waypoint_114",
@@ -1938,14 +1938,14 @@
       "target": "H_F9_doorway_111",
       "type": "door_to_hallway",
       "weight": 58,
-      "accessible": true
+      "accessible": false
     },
     {
       "source": "H_F9_doorway_175",
       "target": "H_F9_doorway_114",
       "type": "door_to_hallway",
       "weight": 69,
-      "accessible": true
+      "accessible": false
     },
     {
       "source": "H_F9_doorway_160",
@@ -2029,7 +2029,7 @@
       "target": "H_F9_doorway_110",
       "type": "door_to_hallway",
       "weight": 70,
-      "accessible": true
+      "accessible": false
     },
     {
       "source": "H_F9_hallway_waypoint_139",
@@ -2190,7 +2190,7 @@
       "target": "H_F9_doorway_112",
       "type": "hallway",
       "weight": 100,
-      "accessible": true
+      "accessible": false
     },
     {
       "source": "H_F9_hallway_waypoint_150",
@@ -2211,7 +2211,7 @@
       "target": "H_F9_doorway_112",
       "type": "hallway",
       "weight": 101,
-      "accessible": true
+      "accessible": false
     },
     {
       "source": "H_F9_hallway_waypoint_122",
@@ -2225,14 +2225,14 @@
       "target": "H_F9_doorway_112",
       "type": "hallway",
       "weight": 144,
-      "accessible": true
+      "accessible": false
     },
     {
       "source": "H_F9_hallway_waypoint_120",
       "target": "H_F9_doorway_113",
       "type": "hallway",
       "weight": 100,
-      "accessible": true
+      "accessible": false
     },
     {
       "source": "H_F9_hallway_waypoint_120",
@@ -2246,7 +2246,7 @@
       "target": "H_F9_hallway_waypoint_119",
       "type": "hallway",
       "weight": 126,
-      "accessible": true
+      "accessible": false
     },
     {
       "source": "H_F9_hallway_waypoint_120",
@@ -2533,7 +2533,7 @@
       "target": "H_F9_hallway_waypoint_165",
       "type": "hallway",
       "weight": 119,
-      "accessible": true
+      "accessible": false
     },
     {
       "source": "H_F9_hallway_waypoint_158",

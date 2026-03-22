@@ -812,7 +812,7 @@
       "target": "VL_F1_doorway_60",
       "type": "door_to_hallway",
       "weight": 112,
-      "accessible": true
+      "accessible": false
     },
     {
       "source": "VL_F1_doorway_60",

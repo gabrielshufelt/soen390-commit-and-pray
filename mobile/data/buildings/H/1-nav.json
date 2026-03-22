@@ -200,7 +200,7 @@
       "buildingId": "H",
       "floor": 1,
       "x": 367,
-      "y": 567,
+      "y": 565,
       "label": "",
       "accessible": true
     },
@@ -219,8 +219,8 @@
       "type": "doorway",
       "buildingId": "H",
       "floor": 1,
-      "x": 654,
-      "y": 1496,
+      "x": 655,
+      "y": 1495,
       "label": "",
       "accessible": false
     },
@@ -556,7 +556,7 @@
       "buildingId": "H",
       "floor": 1,
       "x": 1644,
-      "y": 979,
+      "y": 980,
       "label": "",
       "accessible": true
     },
@@ -765,14 +765,14 @@
       "target": "H_F1_room_33",
       "type": "hallway",
       "weight": 174,
-      "accessible": true
+      "accessible": false
     },
     {
       "source": "H_F1_room_34",
       "target": "H_F1_room_57",
       "type": "door_to_hallway",
       "weight": 281,
-      "accessible": true
+      "accessible": false
     },
     {
       "source": "H_F1_room_57",
@@ -793,7 +793,7 @@
       "target": "H_F1_room_87",
       "type": "hallway",
       "weight": 84,
-      "accessible": true
+      "accessible": false
     },
     {
       "source": "H_F1_hallway_waypoint_14",
@@ -1101,14 +1101,14 @@
       "target": "H_F1_hallway_waypoint_28",
       "type": "hallway",
       "weight": 415,
-      "accessible": true
+      "accessible": false
     },
     {
       "source": "H_F1_hallway_waypoint_28",
       "target": "H_F1_room_34",
       "type": "hallway",
       "weight": 93,
-      "accessible": true
+      "accessible": false
     },
     {
       "source": "H_F1_hallway_waypoint_28",
@@ -1129,7 +1129,7 @@
       "target": "H_F1_hallway_waypoint_29",
       "type": "hallway",
       "weight": 222,
-      "accessible": true
+      "accessible": false
     },
     {
       "source": "H_F1_hallway_waypoint_29",
@@ -1192,14 +1192,14 @@
       "target": "H_F1_hallway_waypoint_30",
       "type": "door_to_hallway",
       "weight": 69,
-      "accessible": true
+      "accessible": false
     },
     {
       "source": "H_F1_hallway_waypoint_30",
       "target": "H_F1_room_44",
       "type": "hallway",
       "weight": 99,
-      "accessible": true
+      "accessible": false
     },
     {
       "source": "H_F1_room_44",
