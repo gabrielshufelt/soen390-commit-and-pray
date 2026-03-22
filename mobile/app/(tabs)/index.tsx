@@ -257,7 +257,8 @@ export default function Index() {
       setShowIndoorMapModal(true);
     };
   const handleOpenIndoorMap = (building: BuildingChoice) => {
-      const extractedCode = building.code ?? building.name.match(/\(([A-Za-z0-9]+)\)\s*$/)?.[1];
+      const match = /\(([A-Za-z0-9]+)\)\s*$/.exec(building.name);
+      const extractedCode = building.code ?? match?.[1];
       const normalizedCode = extractedCode?.toUpperCase();
       if (!normalizedCode) return;
 

@@ -5,7 +5,6 @@ import {
   Text,
   TouchableOpacity,
   Image,
-  ScrollView,
   TextInput,
   FlatList,
 } from "react-native";
@@ -20,9 +19,9 @@ import {
 import { styles } from "@/styles/indoorMapModal.styles";
 
 type IndoorMapModalProps = {
-  visible: boolean;
-  initialBuildingCode: string | null;
-  onClose: () => void;
+  readonly visible: boolean;
+  readonly initialBuildingCode: string | null;
+  readonly onClose: () => void;
 };
 
 const ROOM_NODE_TYPE = "room";
@@ -135,12 +134,12 @@ export default function IndoorMapModal({
       if (activeFilters.length === 0) return matchesSearch;
 
       const nodeAccessibility = getNodeAccessibility(node);
-      const roomAccessibilities = [
+      const roomAccessibilities = new Set([
         ...(nodeAccessibility ? [nodeAccessibility] : []),
         ...extractAccessibility(node.label),
-      ];
+      ]);
       const matchesFilters = activeFilters.some((filter) =>
-        roomAccessibilities.includes(filter)
+        roomAccessibilities.has(filter)
       );
 
       return matchesSearch && matchesFilters;
@@ -251,6 +250,11 @@ export default function IndoorMapModal({
     const isSelected = selectedRoom?.id === room.id;
     const facility = getNodeAccessibility(room);
     const label = getNodeDisplayLabel(room);
+    const accessibilityText = facility
+      ? `${facility.charAt(0).toUpperCase() + facility.slice(1)} facility`
+      : room.accessible
+      ? "Accessible"
+      : "Not accessible";
     return (
       <TouchableOpacity
         key={room.id}
@@ -261,11 +265,7 @@ export default function IndoorMapModal({
           {facility ? `${ACCESSIBILITY_ICONS[facility]} ${label}` : label}
         </Text>
         <Text style={styles.roomCardMeta}>
-          {facility
-            ? `${facility.charAt(0).toUpperCase() + facility.slice(1)} facility`
-            : room.accessible
-            ? "Accessible"
-            : "Not accessible"}
+          {accessibilityText}
         </Text>
       </TouchableOpacity>
     );
