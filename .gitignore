@@ -61,3 +61,6 @@ junit.xml
 # IDE
 .idea
 backend/.env.local
+
+# Source of truth for usability testing
+documentation/usability_testing/sot/*

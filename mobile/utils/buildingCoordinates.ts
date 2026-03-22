@@ -7,6 +7,10 @@
 import sgwData from '../data/buildings/sgw.json';
 import loyolaData from '../data/buildings/loyola.json';
 import { getInteriorPoint } from './geometry';
+import ccNav from '../data/buildings/CC/1-nav.json';
+import hNav from '../data/buildings/H/1-nav.json';
+import mbNav from '../data/buildings/MB/1-nav.json';
+import vlNav from '../data/buildings/VL/1-nav.json';
 
 export interface BuildingCoordinate {
   latitude: number;
@@ -15,6 +19,14 @@ export interface BuildingCoordinate {
 
 // Build a lookup map from building code -> centroid coordinate (computed once at module load)
 const coordinateMap: Record<string, BuildingCoordinate> = {};
+
+// Build a lookup map for navigation data by building code
+const navDataMap: Record<string, Record<string, unknown>> = {
+  CC: ccNav,
+  H: hNav,
+  MB: mbNav,
+  VL: vlNav,
+};
 
 const allFeatures = [
   ...sgwData.features,
@@ -42,7 +54,12 @@ export function getBuildingCoordinate(buildingCode: string): BuildingCoordinate 
 
 export function getBuildingEntryCoordinates(buildingCode: string): BuildingCoordinate | null {
   try {
-    const navData = require(`../data/buildings/${buildingCode.toUpperCase()}/1-nav.json`);
+    const buildingCodeUpper = buildingCode.toUpperCase();
+    const navData = navDataMap[buildingCodeUpper];
+
+    if (!navData) {
+      return null;
+    }
 
     const nodes = navData?.nodes;
     if (!Array.isArray(nodes)) {

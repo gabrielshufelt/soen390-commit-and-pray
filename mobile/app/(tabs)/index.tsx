@@ -148,7 +148,8 @@ export default function Index() {
   /** Effective transport mode: shuttle always drives between stops. */
   const effectiveMode = useShuttle ? "DRIVING" : directionsState.transportMode;
 
-  const handleEndDirections = () => {
+  const handleEndDirections = (reason: string = 'user_end') => {
+    const endedDestination = destChoice?.name ?? null;
     endDirections();
     setStartChoice(null);
     setDestChoice(null);
@@ -160,7 +161,7 @@ export default function Index() {
       durationText: null,
     });
     // log that the user ended or cancelled the route
-    logDirectionsEnded();
+    logDirectionsEnded(reason, endedDestination);
   };
 
   const handleStartRoute = () => {
@@ -175,6 +176,7 @@ export default function Index() {
 
     const buildingCoord = getBuildingCoordinate(buildingCode);
     if (buildingCoord) {
+      logDirectionsStarted(effectiveMode, buildingCode);
       startDirections(
         { latitude: effectiveLocation.coords.latitude, longitude: effectiveLocation.coords.longitude },
         buildingCoord
@@ -611,10 +613,10 @@ export default function Index() {
           }}
           routeActive={directionsState.isActive}
           previewActive={!directionsState.isActive && !!directionsState.origin}
-          onEndRoute={handleEndDirections}
+          onEndRoute={() => handleEndDirections('user_end')}
           onStartRoute={handleStartRoute}
           onPreviewRoute={handlePreviewRoute}
-          onExitPreview={handleEndDirections}
+          onExitPreview={() => handleEndDirections('preview_exit')}
           previewRouteInfo={previewRouteInfo}
           useShuttle={useShuttle}
           onUseShuttleChange={setUseShuttle}
@@ -633,7 +635,7 @@ export default function Index() {
       {!directionsState.isActive && (
         <CampusToggle
           selectedCampus={campusKey}
-          onCampusChange={(campus) => {
+          onCampusChange={(campus: 'SGW' | 'Loyola') => {
             setCampusKey(campus);
             // log which campus the user switched to
             logCampusToggled(campus);
@@ -660,7 +662,7 @@ export default function Index() {
           totalDistance={directionsState.routeInfo.distanceText ?? ""}
           totalDuration={directionsState.routeInfo.durationText ?? ""}
           isOffRoute={directionsState.isOffRoute}
-          onEndNavigation={handleEndDirections}
+          onEndNavigation={() => handleEndDirections('navigation_end')}
           onNextStep={nextStep}
           onPrevStep={prevStep}
         />

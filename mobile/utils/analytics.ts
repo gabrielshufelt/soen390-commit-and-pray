@@ -64,13 +64,39 @@ export const logSearchPerformed = (
     result_selected: resultSelected.toString(),
   });
 
+// Log when a search query returns no matching buildings.
+export const logSearchNoResults = (
+  queryLength: number,
+  field: 'start' | 'destination'
+): Promise<void> =>
+  analytics().logEvent('pilot_search_no_results', {
+    query_length: queryLength,
+    field,
+  });
+
+// Log when the user leaves search without selecting a result.
+export const logSearchAbandoned = (
+  queryLength: number,
+  field: 'start' | 'destination'
+): Promise<void> =>
+  analytics().logEvent('pilot_search_abandoned', {
+    query_length: queryLength,
+    field,
+  });
+
 // Log when the user switches between SGW and Loyola campuses.
 export const logCampusToggled = (campusSelected: string): Promise<void> =>
   analytics().logEvent('pilot_campus_toggled', { campus_selected: campusSelected });
 
 // Log when the user ends or cancels a route.
-export const logDirectionsEnded = (): Promise<void> =>
-  analytics().logEvent('pilot_directions_ended', {});
+export const logDirectionsEnded = (
+  reason?: string,
+  destination?: string | null
+): Promise<void> =>
+  analytics().logEvent('pilot_directions_ended', {
+    ...(reason ? { reason } : {}),
+    ...(destination ? { destination } : {}),
+  });
 
 // Log a general button or feature tap.
 // Use this for anything that does not have its own function above.
@@ -117,3 +143,21 @@ export const logBuildingDirectionsSet = (
 // Log when the user taps "Show Route" inside the shuttle schedule modal.
 export const logShuttleRouteShown = (): Promise<void> =>
   analytics().logEvent('pilot_shuttle_route_shown', {});
+
+// Log when the next class card is displayed to the user.
+export const logNextClassCardShown = (
+  classTitle: string,
+  buildingCode: string
+): Promise<void> =>
+  analytics().logEvent('pilot_next_class_card_shown', {
+    class_title: classTitle,
+    building_code: buildingCode,
+  });
+
+// Log when the user taps "Get Directions" from the next class card.
+export const logNextClassDirectionsTapped = (
+  buildingCode: string
+): Promise<void> =>
+  analytics().logEvent('pilot_next_class_directions_tapped', {
+    building_code: buildingCode,
+  });

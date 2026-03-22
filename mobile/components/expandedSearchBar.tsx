@@ -19,6 +19,7 @@ import { useShuttleAvailability } from "../hooks/useShuttleAvailability";
 import { styles, MAROON, MUTED, TEXT } from "../styles/searchBar.styles";
 import TransportModeSelector from "./TransportModeSelector";
 import { stripCodePrefix, displayName, makeHaystack } from "@/constants/searchBar.utils";
+import { logSearchAbandoned, logSearchNoResults } from "../utils/analytics";
 
 type Props = {
   buildings: BuildingChoice[];
@@ -127,6 +128,7 @@ export default function ExpandedSearchBar({
 
   const [history, setHistory] = useState<BuildingChoice[]>([]);
   const [quickFilter, setQuickFilter] = useState<"Home" | "Library" | "Favorites" | null>(null);
+  const lastNoResultsKeyRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (!destFocused) setDestText(destination ? displayName(destination) : "");
@@ -154,6 +156,30 @@ export default function ExpandedSearchBar({
     if (!startFocused || !startQuery || routeActive) return [];
     return buildings.filter((b) => makeHaystack(b).includes(startQuery)).slice(0, 10);
   }, [buildings, startFocused, startQuery, routeActive]);
+
+  useEffect(() => {
+    if (!destFocused || routeActive) return;
+    if (destinationQuery.length < 2) return;
+    if (suggestions.length > 0) return;
+
+    const key = `destination:${destinationQuery}`;
+    if (lastNoResultsKeyRef.current === key) return;
+
+    lastNoResultsKeyRef.current = key;
+    logSearchNoResults(destinationQuery.length, "destination");
+  }, [destFocused, routeActive, destinationQuery, suggestions.length]);
+
+  useEffect(() => {
+    if (!startFocused || routeActive) return;
+    if (startQuery.length < 2) return;
+    if (startSuggestions.length > 0) return;
+
+    const key = `start:${startQuery}`;
+    if (lastNoResultsKeyRef.current === key) return;
+
+    lastNoResultsKeyRef.current = key;
+    logSearchNoResults(startQuery.length, "start");
+  }, [startFocused, routeActive, startQuery, startSuggestions.length]);
 
   function addToHistory(b: BuildingChoice) {
     setHistory((prev) => {
@@ -244,7 +270,17 @@ export default function ExpandedSearchBar({
                 placeholder="Current Location"
                 placeholderTextColor="#9CA3AF"
                 onFocus={() => setStartFocused(true)}
-                onBlur={() => setStartFocused(false)}
+                onBlur={() => {
+                  setStartFocused(false);
+                  if (
+                    !routeActive &&
+                    startQuery.length >= 2 &&
+                    startSuggestions.length === 0 &&
+                    !start
+                  ) {
+                    logSearchAbandoned(startQuery.length, "start");
+                  }
+                }}
                 onChangeText={(t) => {
                   setStartText(t);
                   onChangeStart(null);
@@ -297,7 +333,17 @@ export default function ExpandedSearchBar({
                 placeholder="Where to?"
                 placeholderTextColor="#9CA3AF"
                 onFocus={() => setDestFocused(true)}
-                onBlur={() => setDestFocused(false)}
+                onBlur={() => {
+                  setDestFocused(false);
+                  if (
+                    !routeActive &&
+                    destinationQuery.length >= 2 &&
+                    suggestions.length === 0 &&
+                    !destination
+                  ) {
+                    logSearchAbandoned(destinationQuery.length, "destination");
+                  }
+                }}
                 onChangeText={(t) => {
                   setDestText(t);
                   onChangeDestination(null);

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -11,6 +11,7 @@ import { useTheme } from '../context/ThemeContext';
 import { ParsedNextClass, NextClassStatus, NO_CLASS_BEHAVIOR } from '../hooks/useNextClass';
 import { DEV_OVERRIDE_TIME } from '../utils/devConfig';
 import { styles } from '../styles/nextClassModal.styles';
+import { logNextClassCardShown, logNextClassDirectionsTapped } from '../utils/analytics';
 
 const TIMEOUT_MS = 30_000; // 30 seconds, how often the "in X mins" counter updates
 
@@ -97,6 +98,7 @@ function renderStatusCard(
 export default function NextClassModal({ nextClass, status, isLoading, onGetDirections }: NextClassModalProps) {
   const { colorScheme } = useTheme();
   const isDark = colorScheme === 'dark';
+  const lastShownKeyRef = useRef<string | null>(null);
 
   // Live "in X mins" counter. Updates every 30s
   const [minutesUntil, setMinutesUntil] = useState<number>(
@@ -113,6 +115,14 @@ export default function NextClassModal({ nextClass, status, isLoading, onGetDire
 
     return () => clearInterval(id);
   }, [nextClass]);
+
+  useEffect(() => {
+    if (!nextClass || status !== 'found') return;
+    const key = `${nextClass.title}-${nextClass.buildingCode}-${nextClass.startTime.toISOString()}`;
+    if (lastShownKeyRef.current === key) return;
+    lastShownKeyRef.current = key;
+    logNextClassCardShown(nextClass.title, nextClass.buildingCode);
+  }, [nextClass, status]);
 
   const statusCard = renderStatusCard(status, isLoading, isDark);
   if (statusCard !== undefined) return statusCard;
@@ -217,7 +227,10 @@ export default function NextClassModal({ nextClass, status, isLoading, onGetDire
           <TouchableOpacity
             style={styles.directionsButton}
             activeOpacity={0.8}
-            onPress={() => onGetDirections(nextClass.buildingCode)}
+            onPress={() => {
+              logNextClassDirectionsTapped(nextClass.buildingCode);
+              onGetDirections(nextClass.buildingCode);
+            }}
           >
             <Ionicons name="navigate" size={14} color="#FFFFFF" style={{ marginRight: 5 }} />
             <Text style={styles.directionsButtonText}>Get Directions</Text>
