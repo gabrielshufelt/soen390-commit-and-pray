@@ -1379,7 +1379,7 @@
       "target": "MB_F-2_doorway_8",
       "type": "door_to_hallway",
       "weight": 50.8,
-      "accessible": false
+      "accessible": true
     },
     {
       "source": "MB_F-2_hallway_waypoint_4",
@@ -1995,7 +1995,7 @@
       "target": "MB_F-2_doorway_43",
       "type": "door_to_hallway",
       "weight": 50,
-      "accessible": false
+      "accessible": true
     },
     {
       "source": "MB_F-2_doorway_7",
