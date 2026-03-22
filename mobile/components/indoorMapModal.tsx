@@ -250,11 +250,10 @@ export default function IndoorMapModal({
     const isSelected = selectedRoom?.id === room.id;
     const facility = getNodeAccessibility(room);
     const label = getNodeDisplayLabel(room);
+    const accessibilityStatus = room.accessible ? "Accessible" : "Not accessible";
     const accessibilityText = facility
       ? `${facility.charAt(0).toUpperCase() + facility.slice(1)} facility`
-      : room.accessible
-      ? "Accessible"
-      : "Not accessible";
+      : accessibilityStatus;
     return (
       <TouchableOpacity
         key={room.id}
