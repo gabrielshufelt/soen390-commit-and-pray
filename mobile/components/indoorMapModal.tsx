@@ -93,6 +93,12 @@ export default function IndoorMapModal({
   const [searchQuery, setSearchQuery] = useState("");
   const [activeFilters, setActiveFilters] = useState<AccessibilityFilter[]>([]);
   const [viewMode, setViewMode] = useState<"map" | "search">("map");
+  const [zoom, setZoom] = useState(1);
+  const [panX, setPanX] = useState(0);
+  const [panY, setPanY] = useState(0);
+  const [isPanning, setIsPanning] = useState(false);
+  const [panStartX, setPanStartX] = useState(0);
+  const [panStartY, setPanStartY] = useState(0);
 
   useEffect(() => {
     if (!indoorMap) {
@@ -155,6 +161,41 @@ export default function IndoorMapModal({
       // Single click to select
       setSelectedRoom(room);
     }
+  };
+
+  const handleZoomIn = () => {
+    setZoom((prevZoom) => Math.min(3, prevZoom + 0.5));
+  };
+
+  const handleZoomOut = () => {
+    setZoom((prevZoom) => Math.max(1, prevZoom - 0.5));
+  };
+
+  const handleResetZoom = () => {
+    setZoom(1);
+    setPanX(0);
+    setPanY(0);
+  };
+
+  const handleMapPressIn = (event: any) => {
+    if (zoom > 1) {
+      setIsPanning(true);
+      setPanStartX(event.nativeEvent.pageX - panX);
+      setPanStartY(event.nativeEvent.pageY - panY);
+    }
+  };
+
+  const handleMapMove = (event: any) => {
+    if (isPanning && zoom > 1) {
+      const newPanX = event.nativeEvent.pageX - panStartX;
+      const newPanY = event.nativeEvent.pageY - panStartY;
+      setPanX(newPanX);
+      setPanY(newPanY);
+    }
+  };
+
+  const handleMapPressOut = () => {
+    setIsPanning(false);
   };
 
   const onNextFloor = () => {
@@ -286,20 +327,74 @@ export default function IndoorMapModal({
                   </TouchableOpacity>
                 </View>
 
-                <View style={styles.mapCard}>
-                  <Image source={currentFloor.image} style={styles.floorImage} resizeMode="stretch" />
-                  <View style={styles.roomOverlay}>
-                    {[...rooms, ...facilities].map((room) =>
-                      renderRoomDot(room, currentFloor, selectedRoom?.id === room.id)
-                    )}
+                <View style={styles.zoomControlsContainer}>
+                  <TouchableOpacity 
+                    style={styles.zoomButton} 
+                    onPress={handleZoomIn}
+                    disabled={zoom >= 3}
+                  >
+                    <Text style={styles.zoomButtonText}>+</Text>
+                  </TouchableOpacity>
+                  <Text style={styles.zoomLevelText}>{zoom.toFixed(1)}x</Text>
+                  <TouchableOpacity 
+                    style={styles.zoomButton} 
+                    onPress={handleZoomOut}
+                    disabled={zoom <= 1}
+                  >
+                    <Text style={styles.zoomButtonText}>−</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity 
+                    style={styles.zoomButton} 
+                    onPress={handleResetZoom}
+                  >
+                    <Text style={styles.resetButtonText}>Reset</Text>
+                  </TouchableOpacity>
+                </View>
+
+                <View style={styles.mapViewContainer}>
+                  <View 
+                    style={styles.mapScrollContainer}
+                    onTouchStart={handleMapPressIn}
+                    onTouchMove={handleMapMove}
+                    onTouchEnd={handleMapPressOut}
+                  >
+                    <View 
+                      style={[
+                        styles.mapCard, 
+                        { 
+                          transform: [
+                            { scale: zoom },
+                            { translateX: panX },
+                            { translateY: panY }
+                          ],
+                          transformOrigin: zoom > 1 ? "center" : "0 0"
+                        }
+                      ]}
+                    >
+                      <Image source={currentFloor.image} style={styles.floorImage} resizeMode="stretch" />
+                      <View style={styles.roomOverlay}>
+                        {[...rooms, ...facilities].map((room) =>
+                          renderRoomDot(room, currentFloor, selectedRoom?.id === room.id)
+                        )}
+                      </View>
+                    </View>
                   </View>
                 </View>
 
                 {selectedRoom && (
                   <View style={styles.selectedRoomCard}>
                     <Text style={styles.selectedRoomLabel}>{selectedRoom.label}</Text>
-                    <TouchableOpacity style={styles.directionsButton}>
-                      <Text style={styles.directionsButtonText}>🧭 Get Directions</Text>
+                    <TouchableOpacity 
+                      style={[styles.directionButton, styles.directionButtonTo]}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={styles.directionButtonToText}>Get Directions To</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity 
+                      style={[styles.directionButton, styles.directionButtonFrom]}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={styles.directionButtonFromText}>Get Directions From</Text>
                     </TouchableOpacity>
                   </View>
                 )}

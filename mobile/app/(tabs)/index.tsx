@@ -645,6 +645,7 @@ export default function Index() {
       {!directionsState.isActive && (
         <CampusToggle selectedCampus={campusKey} onCampusChange={setCampusKey} />
       )}
+        {userBuilding && (
         <TouchableOpacity
            style={styles.indoorButton}
            onPress={handleOpenIndoorQuickAccess}
@@ -652,6 +653,7 @@ export default function Index() {
         >
              <Text style={styles.indoorButtonText}>Indoor</Text>
         </TouchableOpacity>
+        )}
 
       <TouchableOpacity
         style={styles.shuttleButton}
