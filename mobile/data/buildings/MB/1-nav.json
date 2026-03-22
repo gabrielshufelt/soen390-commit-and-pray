@@ -636,7 +636,19 @@
     },
     {
       "id": "MB_F1_doorway_7",
-      "type": "building_entry_exit",
+      "type": "building_entry",
+      "buildingId": "MB",
+      "floor": 1,
+      "x": 692,
+      "y": 1808,
+      "latitude": 45.4955008664397, 
+      "longitude": -73.57915690500853,
+      "label": "",
+      "accessible": true
+    },
+    {
+      "id": "MB_F1_doorway_7_exit",
+      "type": "building_exit",
       "buildingId": "MB",
       "floor": 1,
       "x": 692,
@@ -886,7 +898,19 @@
     },
     {
       "id": "MB_F1_hallway_waypoint_16",
-      "type": "building_entry_exit",
+      "type": "building_entry",
+      "buildingId": "MB",
+      "floor": 1,
+      "x": 501,
+      "y": 209,
+      "latitude": 45.495217933169, 
+      "longitude": -73.57857958459395,
+      "label": "",
+      "accessible": true
+    },
+    {
+      "id": "MB_F1_hallway_waypoint_16_exit",
+      "type": "building_exit",
       "buildingId": "MB",
       "floor": 1,
       "x": 501,

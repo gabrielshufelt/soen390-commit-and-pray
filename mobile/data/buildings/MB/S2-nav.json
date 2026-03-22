@@ -1256,7 +1256,17 @@
     },
     {
       "id": "MB_F-2_doorway_49",
-      "type": "building_entry_exit",
+      "type": "building_entry",
+      "buildingId": "MB",
+      "floor": -2,
+      "x": 335,
+      "y": 889,
+      "label": "",
+      "accessible": true
+    },
+    {
+      "id": "MB_F-2_doorway_49_exit",
+      "type": "building_exit",
       "buildingId": "MB",
       "floor": -2,
       "x": 335,
@@ -1369,7 +1379,7 @@
       "target": "MB_F-2_doorway_8",
       "type": "door_to_hallway",
       "weight": 50.8,
-      "accessible": false
+      "accessible": true
     },
     {
       "source": "MB_F-2_hallway_waypoint_4",
@@ -1985,7 +1995,7 @@
       "target": "MB_F-2_doorway_43",
       "type": "door_to_hallway",
       "weight": 50,
-      "accessible": false
+      "accessible": true
     },
     {
       "source": "MB_F-2_doorway_7",

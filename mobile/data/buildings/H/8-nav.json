@@ -1019,7 +1019,7 @@
       "type": "stair_landing",
       "buildingId": "H",
       "floor": 8,
-      "x": 1072,
+      "x": 1071,
       "y": 1146,
       "label": "",
       "accessible": true
@@ -1069,7 +1069,7 @@
       "type": "elevator_door",
       "buildingId": "H",
       "floor": 8,
-      "x": 1236,
+      "x": 1235,
       "y": 653,
       "label": "",
       "accessible": true
@@ -1841,14 +1841,14 @@
       "target": "H_F8_doorway_87",
       "type": "door_to_hallway",
       "weight": 64,
-      "accessible": true
+      "accessible": false
     },
     {
       "source": "H_F8_doorway_86",
       "target": "H_F8_doorway_102",
       "type": "door_to_hallway",
       "weight": 73,
-      "accessible": true
+      "accessible": false
     },
     {
       "source": "H_F8_doorway_79",
@@ -1904,14 +1904,14 @@
       "target": "H_F8_doorway_100",
       "type": "door_to_hallway",
       "weight": 64,
-      "accessible": true
+      "accessible": false
     },
     {
       "source": "H_F8_doorway_85",
       "target": "H_F8_doorway_103",
       "type": "door_to_hallway",
       "weight": 56,
-      "accessible": true
+      "accessible": false
     },
     {
       "source": "H_F8_hallway_waypoint_78",
@@ -1988,7 +1988,7 @@
       "target": "H_F8_doorway_104",
       "type": "hallway",
       "weight": 67,
-      "accessible": true
+      "accessible": false
     },
     {
       "source": "H_F8_hallway_waypoint_81",
@@ -2023,7 +2023,7 @@
       "target": "H_F8_doorway_105",
       "type": "door_to_hallway",
       "weight": 83,
-      "accessible": true
+      "accessible": false
     },
     {
       "source": "H_F8_hallway_waypoint_105",
