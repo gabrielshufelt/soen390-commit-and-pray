@@ -1,4 +1,0 @@
-fastapi[standard]
-pytest-cov
-pytest
-httpx

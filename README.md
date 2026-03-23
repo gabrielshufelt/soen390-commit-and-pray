@@ -37,7 +37,6 @@ Full project documentation is available in the GitHub Wiki, including:
 ## Tech Stack
 
 - React Native (Expo)
-- FastAPI
 - Google Maps / Directions API
 - SonarQube (code quality)
 
