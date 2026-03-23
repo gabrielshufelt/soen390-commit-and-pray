@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+  <head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@100..900&amp;display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+    <link href="global.css" rel="stylesheet"/>
+    <script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "on-secondary-fixed-variant": "#6c373c", //study category icon color
+              "surface-container-lowest": "#ffffff", //search bar background color
+              "surface-container-low": "#fff0f0", //POI item background color
+              "surface-container-highest": "#f3ddde",//POI hover color
+              "secondary-fixed": "#ffdadb", //study category color
+              "tertiary-fixed": "#a8f2cb", //dining category color
+              "on-primary": "#ffffff", //selected filter text color
+              "on-surface": "#241919", //default text color
+              "primary": "#710723", //primary color for icons, highlights, and selected filter background
+              "tertiary": "#003f2a",//dining category icon color
+              "on-surface-variant": "#574143", //secondary text and unselected filters color
+              "primary-container": "#912338", //selected filter background color
+              "surface": "#fff8f7", //main background color
+              "surface-container-high": "#f9e3e4", //unselected filter background color
+            },
+            fontFamily: {
+              "display": ["Lexend", "sans-serif"],
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+  </head>
+  <body class="bg-surface text-on-surface min-h-screen pb-32">
+    <main class="px-6 pt-4">
+      <!-- Search & Filters Sticky Section -->
+      <div class="sticky top-0 z-40 bg-surface/95 backdrop-blur-sm -mx-6 px-6 py-4">
+        <div class="relative mb-6">
+          <input class="w-full bg-surface-container-lowest h-14 pl-14 pr-6 rounded-xl border-none shadow-[0px_4px_20px_rgba(36,25,25,0.05)] text-on-surface focus:ring-2 focus:ring-primary/20 placeholder:text-stone-400 font-body" placeholder="Search buildings, cafes, labs..." type="text"/>
+          <span class="material-symbols-outlined absolute left-5 top-1/2 -translate-y-1/2 text-primary" data-icon="search">search</span>
+        </div>
+        <div class="flex gap-3 overflow-x-auto no-scrollbar pb-2" id="filterScroll">
+          <button class="bg-white border-2 border-primary text-primary hover:bg-primary/5 transition-colors flex items-center gap-2 whitespace-nowrap px-4 py-2.5 rounded-full text-sm font-bold tracking-wide shadow-sm">
+            <span class="material-symbols-outlined text-lg" data-icon="tune">tune</span>
+            Filter
+          </button>
+          <button class="bg-primary-container text-on-primary whitespace-nowrap px-6 py-2.5 rounded-full text-sm font-medium tracking-wide">
+            All POIs
+          </button>
+          <button class="bg-surface-container-high text-on-surface-variant hover:bg-surface-container-highest transition-colors whitespace-nowrap px-6 py-2.5 rounded-full text-sm font-medium tracking-wide">
+            Study Spaces
+          </button>
+          <button class="bg-surface-container-high text-on-surface-variant hover:bg-surface-container-highest transition-colors whitespace-nowrap px-6 py-2.5 rounded-full text-sm font-medium tracking-wide">
+            Dining
+          </button>
+          <button class="bg-surface-container-high text-on-surface-variant hover:bg-surface-container-highest transition-colors whitespace-nowrap px-6 py-2.5 rounded-full text-sm font-medium tracking-wide">
+            Labs
+          </button>
+          <button class="bg-surface-container-high text-on-surface-variant hover:bg-surface-container-highest transition-colors whitespace-nowrap px-6 py-2.5 rounded-full text-sm font-medium tracking-wide">
+            Gyms
+          </button>
+        </div>
+      </div>
+
+      <!-- Grouped POI List -->
+      <div class="space-y-10">
+        <!-- Category: Dining -->
+        <section>
+          <div class="flex items-center gap-3 mb-6">
+            <div class="w-10 h-10 rounded-xl bg-tertiary-fixed flex items-center justify-center text-tertiary">
+              <span class="material-symbols-outlined" data-icon="restaurant">restaurant</span>
+            </div>
+            <h3 class="text-lg font-bold tracking-tight">Dining</h3>
+          </div>
+          <div class="space-y-2">
+            <!-- POI Item -->
+            <div class="group flex items-center justify-between p-4 bg-surface-container-low rounded-xl hover:bg-surface-container-highest transition-all active:scale-[0.98]">
+              <div class="flex items-center gap-4">
+                <div class="w-12 h-12 rounded-lg bg-white flex items-center justify-center shadow-sm">
+                  <span class="material-symbols-outlined text-primary" data-icon="coffee">coffee</span>
+                </div>
+                <div>
+                  <h4 class="font-bold text-on-surface">Second Cup</h4>
+                  <p class="text-xs text-on-surface-variant uppercase tracking-wider font-medium">Cafe • LB Building</p>
+                </div>
+              </div>
+              <div class="text-right">
+                <p class="font-bold text-primary">150m</p>
+                <p class="text-[10px] text-stone-500 font-bold uppercase tracking-tighter">2 min walk</p>
+              </div>
+            </div>
+            <!-- POI Item -->
+            <div class="group flex items-center justify-between p-4 bg-surface-container-low rounded-xl hover:bg-surface-container-highest transition-all active:scale-[0.98]">
+              <div class="flex items-center gap-4">
+                <div class="w-12 h-12 rounded-lg bg-white flex items-center justify-center shadow-sm">
+                  <span class="material-symbols-outlined text-primary" data-icon="lunch_dining">lunch_dining</span>
+                </div>
+                <div>
+                  <h4 class="font-bold text-on-surface">The Hive Cafe</h4>
+                  <p class="text-xs text-on-surface-variant uppercase tracking-wider font-medium">Vegan • SC Building</p>
+                </div>
+              </div>
+              <div class="text-right">
+                <p class="font-bold text-primary">450m</p>
+                <p class="text-[10px] text-stone-500 font-bold uppercase tracking-tighter">6 min walk</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Category: Study Zones -->
+        <section>
+          <div class="flex items-center gap-3 mb-6">
+            <div class="w-10 h-10 rounded-xl bg-secondary-fixed flex items-center justify-center text-on-secondary-fixed-variant">
+              <span class="material-symbols-outlined" data-icon="menu_book">menu_book</span>
+            </div>
+            <h3 class="text-lg font-bold tracking-tight">Study Zones</h3>
+          </div>
+          <div class="space-y-2">
+            <!-- POI Item -->
+            <div class="group flex items-center justify-between p-4 bg-surface-container-low rounded-xl hover:bg-surface-container-highest transition-all active:scale-[0.98]">
+              <div class="flex items-center gap-4">
+                <div class="w-12 h-12 rounded-lg bg-white flex items-center justify-center shadow-sm">
+                  <span class="material-symbols-outlined text-primary" data-icon="laptop_mac">laptop_mac</span>
+                </div>
+                <div>
+                  <h4 class="font-bold text-on-surface">Grey Nuns Reading Room</h4>
+                  <p class="text-xs text-on-surface-variant uppercase tracking-wider font-medium">Silent Study • GN Building</p>
+                </div>
+              </div>
+              <div class="text-right">
+                <p class="font-bold text-primary">800m</p>
+                <p class="text-[10px] text-stone-500 font-bold uppercase tracking-tighter">12 min walk</p>
+              </div>
+            </div>
+            <!-- POI Item -->
+            <div class="group flex items-center justify-between p-4 bg-surface-container-low rounded-xl hover:bg-surface-container-highest transition-all active:scale-[0.98]">
+              <div class="flex items-center gap-4">
+                <div class="w-12 h-12 rounded-lg bg-white flex items-center justify-center shadow-sm">
+                  <span class="material-symbols-outlined text-primary" data-icon="groups">groups</span>
+                </div>
+                <div>
+                  <h4 class="font-bold text-on-surface">EV Collaborative Space</h4>
+                  <p class="text-xs text-on-surface-variant uppercase tracking-wider font-medium">Group Study • EV Building</p>
+                </div>
+              </div>
+              <div class="text-right">
+                <p class="font-bold text-primary">50m</p>
+                <p class="text-[10px] text-stone-500 font-bold uppercase tracking-tighter">Nearby</p>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <!-- BottomNavBar -->
+    <nav class="fixed bottom-0 w-full z-50 flex justify-around items-center px-4 pb-6 pt-3 bg-white dark:bg-stone-950 shadow-[0px_-4px_30px_rgba(36,25,25,0.05)]">
+      <a class="flex flex-col items-center justify-center text-stone-500 dark:text-stone-400 px-5 py-2 tap-highlight-none active:scale-90 transition-transform" href="#">
+        <span class="material-symbols-outlined mb-1" data-icon="map">map</span>
+        <span class="font-lexend text-[11px] font-medium uppercase tracking-widest">Map</span>
+      </a>
+      <a class="flex flex-col items-center justify-center bg-maroon-100 dark:bg-maroon-900/40 text-maroon-900 dark:text-maroon-50 rounded-xl px-5 py-2 tap-highlight-none active:scale-90 transition-transform" href="#">
+        <span class="material-symbols-outlined mb-1" data-icon="layers" style="font-variation-settings: 'FILL' 1;">explore_nearby</span>
+        <span class="font-lexend text-[11px] font-medium uppercase tracking-widest">Nearby</span>
+      </a>
+      <a class="flex flex-col items-center justify-center text-stone-500 dark:text-stone-400 px-5 py-2 tap-highlight-none active:scale-90 transition-transform" href="#">
+        <span class="material-symbols-outlined mb-1" data-icon="person">person</span>
+        <span class="font-lexend text-[11px] font-medium uppercase tracking-widest">Profile</span>
+      </a>
+    </nav>
+
+    <script>
+      const filterScroll = document.getElementById('filterScroll');
+      let isDown = false;
+      let startX;
+      let scrollLeft;
+
+      filterScroll.addEventListener('mousedown', (e) => {
+        isDown = true;
+        startX = e.pageX - filterScroll.offsetLeft;
+        scrollLeft = filterScroll.scrollLeft;
+        filterScroll.style.cursor = 'grabbing';
+      });
+
+      filterScroll.addEventListener('mouseleave', () => {
+        isDown = false;
+        filterScroll.style.cursor = 'grab';
+      });
+
+      filterScroll.addEventListener('mouseup', () => {
+        isDown = false;
+        filterScroll.style.cursor = 'grab';
+      });
+
+      filterScroll.addEventListener('mousemove', (e) => {
+        if (!isDown) return;
+        e.preventDefault();
+        const x = e.pageX - filterScroll.offsetLeft;
+        const walk = (x - startX) * 1;
+        filterScroll.scrollLeft = scrollLeft - walk;
+      });
+    </script>
+  </body>
+</html>

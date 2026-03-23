@@ -227,3 +227,18 @@ body {
 .campus-selector input {
   display: none;
 }
+
+/* POI Page Styles */
+body {
+  font-family: 'Lexend', sans-serif;
+  background-color: #fff8f7;
+  color: #241919;
+}
+
+#filterScroll {
+  cursor: grab;
+}
+
+#filterScroll:active {
+  cursor: grabbing;
+}
