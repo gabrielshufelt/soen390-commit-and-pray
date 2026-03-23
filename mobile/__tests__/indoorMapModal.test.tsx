@@ -2,6 +2,9 @@ import React from 'react';
 import { fireEvent, render } from '@testing-library/react-native';
 
 import IndoorMapModal from '../components/indoorMapModal';
+import { IndoorPathfinder } from '../utils/indoorPathfinder';
+
+const mockFindShortestPath = jest.fn();
 
 jest.mock('@/styles/indoorMapModal.styles', () => ({
   styles: new Proxy(
@@ -13,12 +16,25 @@ jest.mock('@/styles/indoorMapModal.styles', () => ({
 }));
 
 const mockGetBuildingIndoorMap = jest.fn();
+const mockGetBuildingIndoorGraphData = jest.fn();
 const mockGetFloorLabel = jest.fn((floor: number) => `${floor}`);
 
 jest.mock('@/utils/indoorMapData', () => ({
   getBuildingIndoorMap: (...args: unknown[]) => mockGetBuildingIndoorMap(...args),
+  getBuildingIndoorGraphData: (...args: unknown[]) => mockGetBuildingIndoorGraphData(...args),
   getFloorLabel: (...args: unknown[]) => mockGetFloorLabel(...args),
 }));
+
+const routeNode = (id: string, floor: number, x: number, y: number, label: string) => ({
+  id,
+  type: 'room',
+  buildingId: 'H',
+  floor,
+  x,
+  y,
+  label,
+  accessible: true,
+});
 
 const createIndoorMap = () => ({
   buildingId: 'H',
@@ -158,7 +174,20 @@ describe('<IndoorMapModal />', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    jest.spyOn(IndoorPathfinder.prototype, 'findShortestPath').mockImplementation((...args: unknown[]) =>
+      mockFindShortestPath(...args)
+    );
     mockGetBuildingIndoorMap.mockReturnValue(createIndoorMap());
+    mockGetBuildingIndoorGraphData.mockReturnValue([{ nodes: [], edges: [] }]);
+    mockFindShortestPath.mockReturnValue([
+      routeNode('r1', 1, 100, 120, 'H-101'),
+      routeNode('r-mid', 1, 140, 160, ''),
+      routeNode('r-wash', 1, 140, 170, 'Gender Neutral Washroom'),
+    ]);
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
   });
 
   it('renders empty state when no indoor map exists for the building', () => {
@@ -280,23 +309,23 @@ describe('<IndoorMapModal />', () => {
     expect(getByText('Floor 2')).toBeTruthy();
   });
   it('updates zoom level with +, −, and Reset controls', () => {
-      const { getByText } = render(
-        <IndoorMapModal visible={true} initialBuildingCode="H" onClose={onClose} />
-      );
+    const { getByText } = render(
+      <IndoorMapModal visible={true} initialBuildingCode="H" onClose={onClose} />
+    );
 
-      expect(getByText('1.0x')).toBeTruthy();
+    expect(getByText('1.0x')).toBeTruthy();
 
-      fireEvent.press(getByText('+'));
-      expect(getByText('1.5x')).toBeTruthy();
+    fireEvent.press(getByText('+'));
+    expect(getByText('1.5x')).toBeTruthy();
 
-      fireEvent.press(getByText('−'));
-      expect(getByText('1.0x')).toBeTruthy();
+    fireEvent.press(getByText('−'));
+    expect(getByText('1.0x')).toBeTruthy();
 
-      fireEvent.press(getByText('+'));
-      expect(getByText('1.5x')).toBeTruthy();
+    fireEvent.press(getByText('+'));
+    expect(getByText('1.5x')).toBeTruthy();
 
-      fireEvent.press(getByText('Reset'));
-      expect(getByText('1.0x')).toBeTruthy();
+    fireEvent.press(getByText('Reset'));
+    expect(getByText('1.0x')).toBeTruthy();
   });
 
   it('defaults to the first floor when floor 1 does not exist', () => {
@@ -331,5 +360,65 @@ describe('<IndoorMapModal />', () => {
     fireEvent.press(getByText('Close'));
 
     expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('computes and renders a blue route overlay after setting from and to rooms', () => {
+    const { getByText, getAllByTestId } = render(
+      <IndoorMapModal visible={true} initialBuildingCode="H" onClose={onClose} />
+    );
+
+    fireEvent.press(getByText('H-101'));
+    fireEvent.press(getByText('Get Directions From'));
+
+    fireEvent.press(getByText('Gender Neutral Washroom'));
+    fireEvent.press(getByText('Get Directions To'));
+
+    expect(mockFindShortestPath).toHaveBeenCalledWith('H-101', 'Gender Neutral Washroom');
+    expect(getByText('Route: H-101 to Gender Neutral Washroom')).toBeTruthy();
+    expect(getAllByTestId('route-segment').length).toBeGreaterThan(0);
+  });
+
+  it('shows floor transition guidance for cross-floor routes', () => {
+    mockFindShortestPath.mockReturnValue([
+      routeNode('r1', 1, 100, 120, 'H-101'),
+      routeNode('e1', 1, 220, 240, ''),
+      routeNode('e2', 2, 230, 260, ''),
+      routeNode('r2', 2, 300, 320, 'H-201'),
+    ]);
+
+    const { getByText, getAllByTestId } = render(
+      <IndoorMapModal visible={true} initialBuildingCode="H" onClose={onClose} />
+    );
+
+    fireEvent.press(getByText('H-101'));
+    fireEvent.press(getByText('Get Directions From'));
+    fireEvent.press(getByText('▶'));
+    fireEvent.press(getByText('H-201'));
+    fireEvent.press(getByText('Get Directions To'));
+    fireEvent.press(getByText('◀'));
+
+    expect(getByText('Take elevator to Floor 2')).toBeTruthy();
+    expect(getAllByTestId('cross-floor-direction').length).toBeGreaterThan(0);
+
+    fireEvent.press(getByText('▶'));
+    expect(getByText('Arrive from Floor 1')).toBeTruthy();
+  });
+
+  it('clears route state when clear button is pressed', () => {
+    const { getByText, queryByText, queryAllByTestId } = render(
+      <IndoorMapModal visible={true} initialBuildingCode="H" onClose={onClose} />
+    );
+
+    fireEvent.press(getByText('H-101'));
+    fireEvent.press(getByText('Get Directions From'));
+    fireEvent.press(getByText('Gender Neutral Washroom'));
+    fireEvent.press(getByText('Get Directions To'));
+
+    expect(getByText('Clear Route')).toBeTruthy();
+
+    fireEvent.press(getByText('Clear Route'));
+
+    expect(queryByText('Route: H-101 to Gender Neutral Washroom')).toBeNull();
+    expect(queryAllByTestId('route-segment')).toHaveLength(0);
   });
 });
