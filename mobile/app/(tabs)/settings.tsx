@@ -1,6 +1,6 @@
 import { Text, View, StyleSheet, Pressable, ActivityIndicator, Image, ScrollView } from 'react-native';
 import React, { useCallback, useRef } from 'react';
-import { useFocusEffect } from 'expo-router';
+import { useFocusEffect, Link } from 'expo-router';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
 import { useCalendar } from '../../context/CalendarContext';
@@ -168,6 +168,26 @@ function AccountSection({ isDark, user, isLoading, calendars, isLoadingCalendars
   );
 }
 
+function DebugSection({ isDark }: Readonly<{ isDark: boolean }>) {
+  if (!__DEV__) return null;
+  const mutedColor = isDark ? '#8e8e93' : '#6e6e73';
+  const bgColor = isDark ? '#1c1c1e' : '#ffffff';
+
+  return (
+    <>
+      <Text style={[styles.sectionTitle, { color: mutedColor, marginTop: 30 }]}>Developer Tools</Text>
+      <View style={[styles.optionsContainer, { backgroundColor: bgColor, marginBottom: 40 }]}>
+        <Link href="/indoor-path-test" asChild>
+          <Pressable style={styles.option}>
+            <Text style={[styles.optionText, { color: '#007aff' }]}>Test Indoor Pathfinder</Text>
+            <Text style={{ color: mutedColor }}>{'>'}</Text>
+          </Pressable>
+        </Link>
+      </View>
+    </>
+  );
+}
+
 // --- Main Screen ---
 
 export default function SettingsScreen() {
@@ -233,6 +253,8 @@ export default function SettingsScreen() {
         onCalendarSelect={handleCalendarSelect}
         onSignOut={handleSignOut}
       />
+
+	<DebugSection isDark={isDark} />
     </ScrollView>
   );
 }

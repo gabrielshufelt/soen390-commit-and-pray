@@ -8,6 +8,9 @@ import sgwData from '../data/buildings/sgw.json';
 import loyolaData from '../data/buildings/loyola.json';
 import { getInteriorPoint } from './geometry';
 
+// Import centralized data barrel
+import { AllCampusData } from '../data/buildings';
+
 export interface BuildingCoordinate {
   latitude: number;
   longitude: number;
@@ -38,4 +41,28 @@ for (const feature of allFeatures) {
 // Get the geographic centre of a campus building by its code (e.g. "H", "MB", "CJ").
 export function getBuildingCoordinate(buildingCode: string): BuildingCoordinate | null {
   return coordinateMap[buildingCode.toUpperCase()] ?? null;
+}
+
+export function getBuildingEntryCoordinates(buildingCode: string): BuildingCoordinate | null {
+  try {
+    const upperCode = buildingCode.toUpperCase();
+
+    const buildingFloors = AllCampusData.filter(f => f.meta.buildingId === upperCode);
+    
+    if (buildingFloors.length === 0) return null;
+
+    for (const floor of buildingFloors) {
+      const entryNode = floor.nodes.find((node: any) => node.type === 'building_entry');
+      
+      if (entryNode?.latitude && entryNode?.longitude) {
+        return {
+          latitude: entryNode.latitude,
+          longitude: entryNode.longitude,
+        };
+      }
+    }
+    return null;
+  } catch {
+    return null;
+  }
 }

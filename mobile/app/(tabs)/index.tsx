@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useCallback } from "react";
+import React, { useMemo, useState, useCallback, useRef, useEffect } from "react";
 import { useFocusEffect } from "expo-router";
 import * as Location from "expo-location";
 import { useNavigationCamera } from "../../hooks/useNavigationCamera";
@@ -28,9 +28,12 @@ import { useNextClass } from "../../hooks/useNextClass";
 import { getRouteLineStyle } from "../../constants/routeStyles";
 import NextClassModal from "../../components/NextClassModal";
 import { getBuildingCoordinate } from "../../utils/buildingCoordinates";
+import IndoorMapModal from "../../components/indoorMapModal";
+import { getBuildingIndoorMap, getIndoorBuildingCodes } from "@/utils/indoorMapData";
 
 const LABEL_ZOOM_THRESHOLD = 0.015;
 const ANCHOR_OFFSET = { x: 0.5, y: 0.5 };
+const SUPPORTED_INDOOR_BUILDINGS = new Set(["H", "MB", "VL", "CC"]);
 
 export default function Index() {
   const { colorScheme } = useTheme();
@@ -99,10 +102,13 @@ export default function Index() {
   const [startChoice, setStartChoice] = useState<BuildingChoice | null>(null);
   const [destChoice, setDestChoice] = useState<BuildingChoice | null>(null);
   const [showShuttleModal, setShowShuttleModal] = useState(false);
+  const [showIndoorMapModal, setShowIndoorMapModal] = useState(false);
+  const [indoorBuildingCode, setIndoorBuildingCode] = useState<string | null>(null);
 
   // Concordia Shuttle option
   const [useShuttle, setUseShuttle] = useState(false);
-  const [shuttleCampus, setShuttleCampus] = useState<"SGW" | "Loyola">("SGW");
+  // Departure campus is always the opposite of the destination building's campus
+  const shuttleCampus: "SGW" | "Loyola" = destChoice?.campus === "Loyola" ? "SGW" : "Loyola";
 
   // fetchTrigger is incremented every time the home screen gains focus so that
   // the next class data is refreshed when the user returns from Settings after
@@ -188,12 +194,79 @@ export default function Index() {
     });
   }, [setPreviewRouteInfo]);
 
+  // Accumulate all 3 shuttle preview leg results before updating the time estimate.
+  const shuttlePreviewLegs = useRef<({ distance: number; duration: number } | null)[]>([null, null, null]);
+
+  useEffect(() => {
+    shuttlePreviewLegs.current = [null, null, null];
+  }, [useShuttle, shuttleWaypoints, destChoice, startChoice]);
+
+  const handlePreviewLegReady = useCallback((legIndex: 0 | 1 | 2, result: any) => {
+    shuttlePreviewLegs.current[legIndex] = { distance: result.distance ?? 0, duration: result.duration ?? 0 };
+    const all = shuttlePreviewLegs.current;
+    if (all[0] && all[1] && all[2]) {
+      const totalDist = all[0].distance + all[1].distance + all[2].distance;
+      const totalDur = all[0].duration + all[1].duration + all[2].duration;
+      setPreviewRouteInfo({
+        distance: totalDist,
+        duration: totalDur,
+        distanceText: `${totalDist.toFixed(1)} km`,
+        durationText: `${Math.round(totalDur)} min`,
+      });
+    }
+  }, [setPreviewRouteInfo]);
+
+  const handlePreviewLeg1Ready = useCallback((result: any) => handlePreviewLegReady(0, result), [handlePreviewLegReady]);
+  const handlePreviewLeg2Ready = useCallback((result: any) => handlePreviewLegReady(1, result), [handlePreviewLegReady]);
+  const handlePreviewLeg3Ready = useCallback((result: any) => handlePreviewLegReady(2, result), [handlePreviewLegReady]);
+
   const handleShowShuttleRoute = () => {
     const loyolaStop = shuttleData.busStops.loyola.coordinate;
     const sgwStop = shuttleData.busStops.sgw.coordinate;
 
     startDirections(loyolaStop, sgwStop);
   };
+
+   const resolveIndoorBuildingCode = (): string | null => {
+      const candidates = [
+        indoorBuildingCode,
+        selectedBuildingData?.properties?.code,
+        destChoice?.code,
+        startChoice?.code,
+        userBuilding?.code,
+      ];
+
+      for (const candidate of candidates) {
+        const normalized = typeof candidate === "string" ? candidate.toUpperCase() : null;
+        if (normalized && getBuildingIndoorMap(normalized)) {
+          return normalized;
+        }
+      }
+
+      return getIndoorBuildingCodes()[0] ?? null;
+    };
+
+    const handleOpenIndoorQuickAccess = () => {
+      const fallbackCode = resolveIndoorBuildingCode();
+      if (!fallbackCode) {
+        Alert.alert("Indoor map unavailable", "No indoor map data is configured yet.");
+        return;
+      }
+
+      setIndoorBuildingCode(fallbackCode);
+      setShowIndoorMapModal(true);
+    };
+  const handleOpenIndoorMap = (building: BuildingChoice) => {
+      const match = /\(([A-Za-z0-9]+)\)\s*$/.exec(building.name);
+      const extractedCode = building.code ?? match?.[1];
+      const normalizedCode = extractedCode?.toUpperCase();
+      if (!normalizedCode) return;
+
+      if (!getBuildingIndoorMap(normalizedCode)) return;
+
+      setIndoorBuildingCode(normalizedCode);
+      setShowIndoorMapModal(true);
+    };
 
 
   const handleRegionChange = useCallback((region: Region) => {
@@ -442,7 +515,7 @@ export default function Index() {
             apikey={apiKey}
             mode={directionsState.transportMode}
             {...getRouteLineStyle(directionsState.transportMode)}
-            onReady={handleRoutePreviewReady}
+            onReady={handlePreviewLeg1Ready}
           />
           {/* Leg 2: shuttle departure stop → arrival stop (shuttle bus) */}
           <MapViewDirections
@@ -452,7 +525,7 @@ export default function Index() {
             apikey={apiKey}
             mode="DRIVING"
             {...getRouteLineStyle('SHUTTLE')}
-            onReady={handleRoutePreviewReady}
+            onReady={handlePreviewLeg2Ready}
           />
           {/* Leg 3: shuttle arrival stop → destination */}
           <MapViewDirections
@@ -462,7 +535,7 @@ export default function Index() {
             apikey={apiKey}
             mode={directionsState.transportMode}
             {...getRouteLineStyle(directionsState.transportMode)}
-            onReady={handleRoutePreviewReady}
+            onReady={handlePreviewLeg3Ready}
           />
         </React.Fragment>
       );
@@ -484,6 +557,7 @@ export default function Index() {
     directionsState.isActive, directionsState.transportMode, destChoice,
     startChoice, effectiveLocation, useShuttle, shuttleWaypoints,
     apiKey, effectiveMode, handleRoutePreviewReady,
+    handlePreviewLeg1Ready, handlePreviewLeg2Ready, handlePreviewLeg3Ready,
   ]);
 
   return (
@@ -550,9 +624,15 @@ export default function Index() {
           previewRouteInfo={previewRouteInfo}
           useShuttle={useShuttle}
           onUseShuttleChange={setUseShuttle}
-          onCampusChange={setShuttleCampus}
+          onOpenBuilding={handleOpenIndoorMap}
         />
       )}
+
+        <IndoorMapModal
+          visible={showIndoorMapModal}
+          initialBuildingCode={indoorBuildingCode}
+          onClose={() => setShowIndoorMapModal(false)}
+         />
 
       {!directionsState.isActive && (
         <NextClassModal
@@ -566,6 +646,15 @@ export default function Index() {
       {!directionsState.isActive && (
         <CampusToggle selectedCampus={campusKey} onCampusChange={setCampusKey} />
       )}
+        {userBuilding && (
+        <TouchableOpacity
+           style={styles.indoorButton}
+           onPress={handleOpenIndoorQuickAccess}
+           activeOpacity={0.85}
+        >
+             <Text style={styles.indoorButtonText}>Indoor</Text>
+        </TouchableOpacity>
+        )}
 
       <TouchableOpacity
         style={styles.shuttleButton}
@@ -642,6 +731,32 @@ const styles = StyleSheet.create({
     elevation: 5,
     zIndex: 1000,
   },
+  indoorButton: {
+      position: "absolute",
+      top: 204,
+      left: 16,
+      minWidth: 56,
+      height: 42,
+      borderRadius: 21,
+      backgroundColor: "#8B0000",
+      borderWidth: 1,
+      borderColor: "#6E0000",
+      justifyContent: "center",
+      alignItems: "center",
+      paddingHorizontal: 12,
+      shadowColor: "#000",
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.25,
+      shadowRadius: 3.84,
+      elevation: 5,
+      zIndex: 1000,
+    },
+
+    indoorButtonText: {
+      fontSize: 13,
+      fontWeight: "700",
+      color: "#FFFFFF",
+    },
 
   shuttleButtonText: {
     fontSize: 28,
