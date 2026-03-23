@@ -1,16 +1,9 @@
 import type { ImageSourcePropType } from "react-native";
 
-import ccFloor1Nav from "../data/buildings/CC/1-nav.json";
-import hFloor1Nav from "../data/buildings/H/1-nav.json";
-import hFloor2Nav from "../data/buildings/H/2-nav.json";
-import hFloor8Nav from "../data/buildings/H/8-nav.json";
-import hFloor9Nav from "../data/buildings/H/9-nav.json";
-import mbFloor1Nav from "../data/buildings/MB/1-nav.json";
-import mbFloorS2Nav from "../data/buildings/MB/S2-nav.json";
-import vlFloor1Nav from "../data/buildings/VL/1-nav.json";
-import vlFloor2Nav from "../data/buildings/VL/2-nav.json";
-
-
+import { CCData } from "../data/buildings/CC";
+import { HallData } from "../data/buildings/H";
+import { MBData } from "../data/buildings/MB";
+import { VLData } from "../data/buildings/VL";
 
 export type IndoorNode = {
   id: string;
@@ -78,38 +71,38 @@ const INDOOR_BUILDING_MAPS: Record<string, IndoorBuildingMap> = {
     buildingId: "CC",
     floors: [
       // CC Floor 1: Loyola CJ campus
-      buildFloor(ccFloor1Nav as IndoorNavFile, require("../data/buildings/CC/1.png")),
+      buildFloor(CCData[0] as IndoorNavFile, require("../data/buildings/CC/1.png")),
     ],
   },
   H: {
     buildingId: "H",
     floors: [
       // H Floor 1: SGW campus downtown
-      buildFloor(hFloor1Nav as IndoorNavFile, require("../data/buildings/H/1.png")),
+      buildFloor(HallData.find(f => f.meta.floor === 1) as IndoorNavFile, require("../data/buildings/H/1.png")),
       // H Floor 2: SGW campus downtown
-      buildFloor(hFloor2Nav as IndoorNavFile, require("../data/buildings/H/2.png")),
+      buildFloor(HallData.find(f => f.meta.floor === 2) as IndoorNavFile, require("../data/buildings/H/2.png")),
       // H Floor 8: SGW campus downtown
-      buildFloor(hFloor8Nav as IndoorNavFile, require("../data/buildings/H/8.png")),
+      buildFloor(HallData.find(f => f.meta.floor === 8) as IndoorNavFile, require("../data/buildings/H/8.png")),
       // H Floor 9: SGW campus downtown
-      buildFloor(hFloor9Nav as IndoorNavFile, require("../data/buildings/H/9.png")),
+      buildFloor(HallData.find(f => f.meta.floor === 9) as IndoorNavFile, require("../data/buildings/H/9.png")),
     ],
   },
   MB: {
     buildingId: "MB",
     floors: [
       // MB Basement S2: JMSB (John Molson School of Business)
-      buildFloor(mbFloorS2Nav as IndoorNavFile, require("../data/buildings/MB/S2.png")),
+      buildFloor(MBData.find(f => f.meta.floor === -2) as IndoorNavFile, require("../data/buildings/MB/S2.png")),
       // MB Floor 1: JMSB
-      buildFloor(mbFloor1Nav as IndoorNavFile, require("../data/buildings/MB/1.png")),
+      buildFloor(MBData.find(f => f.meta.floor === 1) as IndoorNavFile, require("../data/buildings/MB/1.png")),
     ],
   },
   VL: {
     buildingId: "VL",
     floors: [
       // VL Floor 1: Loyola campus
-      buildFloor(vlFloor1Nav as IndoorNavFile, require("../data/buildings/VL/1.png")),
+      buildFloor(VLData.find(f => f.meta.floor === 1) as IndoorNavFile, require("../data/buildings/VL/1.png")),
       // VL Floor 2: Loyola campus
-      buildFloor(vlFloor2Nav as IndoorNavFile, require("../data/buildings/VL/2.png")),
+      buildFloor(VLData.find(f => f.meta.floor === 2) as IndoorNavFile, require("../data/buildings/VL/2.png")),
     ],
   },
 };
