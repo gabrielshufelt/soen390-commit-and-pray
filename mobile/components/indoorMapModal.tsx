@@ -12,10 +12,12 @@ import type { DimensionValue } from "react-native";
 
 import {
   getBuildingIndoorMap,
+  getBuildingIndoorGraphData,
   getFloorLabel,
   type IndoorNode,
   type IndoorFloorMap,
 } from "@/utils/indoorMapData";
+import { IndoorPathfinder, type IndoorNode as PathfinderIndoorNode } from "@/utils/indoorPathfinder";
 import { styles } from "@/styles/indoorMapModal.styles";
 
 type IndoorMapModalProps = {
@@ -33,6 +35,43 @@ const ACCESSIBILITY_ICONS = {
 };
 
 type AccessibilityFilter = keyof typeof ACCESSIBILITY_ICONS;
+
+type RouteSegment = {
+  id: string;
+  left: DimensionValue;
+  top: DimensionValue;
+  width: number;
+  angle: number;
+};
+
+type RouteTransition = {
+  id: string;
+  left: DimensionValue;
+  top: DimensionValue;
+  message: string;
+};
+
+const clampPercent = (value: number) => Math.max(0, Math.min(100, value));
+
+const getNodePositionPercent = (
+  node: Pick<IndoorNode, "x" | "y">,
+  floor: Pick<IndoorFloorMap, "canvasWidth" | "canvasHeight" | "offsetX" | "offsetY" | "scaleX" | "scaleY">
+) => {
+  const scaleX = floor.scaleX ?? 1;
+  const scaleY = floor.scaleY ?? 1;
+  const offsetX = floor.offsetX ?? 0;
+  const offsetY = floor.offsetY ?? 0;
+
+  const leftPct = clampPercent(((node.x * scaleX + offsetX) / floor.canvasWidth) * 100);
+  const topPct = clampPercent(((node.y * scaleY + offsetY) / floor.canvasHeight) * 100);
+
+  return {
+    left: `${leftPct}%` as DimensionValue,
+    top: `${topPct}%` as DimensionValue,
+    leftPct,
+    topPct,
+  };
+};
 
 const getRoomNodes = (nodes: IndoorNode[]): IndoorNode[] => {
   return nodes.filter((node) => node.type === ROOM_NODE_TYPE && !!node.label?.trim());
@@ -87,11 +126,22 @@ export default function IndoorMapModal({
     return getBuildingIndoorMap(initialBuildingCode);
   }, [initialBuildingCode]);
 
+  const pathfinder = useMemo(() => {
+    if (!initialBuildingCode) return null;
+    const graphData = getBuildingIndoorGraphData(initialBuildingCode);
+    if (!graphData || graphData.length === 0) return null;
+    return new IndoorPathfinder(graphData);
+  }, [initialBuildingCode]);
+
   const [floorIndex, setFloorIndex] = useState(0);
   const [selectedRoom, setSelectedRoom] = useState<IndoorNode | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeFilters, setActiveFilters] = useState<AccessibilityFilter[]>([]);
   const [viewMode, setViewMode] = useState<"map" | "search">("map");
+  const [routeStartNode, setRouteStartNode] = useState<IndoorNode | null>(null);
+  const [routeEndNode, setRouteEndNode] = useState<IndoorNode | null>(null);
+  const [routePath, setRoutePath] = useState<PathfinderIndoorNode[]>([]);
+  const [routeError, setRouteError] = useState<string | null>(null);
   const [zoom, setZoom] = useState(1);
   const [panX, setPanX] = useState(0);
   const [panY, setPanY] = useState(0);
@@ -112,7 +162,79 @@ export default function IndoorMapModal({
     setFloorIndex(firstFloorIndex);
   }, [indoorMap]);
 
+  useEffect(() => {
+    setSelectedRoom(null);
+    setRouteStartNode(null);
+    setRouteEndNode(null);
+    setRoutePath([]);
+    setRouteError(null);
+  }, [initialBuildingCode]);
+
   const currentFloor = indoorMap?.floors[floorIndex] ?? null;
+
+  const routeSegments = useMemo<RouteSegment[]>(() => {
+    if (!currentFloor || routePath.length < 2) return [];
+
+    const segments: RouteSegment[] = [];
+    for (let i = 0; i < routePath.length - 1; i++) {
+      const start = routePath[i];
+      const end = routePath[i + 1];
+      if (start.floor !== currentFloor.floor || end.floor !== currentFloor.floor) {
+        continue;
+      }
+
+      const startPct = getNodePositionPercent(start, currentFloor);
+      const endPct = getNodePositionPercent(end, currentFloor);
+
+      const dx = endPct.leftPct - startPct.leftPct;
+      const dy = endPct.topPct - startPct.topPct;
+      const width = Math.sqrt(dx * dx + dy * dy);
+      const angle = (Math.atan2(dy, dx) * 180) / Math.PI;
+
+      segments.push({
+        id: `${start.id}-${end.id}`,
+        left: `${startPct.leftPct}%`,
+        top: `${startPct.topPct}%`,
+        width,
+        angle,
+      });
+    }
+
+    return segments;
+  }, [currentFloor, routePath]);
+
+  const crossFloorTransitions = useMemo<RouteTransition[]>(() => {
+    if (!currentFloor || routePath.length < 2) return [];
+
+    const transitions: RouteTransition[] = [];
+    for (let i = 0; i < routePath.length - 1; i++) {
+      const start = routePath[i];
+      const end = routePath[i + 1];
+      if (start.floor === end.floor) continue;
+
+      if (start.floor === currentFloor.floor) {
+        const startPct = getNodePositionPercent(start, currentFloor);
+        transitions.push({
+          id: `up-${start.id}-${end.id}`,
+          left: startPct.left,
+          top: startPct.top,
+          message: `Take elevator to Floor ${getFloorLabel(end.floor)}`,
+        });
+      }
+
+      if (end.floor === currentFloor.floor) {
+        const endPct = getNodePositionPercent(end, currentFloor);
+        transitions.push({
+          id: `down-${start.id}-${end.id}`,
+          left: endPct.left,
+          top: endPct.top,
+          message: `Arrive from Floor ${getFloorLabel(start.floor)}`,
+        });
+      }
+    }
+
+    return transitions;
+  }, [currentFloor, routePath]);
 
   const rooms = useMemo(() => {
     return currentFloor ? getRoomNodes(currentFloor.nodes) : [];
@@ -162,6 +284,68 @@ export default function IndoorMapModal({
     }
   };
 
+  const computeRoute = (fromNode: IndoorNode, toNode: IndoorNode) => {
+    if (!pathfinder) {
+      setRoutePath([]);
+      setRouteError("Indoor routing data is unavailable for this building.");
+      return;
+    }
+
+    if (fromNode.type !== ROOM_NODE_TYPE || toNode.type !== ROOM_NODE_TYPE) {
+      setRoutePath([]);
+      setRouteError("Directions are only supported between rooms.");
+      return;
+    }
+
+    const startLabel = fromNode.label.trim();
+    const endLabel = toNode.label.trim();
+
+    if (!startLabel || !endLabel) {
+      setRoutePath([]);
+      setRouteError("Selected rooms must have valid labels.");
+      return;
+    }
+
+    const path = pathfinder.findShortestPath(startLabel, endLabel);
+    if (!path || path.length < 2) {
+      setRoutePath([]);
+      setRouteError(`No indoor route found from ${startLabel} to ${endLabel}.`);
+      return;
+    }
+
+    setRoutePath(path);
+    setRouteError(null);
+  };
+
+  const handleSetRouteFrom = () => {
+    if (!selectedRoom) return;
+    setRouteStartNode(selectedRoom);
+    if (routeEndNode) {
+      computeRoute(selectedRoom, routeEndNode);
+    } else {
+      setRoutePath([]);
+      setRouteError(null);
+    }
+  };
+
+  const handleSetRouteTo = () => {
+    if (!selectedRoom) return;
+    setRouteEndNode(selectedRoom);
+    if (routeStartNode) {
+      computeRoute(routeStartNode, selectedRoom);
+    } else {
+      setRoutePath([]);
+      setRouteError(null);
+    }
+  };
+
+  const clearRoute = () => {
+    setRouteStartNode(null);
+    setRouteEndNode(null);
+    setRoutePath([]);
+    setRouteError(null);
+  };
+
   const handleZoomIn = () => {
     setZoom((prevZoom) => Math.min(3, prevZoom + 0.5));
   };
@@ -208,16 +392,7 @@ export default function IndoorMapModal({
   };
 
   const renderRoomDot = (room: IndoorNode, floor: IndoorFloorMap, isSelected: boolean) => {
-    const scaleX = floor.scaleX ?? 1;
-    const scaleY = floor.scaleY ?? 1;
-    const offsetX = floor.offsetX ?? 0;
-    const offsetY = floor.offsetY ?? 0;
-
-    const leftPct = ((room.x * scaleX + offsetX) / floor.canvasWidth) * 100;
-    const topPct = ((room.y * scaleY + offsetY) / floor.canvasHeight) * 100;
-
-    const left = `${Math.max(0, Math.min(100, leftPct))}%` as DimensionValue;
-    const top = `${Math.max(0, Math.min(100, topPct))}%` as DimensionValue;
+    const { left, top } = getNodePositionPercent(room, floor);
 
     const facility = getNodeAccessibility(room);
     const isFacility = facility !== null && room.type !== ROOM_NODE_TYPE;
@@ -328,23 +503,23 @@ export default function IndoorMapModal({
                 </View>
 
                 <View style={styles.zoomControlsContainer}>
-                  <TouchableOpacity 
-                    style={styles.zoomButton} 
+                  <TouchableOpacity
+                    style={styles.zoomButton}
                     onPress={handleZoomIn}
                     disabled={zoom >= 3}
                   >
                     <Text style={styles.zoomButtonText}>+</Text>
                   </TouchableOpacity>
                   <Text style={styles.zoomLevelText}>{zoom.toFixed(1)}x</Text>
-                  <TouchableOpacity 
-                    style={styles.zoomButton} 
+                  <TouchableOpacity
+                    style={styles.zoomButton}
                     onPress={handleZoomOut}
                     disabled={zoom <= 1}
                   >
                     <Text style={styles.zoomButtonText}>−</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity 
-                    style={styles.zoomButton} 
+                  <TouchableOpacity
+                    style={styles.zoomButton}
                     onPress={handleResetZoom}
                   >
                     <Text style={styles.resetButtonText}>Reset</Text>
@@ -352,16 +527,16 @@ export default function IndoorMapModal({
                 </View>
 
                 <View style={styles.mapViewContainer}>
-                  <View 
+                  <View
                     style={styles.mapScrollContainer}
                     onTouchStart={handleMapPressIn}
                     onTouchMove={handleMapMove}
                     onTouchEnd={handleMapPressOut}
                   >
-                    <View 
+                    <View
                       style={[
-                        styles.mapCard, 
-                        { 
+                        styles.mapCard,
+                        {
                           transform: [
                             { scale: zoom },
                             { translateX: panX },
@@ -373,6 +548,54 @@ export default function IndoorMapModal({
                     >
                       <Image source={currentFloor.image} style={styles.floorImage} resizeMode="stretch" />
                       <View style={styles.roomOverlay}>
+                        {routeSegments.map((segment) => (
+                          <View
+                            key={segment.id}
+                            testID="route-segment"
+                            style={[
+                              styles.routeSegment,
+                              {
+                                left: segment.left,
+                                top: segment.top,
+                                width: `${segment.width}%`,
+                                transform: [{ rotate: `${segment.angle}deg` }],
+                              },
+                            ]}
+                          />
+                        ))}
+
+                        {routePath.length > 1 && currentFloor && (() => {
+                          const startNode = routePath[0];
+                          const endNode = routePath[routePath.length - 1];
+                          const startOnFloor = startNode.floor === currentFloor.floor;
+                          const endOnFloor = endNode.floor === currentFloor.floor;
+
+                          return (
+                            <>
+                              {startOnFloor && (
+                                <View
+                                  testID="route-start-marker"
+                                  style={[
+                                    styles.routeEndpoint,
+                                    styles.routeStartEndpoint,
+                                    getNodePositionPercent(startNode, currentFloor),
+                                  ]}
+                                />
+                              )}
+                              {endOnFloor && (
+                                <View
+                                  testID="route-end-marker"
+                                  style={[
+                                    styles.routeEndpoint,
+                                    styles.routeEndEndpoint,
+                                    getNodePositionPercent(endNode, currentFloor),
+                                  ]}
+                                />
+                              )}
+                            </>
+                          );
+                        })()}
+
                         {[...rooms, ...facilities].map((room) =>
                           renderRoomDot(room, currentFloor, selectedRoom?.id === room.id)
                         )}
@@ -381,17 +604,51 @@ export default function IndoorMapModal({
                   </View>
                 </View>
 
+                {(routeStartNode || routeEndNode || routeError || crossFloorTransitions.length > 0) && (
+                  <View style={styles.routeInfoCard}>
+                    {routeStartNode && routeEndNode ? (
+                      <Text style={styles.routeInfoText}>
+                        Route: {routeStartNode.label.trim()} to {routeEndNode.label.trim()}
+                      </Text>
+                    ) : (
+                      <Text style={styles.routeInfoText}>
+                        {routeStartNode
+                          ? `Start set: ${routeStartNode.label.trim()}`
+                          : routeEndNode
+                            ? `Destination set: ${routeEndNode.label.trim()}`
+                            : "Pick rooms to generate a route."}
+                      </Text>
+                    )}
+
+                    {crossFloorTransitions.map((transition) => (
+                      <Text key={transition.id} testID="cross-floor-direction" style={styles.crossFloorText}>
+                        {transition.message}
+                      </Text>
+                    ))}
+
+                    {routeError && <Text style={styles.routeErrorText}>{routeError}</Text>}
+
+                    {(routePath.length > 0 || routeStartNode || routeEndNode) && (
+                      <TouchableOpacity style={styles.clearRouteButton} onPress={clearRoute}>
+                        <Text style={styles.clearRouteButtonText}>Clear Route</Text>
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                )}
+
                 {selectedRoom && (
                   <View style={styles.selectedRoomCard}>
                     <Text style={styles.selectedRoomLabel}>{selectedRoom.label}</Text>
-                    <TouchableOpacity 
+                    <TouchableOpacity
                       style={[styles.directionButton, styles.directionButtonTo]}
+                      onPress={handleSetRouteTo}
                       activeOpacity={0.7}
                     >
                       <Text style={styles.directionButtonToText}>Get Directions To</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity 
+                    <TouchableOpacity
                       style={[styles.directionButton, styles.directionButtonFrom]}
+                      onPress={handleSetRouteFrom}
                       activeOpacity={0.7}
                     >
                       <Text style={styles.directionButtonFromText}>Get Directions From</Text>

@@ -354,6 +354,68 @@ export const styles = StyleSheet.create({
   roomOverlay: {
     ...StyleSheet.absoluteFillObject,
   },
+  routeSegment: {
+    position: "absolute",
+    height: 5,
+    backgroundColor: "#1E64D8",
+    borderRadius: 999,
+    opacity: 0.9,
+    transformOrigin: "0 50%",
+  },
+  routeEndpoint: {
+    position: "absolute",
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    borderWidth: 2,
+    borderColor: WHITE,
+    transform: [{ translateX: -7 }, { translateY: -7 }],
+  },
+  routeStartEndpoint: {
+    backgroundColor: "#0C8A3F",
+  },
+  routeEndEndpoint: {
+    backgroundColor: "#1E64D8",
+  },
+  routeInfoCard: {
+    marginHorizontal: 16,
+    marginTop: 10,
+    marginBottom: 8,
+    padding: 12,
+    borderRadius: 12,
+    backgroundColor: "#F0F6FF",
+    borderWidth: 1,
+    borderColor: "#BCD3F5",
+    gap: 6,
+  },
+  routeInfoText: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#113C82",
+  },
+  crossFloorText: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#235CB8",
+  },
+  routeErrorText: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#A12333",
+  },
+  clearRouteButton: {
+    alignSelf: "flex-start",
+    borderWidth: 1,
+    borderColor: "#1E64D8",
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  clearRouteButtonText: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#1E64D8",
+  },
   roomDotContainer: {
     position: "absolute",
     transform: [{ translateX: -8 }, { translateY: -8 }],
