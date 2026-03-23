@@ -188,6 +188,7 @@ describe('<IndoorMapModal />', () => {
 
   afterEach(() => {
     jest.restoreAllMocks();
+    mockGetBuildingIndoorMap.mockReturnValue(createIndoorMap());
   });
 
   it('renders empty state when no indoor map exists for the building', () => {

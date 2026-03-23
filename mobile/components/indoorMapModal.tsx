@@ -393,6 +393,16 @@ export default function IndoorMapModal({
 
   const renderRoomDot = (room: IndoorNode, floor: IndoorFloorMap, isSelected: boolean) => {
     const { left, top } = getNodePositionPercent(room, floor);
+    const scaleX = floor.scaleX ?? 1;
+    const scaleY = floor.scaleY ?? 1;
+    const offsetX = floor.offsetX ?? 0;
+    const offsetY = floor.offsetY ?? 0;
+
+    const leftPct = ((room.x * scaleX + offsetX) / floor.canvasWidth) * 100;
+    const topPct = ((room.y * scaleY + offsetY) / floor.canvasHeight) * 100;
+
+    const left = `${Math.max(0, Math.min(100, leftPct))}%` as DimensionValue;
+    const top = `${Math.max(0, Math.min(100, topPct))}%` as DimensionValue;
 
     const facility = getNodeAccessibility(room);
     const isFacility = facility !== null && room.type !== ROOM_NODE_TYPE;
