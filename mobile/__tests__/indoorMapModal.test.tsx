@@ -4,6 +4,29 @@ import { fireEvent, render } from '@testing-library/react-native';
 import IndoorMapModal from '../components/indoorMapModal';
 import { IndoorPathfinder } from '../utils/indoorPathfinder';
 
+jest.mock('react-native/Libraries/Modal/Modal', () => {
+  const React = require('react');
+  const MockModal = ({ children, visible }: { children: React.ReactNode; visible?: boolean }) =>
+    visible ? React.createElement(React.Fragment, null, children) : null;
+
+  return {
+    __esModule: true,
+    default: MockModal,
+  };
+});
+
+jest.mock('react-native-safe-area-context', () => {
+  const React = require('react');
+  const { View } = require('react-native');
+
+  return {
+    SafeAreaProvider: ({ children }: { children: React.ReactNode }) =>
+      React.createElement(View, null, children),
+    SafeAreaView: ({ children }: { children: React.ReactNode }) =>
+      React.createElement(View, null, children),
+  };
+});
+
 const mockFindShortestPath = jest.fn();
 
 jest.mock('@/styles/indoorMapModal.styles', () => ({
