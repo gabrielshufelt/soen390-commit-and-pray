@@ -8,19 +8,8 @@ import sgwData from '../data/buildings/sgw.json';
 import loyolaData from '../data/buildings/loyola.json';
 import { getInteriorPoint } from './geometry';
 
-// Import all nav.json files statically to satisfy Metro bundler
-import navDataCC from '../data/buildings/CC/1-nav.json';
-import navDataH from '../data/buildings/H/1-nav.json';
-import navDataMB from '../data/buildings/MB/1-nav.json';
-import navDataVL from '../data/buildings/VL/1-nav.json';
-
-// Map building codes to their nav data
-const navDataMap: Record<string, Record<string, unknown>> = {
-  'CC': navDataCC,
-  'H': navDataH,
-  'MB': navDataMB,
-  'VL': navDataVL,
-};
+// Import centralized data barrel
+import { AllCampusData } from '../data/buildings';
 
 export interface BuildingCoordinate {
   latitude: number;
@@ -57,29 +46,22 @@ export function getBuildingCoordinate(buildingCode: string): BuildingCoordinate 
 export function getBuildingEntryCoordinates(buildingCode: string): BuildingCoordinate | null {
   try {
     const upperCode = buildingCode.toUpperCase();
-    const navData = navDataMap[upperCode];
+
+    const buildingFloors = AllCampusData.filter(f => f.meta.buildingId === upperCode);
     
-    if (!navData) {
-      return null;
+    if (buildingFloors.length === 0) return null;
+
+    for (const floor of buildingFloors) {
+      const entryNode = floor.nodes.find((node: any) => node.type === 'building_entry');
+      
+      if (entryNode?.latitude && entryNode?.longitude) {
+        return {
+          latitude: entryNode.latitude,
+          longitude: entryNode.longitude,
+        };
+      }
     }
-
-    const nodes = navData?.nodes;
-    if (!Array.isArray(nodes)) {
-      return null;
-    }
-
-    const entryNode = nodes.find(
-      (node: Record<string, unknown>) => node.type === 'building_entry'
-    );
-
-    if (!entryNode || typeof entryNode.latitude !== 'number' || typeof entryNode.longitude !== 'number') {
-      return null;
-    }
-
-    return {
-      latitude: entryNode.latitude as number,
-      longitude: entryNode.longitude as number,
-    };
+    return null;
   } catch {
     return null;
   }
