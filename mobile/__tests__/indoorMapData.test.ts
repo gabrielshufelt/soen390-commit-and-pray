@@ -1,4 +1,5 @@
 import {
+  getBuildingIndoorGraphData,
   getBuildingIndoorMap,
   getFloorLabel,
   getIndoorBuildingCodes,
@@ -16,6 +17,19 @@ describe('indoorMapData', () => {
 
   it('returns null for unknown building code', () => {
     expect(getBuildingIndoorMap('UNKNOWN')).toBeNull();
+    expect(getBuildingIndoorGraphData('UNKNOWN')).toBeNull();
+  });
+
+  it('returns graph data for known building codes and is case-insensitive', () => {
+    const upper = getBuildingIndoorGraphData('H');
+    const lower = getBuildingIndoorGraphData('h');
+
+    expect(upper).not.toBeNull();
+    expect(lower).not.toBeNull();
+    expect(lower).toEqual(upper);
+    expect(upper!.length).toBeGreaterThan(0);
+    expect(upper![0].nodes.length).toBeGreaterThan(0);
+    expect(upper![0].edges.length).toBeGreaterThan(0);
   });
 
   it('returns known indoor building codes', () => {

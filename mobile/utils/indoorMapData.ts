@@ -4,6 +4,7 @@ import { CCData } from "../data/buildings/CC";
 import { HallData } from "../data/buildings/H";
 import { MBData } from "../data/buildings/MB";
 import { VLData } from "../data/buildings/VL";
+import type { FloorData } from "./indoorPathfinder";
 
 export type IndoorNode = {
   id: string;
@@ -41,6 +42,7 @@ type IndoorNavFile = {
     floor: number;
   };
   nodes: IndoorNode[];
+  edges: FloorData["edges"];
 };
 
 const DEFAULT_CANVAS_SIZE = 2048;
@@ -107,6 +109,13 @@ const INDOOR_BUILDING_MAPS: Record<string, IndoorBuildingMap> = {
   },
 };
 
+const INDOOR_BUILDING_GRAPHS: Record<string, FloorData[]> = {
+  CC: CCData as FloorData[],
+  H: HallData as FloorData[],
+  MB: MBData as FloorData[],
+  VL: VLData as FloorData[],
+};
+
 for (const building of Object.values(INDOOR_BUILDING_MAPS)) {
   building.floors.sort((a, b) => a.floor - b.floor);
 }
@@ -118,6 +127,11 @@ export const getBuildingIndoorMap = (buildingCode: string): IndoorBuildingMap | 
 
 export const getIndoorBuildingCodes = (): string[] => {
   return Object.keys(INDOOR_BUILDING_MAPS);
+};
+
+export const getBuildingIndoorGraphData = (buildingCode: string): FloorData[] | null => {
+  const normalized = buildingCode.toUpperCase();
+  return INDOOR_BUILDING_GRAPHS[normalized] ?? null;
 };
 
 export const getFloorLabel = (floor: number): string => {
