@@ -48,9 +48,16 @@ jest.mock('@/utils/indoorMapData', () => ({
   getFloorLabel: (...args: unknown[]) => mockGetFloorLabel(...args),
 }));
 
-const routeNode = (id: string, floor: number, x: number, y: number, label: string) => ({
+const routeNode = (
+  id: string,
+  floor: number,
+  x: number,
+  y: number,
+  label: string,
+  type: string = 'room'
+) => ({
   id,
-  type: 'room',
+  type,
   buildingId: 'H',
   floor,
   x,
@@ -397,7 +404,11 @@ describe('<IndoorMapModal />', () => {
     fireEvent.press(getByText('Gender Neutral Washroom'));
     fireEvent.press(getByText('Get Directions To'));
 
-    expect(mockFindShortestPath).toHaveBeenCalledWith('H-101', 'Gender Neutral Washroom');
+    expect(mockFindShortestPath).toHaveBeenCalledWith('H-101', 'Gender Neutral Washroom', {
+      wheelchairAccessible: true,
+      avoidStairs: true,
+      preferElevators: true,
+    });
     expect(getByText('Route: H-101 to Gender Neutral Washroom')).toBeTruthy();
     expect(getAllByTestId('route-segment').length).toBeGreaterThan(0);
   });
@@ -405,8 +416,8 @@ describe('<IndoorMapModal />', () => {
   it('shows floor transition guidance for cross-floor routes', () => {
     mockFindShortestPath.mockReturnValue([
       routeNode('r1', 1, 100, 120, 'H-101'),
-      routeNode('e1', 1, 220, 240, ''),
-      routeNode('e2', 2, 230, 260, ''),
+      routeNode('e1', 1, 220, 240, '', 'elevator_door'),
+      routeNode('e2', 2, 230, 260, '', 'elevator_door'),
       routeNode('r2', 2, 300, 320, 'H-201'),
     ]);
 
