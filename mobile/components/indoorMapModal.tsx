@@ -9,6 +9,7 @@ import {
   FlatList,
 } from "react-native";
 import type { DimensionValue } from "react-native";
+import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 
 import {
   getBuildingIndoorMap,
@@ -393,16 +394,6 @@ export default function IndoorMapModal({
 
   const renderRoomDot = (room: IndoorNode, floor: IndoorFloorMap, isSelected: boolean) => {
     const { left, top } = getNodePositionPercent(room, floor);
-    const scaleX = floor.scaleX ?? 1;
-    const scaleY = floor.scaleY ?? 1;
-    const offsetX = floor.offsetX ?? 0;
-    const offsetY = floor.offsetY ?? 0;
-
-    const leftPct = ((room.x * scaleX + offsetX) / floor.canvasWidth) * 100;
-    const topPct = ((room.y * scaleY + offsetY) / floor.canvasHeight) * 100;
-
-    const left = `${Math.max(0, Math.min(100, leftPct))}%` as DimensionValue;
-    const top = `${Math.max(0, Math.min(100, topPct))}%` as DimensionValue;
 
     const facility = getNodeAccessibility(room);
     const isFacility = facility !== null && room.type !== ROOM_NODE_TYPE;
@@ -458,7 +449,8 @@ export default function IndoorMapModal({
 
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
-      <View style={styles.container}>
+      <SafeAreaProvider>
+        <SafeAreaView style={styles.container} edges={["top"]}>
         <View style={styles.header}>
           <Text style={styles.headerTitle}>
             {indoorMap ? `${indoorMap.buildingId} Indoor Map` : "Indoor Map"}
@@ -737,7 +729,8 @@ export default function IndoorMapModal({
             )}
           </>
         )}
-      </View>
+        </SafeAreaView>
+      </SafeAreaProvider>
     </Modal>
   );
 }
