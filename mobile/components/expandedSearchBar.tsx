@@ -167,6 +167,7 @@ export default function ExpandedSearchBar({
     addToHistory(b);
     setDestText(displayName(b));
     setDestFocused(false);
+    onOpenBuilding?.(b);
     Keyboard.dismiss();
   }
 
