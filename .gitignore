@@ -10,26 +10,24 @@ build/
 .expo/
 web-build/
 
-# Mobile (react native)
-mobile/node_modules/
-mobile/.bundle/
-mobile/vendor/bundle/
+# React native
+.bundle/
+vendor/bundle/
 
 # Android specific
-mobile/android/build/
-mobile/android/.gradle/
-mobile/android/app/build/
-mobile/android/local.properties
+android/build/
+android/.gradle/
+android/app/build/
+android/local.properties
 
 # iOS specific
-mobile/ios/build/
-mobile/ios/Pods/
-mobile/ios/.xcode.env.local
-mobile/ios/*.xcworkspace
+ios/build/
+ios/Pods/
+ios/.xcode.env.local
+ios/*.xcworkspace
 
 # testing and coverage
 coverage/
-mobile/coverage/
 .jest/
 *.lcov
 junit.xml
@@ -47,7 +45,7 @@ junit.xml
 *.key
 *.mobileprovision
 /ios
-/mobile/android
+/android
 
 # IDE
 .idea
