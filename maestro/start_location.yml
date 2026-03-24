@@ -1,11 +1,20 @@
 appId: com.commitandpray.soen390project
 ---
 - launchApp
-- setLocation: 45.49726, -73.57888
+- setLocation:
+    latitude: 45.49726
+    longitude: -73.57888
+- tapOn: 
+    point: 37%,43%
 - assertVisible: ".*Henry F. Hall Building.*"
-- tapOn: "Where to?"
+# tapon get directions from
+- tapOn:
+    point: 48%,93%
+- tapOn:
+    id: "searchbar.open"
+- tapOn:
+    point: "50%,42%"
 - inputText: "Richard J Renaud Science Complex"
-- tapOn: "Richard J Renaud Science Complex (SP)"
+- tapOn:
+    point: "50%,51%"
 - assertVisible: "Preview Route"
-- tapOn: "Preview Route"
-- assertVisible: "Exit Preview"
