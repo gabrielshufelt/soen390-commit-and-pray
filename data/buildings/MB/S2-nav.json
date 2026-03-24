@@ -2325,6 +2325,13 @@
       "type": "stair",
       "weight": 0,
       "accessible": true
+    },
+    {
+      "source": "MB_F-2_doorway_48",
+      "target": "MB_F-2_doorway_49_exit",
+      "type": "room_to_door",
+      "weight": 160,
+      "accessible": true
     }
   ]
 }

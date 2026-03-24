@@ -1227,6 +1227,34 @@
       "type": "hallway",
       "weight": 36,
       "accessible": false
+    },
+    {
+      "source": "CC_F1_room_69",
+      "target": "CC_F1_doorway_69_exit",
+      "type": "room_to_door",
+      "weight": 118,
+      "accessible": true
+    },
+    {
+      "source": "CC_F1_room_69",
+      "target": "CC_F1_doorway_85_exit",
+      "type": "room_to_door",
+      "weight": 50,
+      "accessible": true
+    },
+    {
+      "source": "CC_F1_room_68",
+      "target": "CC_F1_doorway_70_exit",
+      "type": "room_to_door",
+      "weight": 40,
+      "accessible": true
+    },
+    {
+      "source": "CC_F1_room_68",
+      "target": "CC_F1_doorway_98_exit",
+      "type": "room_to_door",
+      "weight": 41,
+      "accessible": true
     }
   ]
 }
