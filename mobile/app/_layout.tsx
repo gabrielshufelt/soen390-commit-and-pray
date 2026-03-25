@@ -3,6 +3,7 @@ import React, { useEffect } from 'react';
 import { ThemeProvider } from '../context/ThemeContext';
 import { AuthProvider } from '../context/AuthContext';
 import { CalendarProvider } from '../context/CalendarContext';
+import { UsabilityOverlay } from '../components/usabilityOverlay';
 import Constants from 'expo-constants';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import { logScreenView } from '../utils/analytics';
@@ -28,11 +29,13 @@ export default function RootLayout() {
     <ThemeProvider>
       <AuthProvider>
         <CalendarProvider>
-          {/* ScreenTracker sits inside the router so usePathname works */}
-          <ScreenTracker />
-          <Stack>
-            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          </Stack>
+          <UsabilityOverlay>
+            {/* ScreenTracker sits inside the router so usePathname works */}
+            <ScreenTracker />
+            <Stack>
+              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            </Stack>
+          </UsabilityOverlay>
         </CalendarProvider>
       </AuthProvider>
     </ThemeProvider>
