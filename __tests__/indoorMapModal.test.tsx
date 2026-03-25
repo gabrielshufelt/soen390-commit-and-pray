@@ -459,4 +459,73 @@ describe('<IndoorMapModal />', () => {
     expect(queryByText('Route: H-101 to H-201')).toBeNull();
     expect(queryAllByTestId('route-segment')).toHaveLength(0);
   });
+
+  it('passes selected route options to the pathfinder', () => {
+    const { getByTestId, getByText } = render(
+      <IndoorMapModal visible={true} initialBuildingCode="H" onClose={onClose} />
+    );
+
+    fireEvent.press(getByTestId('indoor.options.menu'));
+    fireEvent(getByTestId('indoor.options.wheelchair'), 'valueChange', true);
+    fireEvent(getByTestId('indoor.options.avoid-stairs'), 'valueChange', true);
+    fireEvent(getByTestId('indoor.options.prefer-elevators'), 'valueChange', true);
+    fireEvent.press(getByText('Done'));
+
+    fireEvent.press(getByText('H-101'));
+    fireEvent.press(getByText('Get Directions From'));
+    fireEvent.press(getByText('▶'));
+    fireEvent.press(getByText('H-201'));
+    fireEvent.press(getByText('Get Directions To'));
+
+    expect(mockFindShortestPath).toHaveBeenLastCalledWith('H-101', 'H-201', {
+      wheelchairAccessible: true,
+      avoidStairs: true,
+      preferElevators: true,
+    });
+  });
+
+  it('shows an error when routing graph data is unavailable', () => {
+    mockGetBuildingIndoorGraphData.mockReturnValue([]);
+
+    const { getByText } = render(
+      <IndoorMapModal visible={true} initialBuildingCode="H" onClose={onClose} />
+    );
+
+    fireEvent.press(getByText('H-101'));
+    fireEvent.press(getByText('Get Directions From'));
+    fireEvent.press(getByText('▶'));
+    fireEvent.press(getByText('H-201'));
+    fireEvent.press(getByText('Get Directions To'));
+
+    expect(getByText('Indoor routing data is unavailable for this building.')).toBeTruthy();
+  });
+
+  it('shows an error when trying to route between a room and a facility', () => {
+    const { getByText } = render(
+      <IndoorMapModal visible={true} initialBuildingCode="H" onClose={onClose} />
+    );
+
+    fireEvent.press(getByText('🛗 Main Elevator'));
+    fireEvent.press(getByText('Get Directions From'));
+    fireEvent.press(getByText('H-101'));
+    fireEvent.press(getByText('Get Directions To'));
+
+    expect(getByText('Directions are only supported between rooms.')).toBeTruthy();
+  });
+
+  it('shows an error when no route is found between selected rooms', () => {
+    mockFindShortestPath.mockReturnValue([]);
+
+    const { getByText } = render(
+      <IndoorMapModal visible={true} initialBuildingCode="H" onClose={onClose} />
+    );
+
+    fireEvent.press(getByText('H-101'));
+    fireEvent.press(getByText('Get Directions From'));
+    fireEvent.press(getByText('▶'));
+    fireEvent.press(getByText('H-201'));
+    fireEvent.press(getByText('Get Directions To'));
+
+    expect(getByText('No indoor route found from H-101 to H-201.')).toBeTruthy();
+  });
 });

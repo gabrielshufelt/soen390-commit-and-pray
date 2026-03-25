@@ -220,15 +220,25 @@ export default function IndoorMapModal({
 
       if (start.floor === currentFloor.floor) {
         const startPct = getNodePositionPercent(start, currentFloor);
+        const isStairTransition =
+          start.type.toLowerCase().includes("stair") ||
+          end.type.toLowerCase().includes("stair");
+        const isElevatorTransition =
+          start.type.toLowerCase().includes("elevator") ||
+          end.type.toLowerCase().includes("elevator");
+        let transitionMessage = `Continue to Floor ${getFloorLabel(end.floor)}`;
+
+        if (isStairTransition) {
+          transitionMessage = `Take stairs to Floor ${getFloorLabel(end.floor)}`;
+        } else if (isElevatorTransition) {
+          transitionMessage = `Take elevator to Floor ${getFloorLabel(end.floor)}`;
+        }
+
         transitions.push({
           id: `up-${start.id}-${end.id}`,
           left: startPct.left,
           top: startPct.top,
-          message: start.type.toLowerCase().includes("stair") || end.type.toLowerCase().includes("stair")
-            ? `Take stairs to Floor ${getFloorLabel(end.floor)}`
-            : start.type.toLowerCase().includes("elevator") || end.type.toLowerCase().includes("elevator")
-              ? `Take elevator to Floor ${getFloorLabel(end.floor)}`
-              : `Continue to Floor ${getFloorLabel(end.floor)}`,
+          message: transitionMessage,
         });
       }
 

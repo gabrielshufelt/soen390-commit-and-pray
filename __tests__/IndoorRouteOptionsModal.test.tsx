@@ -94,4 +94,24 @@ describe('<IndoorRouteOptionsModal />', () => {
 
     expect(onClose).toHaveBeenCalledTimes(1);
   });
+
+  it('supports toggling options on when initial values are false', () => {
+    const { getByTestId } = render(
+      <IndoorRouteOptionsModal
+        {...defaultProps}
+        wheelchairAccessible={false}
+        avoidStairs={false}
+        preferElevators={false}
+      />
+    );
+
+    fireEvent(getByTestId('indoor.options.wheelchair'), 'valueChange', true);
+    expect(onChangeWheelchairAccessible).toHaveBeenCalledWith(true);
+
+    fireEvent(getByTestId('indoor.options.avoid-stairs'), 'valueChange', true);
+    expect(onChangeAvoidStairs).toHaveBeenCalledWith(true);
+
+    fireEvent(getByTestId('indoor.options.prefer-elevators'), 'valueChange', true);
+    expect(onChangePreferElevators).toHaveBeenCalledWith(true);
+  });
 });
