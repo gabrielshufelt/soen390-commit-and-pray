@@ -68,7 +68,11 @@ export async function getStitchedRoute(
   const bestEntry = findBestEntryNode(dest.buildingCode, outdoorStart, transportMode);
   if (bestEntry) outdoorEnd = { latitude: bestEntry.latitude!, longitude: bestEntry.longitude! };
 
-  const outdoorSteps = await fetchOutdoorSteps(outdoorStart, outdoorEnd);
+  const outdoorSteps = await fetchOutdoorSteps(outdoorStart, { 
+  ...outdoorEnd, 
+  transportMode 
+  });
+
   outdoorSteps.forEach(s => route.push({ ...s, source: "outdoor" }));
 
   // Leg 3: Indoor Arrival
