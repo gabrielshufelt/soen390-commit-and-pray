@@ -11,6 +11,7 @@ import {
   logCalendarDeselected,
   logAppearanceChanged,
 } from '../../utils/analytics';
+import { triggerDevMenu } from '../../utils/devMenuController';
 
 type ThemeOption = 'light' | 'dark' | 'system';
 type AuthUser = ReturnType<typeof useAuth>['user'];
@@ -36,7 +37,10 @@ function AppearanceSection({ isDark, theme, setTheme }: Readonly<{
 
   return (
     <>
-      <Text style={[styles.sectionTitle, { color: mutedColor }]}>Appearance</Text>
+      <Text
+        style={[styles.sectionTitle, { color: mutedColor }]}
+        onLongPress={triggerDevMenu}
+      >Appearance</Text>
       <View style={[styles.optionsContainer, { backgroundColor: bgColor }]}>
         {THEME_OPTIONS.map((option, index) => (
           <Pressable

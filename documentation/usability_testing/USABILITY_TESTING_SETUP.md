@@ -144,36 +144,66 @@ Screen views are tracked automatically by Firebase (no `pilot_` prefix) whenever
 
 ## Core Tasks for Full-Scale Usability Testing
 
-Give these tasks to the participant one at a time. Do not help them unless they are completely stuck.
-Note how long each task takes and whether they completed it on their own.
-NOTE: SET DEV VARIABLES TO WEEKDAY IN THE MORNING AND LOCATION TO HALL BUILDING
+Give these tasks to the participant one at a time as written below. Do not help them unless they are completely stuck.
+Record time on task with a stopwatch. Note first click success, errors, misclicks, and help requests per task.
+NOTE: BEFORE HANDING DEVICE TO PARTICIPANT — set dev variables to weekday morning, location to Hall Building, and open the Usability Dev Menu (long-press "Appearance" in Settings) to set Participant ID and start Task 1 tracking.
 
 Target sample size for full-scale testing: **12–15 participants**.
 
-These tasks are intentionally merged into realistic end-to-end user flows (5–8 total tasks as requested).
+---
 
-**Task 1 - Campus orientation flow**
-"On SGW, identify your current building, open one building info card (services/accessibility), then switch to Loyola and back to SGW."
+**Task 1 — Campus Orientation**
+> "The app is showing a map of the SGW campus. Find the building labeled **H** on the map and tap it. In the card that pops up, look at the services and accessibility features listed, then close the card. Finally, use the **SGW / Loyola** toggle at the top of the map to switch to the Loyola campus, then switch back to SGW."
 
-**Task 2 - Destination setup flow**
-"Find EV using search, then set route start and destination using a mix of map taps and search selection."
+*Moderator notes: The Hall building polygon is centered on the SGW map. The card shows SERVICES and ACCESSIBILITY icon rows. The toggle is a pill control at the top-center of the map.*
 
-**Task 3 - Outdoor navigation flow**
-"Preview a walking route, start navigation, and then end/cancel the route."
+---
 
-**Task 4 - Transportation and cross-campus flow**
-"Switch transport mode (cycling and transit), then get directions between an SGW building and a Loyola building."
+**Task 2 — Searching for a Destination**
+> "Tap the search bar at the top of the screen to open it. In the **Destination** field, type **EV** and select the **EV Building** from the list. Then tap any building on the map to open its info card, and tap **Get Directions From** to set it as your starting point."
 
-**Task 5 - Shuttle flow**
-"Open the Concordia shuttle schedule and tap Show Shuttle Route, then return to map navigation."
+*Moderator notes: The search bar is collapsed by default — the participant must tap it first. After picking EV as a destination, the bar stays open. To set a start via map, they close/dismiss the search bar, tap a different building polygon, and use the "Get Directions From" button in the building card.*
 
-**Task 6 - Account and next-class flow**
-"Sign in with Google, select your class calendar, identify next class location/time from the next-class card, then tap Get Directions."
+---
 
-**Task 7 - Indoor directions flow**
-"From a building context, open indoor map, locate a room, request shortest path, then request accessible route and try a multi-floor path."
+**Task 3 — Previewing and Starting a Route**
+> "You have a start and destination set. Tap **Preview Route** in the search bar to see the route on the map. Look at the estimated time and distance shown. Then tap **Start Directions** to begin navigation. Once navigation has started, tap **End** to cancel and go back to the map."
 
-**Task 8 - Points of interest flow**
-"Locate indoor points of interest (elevator/washroom/water fountain), then find a nearby outdoor POI and get directions to it."
+*Moderator notes: "Preview Route" only appears when start is a building (not current location). The "Start Directions" button replaces "Preview Route" once preview is active. The "End" button is inside the navigation step card that appears at the bottom during active navigation.*
+
+---
+
+**Task 4 — Switching Transport Modes**
+> "Open the search bar. Using the transport mode row (the icons showing a car, person, bicycle, and bus), switch to **Cycling**, then switch to **Transit**. Set any Loyola campus building as a destination and tap **Start Directions**."
+
+*Moderator notes: Transport mode buttons are labeled Driving, Walking, Cycling, Transit. The campus can be changed inside the expanded search bar via the SGW/Loyola toggle at the top of the search bar. End directions after this task before handing off Task 5.*
+
+---
+
+**Task 5 — Shuttle Schedule**
+> "Tap the bus icon button (🚌) on the map to open the Concordia shuttle schedule. Look at the departure times. Then tap **Show Route** to display the shuttle route on the map. When done, tap **End** to return to the normal map."
+
+*Moderator notes: The 🚌 button is a floating button on the bottom-right of the map. "Show Route" is a button at the bottom of the shuttle modal. After tapping it the modal closes and directions are shown — "End" is in the navigation step card.*
+
+---
+
+**Task 6 — Sign In and Next Class**
+> "Go to the **Settings** tab (the gear icon at the bottom). Tap **Sign in with Google to sync your calendar** and complete the sign-in with your Google account. Then select your class calendar from the list that appears. Go back to the **Home** tab and look at the card that appears near the bottom of the screen — it should show your next class. Note the building name and time, then tap **Get Directions**."
+
+*Moderator notes: The next class card appears above the search bar on the Home screen once a calendar is connected. It only shows if there is a class scheduled today and in the future (dev time override should be set to morning on a weekday). The "Get Directions" button is inside the card.*
+
+---
+
+**Task 7 — Indoor Directions** *(include only if the indoor map feature is available)*
+> "Tap the **H** building on the map and open its info card. From there, open the indoor map. Find room **H-110**, request the shortest path to it, then switch to the accessible route. Try navigating to a room on a different floor."
+
+*Moderator notes: Only include this task if the indoor map feature has been merged and is accessible from the building modal.*
+
+---
+
+**Task 8 — Points of Interest** *(include only if the indoor POI feature is available)*
+> "Inside the Hall building's indoor map, find the nearest **elevator**, **washroom**, and **water fountain**. Then go back to the main map and find a nearby outdoor point of interest and get directions to it."
+
+*Moderator notes: Only include this task if the indoor POI and outdoor POI features have been merged.*
 
 
