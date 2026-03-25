@@ -211,8 +211,9 @@ describe('<IndoorMapModal />', () => {
     mockGetBuildingIndoorGraphData.mockReturnValue([{ nodes: [], edges: [] }]);
     mockFindShortestPath.mockReturnValue([
       routeNode('r1', 1, 100, 120, 'H-101'),
-      routeNode('r-mid', 1, 140, 160, ''),
-      routeNode('r-wash', 1, 140, 170, 'Gender Neutral Washroom'),
+      routeNode('e1', 1, 220, 240, '', 'elevator_door'),
+      routeNode('e2', 2, 230, 260, '', 'elevator_door'),
+      routeNode('r2', 2, 300, 320, 'H-201'),
     ]);
   });
 
@@ -401,15 +402,16 @@ describe('<IndoorMapModal />', () => {
     fireEvent.press(getByText('H-101'));
     fireEvent.press(getByText('Get Directions From'));
 
-    fireEvent.press(getByText('Gender Neutral Washroom'));
+    fireEvent.press(getByText('▶'));
+    fireEvent.press(getByText('H-201'));
     fireEvent.press(getByText('Get Directions To'));
 
-    expect(mockFindShortestPath).toHaveBeenCalledWith('H-101', 'Gender Neutral Washroom', {
-      wheelchairAccessible: true,
-      avoidStairs: true,
-      preferElevators: true,
+    expect(mockFindShortestPath).toHaveBeenCalledWith('H-101', 'H-201', {
+      wheelchairAccessible: false,
+      avoidStairs: false,
+      preferElevators: false,
     });
-    expect(getByText('Route: H-101 to Gender Neutral Washroom')).toBeTruthy();
+    expect(getByText('Route: H-101 to H-201')).toBeTruthy();
     expect(getAllByTestId('route-segment').length).toBeGreaterThan(0);
   });
 
@@ -446,14 +448,15 @@ describe('<IndoorMapModal />', () => {
 
     fireEvent.press(getByText('H-101'));
     fireEvent.press(getByText('Get Directions From'));
-    fireEvent.press(getByText('Gender Neutral Washroom'));
+    fireEvent.press(getByText('▶'));
+    fireEvent.press(getByText('H-201'));
     fireEvent.press(getByText('Get Directions To'));
 
     expect(getByText('Clear Route')).toBeTruthy();
 
     fireEvent.press(getByText('Clear Route'));
 
-    expect(queryByText('Route: H-101 to Gender Neutral Washroom')).toBeNull();
+    expect(queryByText('Route: H-101 to H-201')).toBeNull();
     expect(queryAllByTestId('route-segment')).toHaveLength(0);
   });
 });
