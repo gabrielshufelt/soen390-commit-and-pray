@@ -15,12 +15,19 @@ export function useCombinedNavigation() {
         (s, e) => fetchOutdoorRoute(s, e, mode, apiKey)
       );
       setFullRoute(route);
+      return route;
     } catch (err) {
       console.error(err);
+      setFullRoute([]);
+      return [];
     } finally {
       setIsCalculating(false);
     }
   };
 
-  return { fullRoute, calculateRoute, isCalculating };
+  const clearRoute = () => {
+    setFullRoute([]);
+  };
+
+  return { fullRoute, calculateRoute, clearRoute, isCalculating };
 }

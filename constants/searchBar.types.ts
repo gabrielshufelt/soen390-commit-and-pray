@@ -4,6 +4,7 @@ export type BuildingChoice = {
   id: string;
   name: string;
   code?: string;
+  room?: string;
   address?: string;
   coordinate: { latitude: number; longitude: number };
   campus?: "SGW" | "Loyola";

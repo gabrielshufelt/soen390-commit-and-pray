@@ -6,10 +6,14 @@ import { styles, WHITE, MUTED, DISABLED, MAROON, WARNING } from "../styles/navig
 export type NavigationStep = {
   instruction: string;
   distance: string;
-  duration: string;
+  duration?: string;
+  source?: "indoor" | "outdoor";
+  buildingCode?: string;
+  floor?: number;
+  coordinates?: { latitude: number; longitude: number };
   maneuver?: string;
-  startLocation: { latitude: number; longitude: number };
-  endLocation: { latitude: number; longitude: number };
+  startLocation?: { latitude: number; longitude: number };
+  endLocation?: { latitude: number; longitude: number };
 };
 
 type Props = {
@@ -102,7 +106,15 @@ export default function NavigationSteps({
         </View>
 
         <View style={styles.instructionContainer}>
+          {!!currentStep.source && (
+            <Text style={styles.nextLabel}>{currentStep.source.toUpperCase()}</Text>
+          )}
           <Text style={styles.distance}>{currentStep.distance}</Text>
+          {currentStep.source === "indoor" && !!currentStep.buildingCode && (
+            <Text style={styles.nextInstruction} numberOfLines={1}>
+              {currentStep.buildingCode}{typeof currentStep.floor === "number" ? ` · Floor ${currentStep.floor}` : ""}
+            </Text>
+          )}
           <Text style={styles.instruction} numberOfLines={2}>
             {stripHtml(currentStep.instruction)}
           </Text>

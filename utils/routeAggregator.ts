@@ -8,6 +8,13 @@ export type CombinedNavigationStep = {
   instruction: string;
   distance: string; 
   source: "indoor" | "outdoor";
+  duration?: string;
+  nodeId?: string;
+  nodeLabel?: string;
+  startNodeId?: string;
+  startNodeLabel?: string;
+  endNodeId?: string;
+  endNodeLabel?: string;
   buildingCode?: string;
   floor?: number;
   coordinates: { latitude: number; longitude: number };
@@ -53,13 +60,30 @@ export async function getStitchedRoute(
   if (origin?.room) {
     const bestExit = findBestEntryNode(origin.buildingCode, userLocation, transportMode);
     if (bestExit) {
-      const indoorPath = pathfinder.findShortestPath(origin.room, bestExit.label, isAccessible);
-      indoorPath.forEach(n => route.push({
-        instruction: `Exit ${origin.buildingCode} via ${bestExit.label}`,
-        distance: "5m", source: "indoor", buildingCode: n.buildingId, floor: n.floor,
-        coordinates: { latitude: n.latitude!, longitude: n.longitude! }
-      }));
-      outdoorStart = { latitude: bestExit.latitude!, longitude: bestExit.longitude! };
+      const indoorPath = pathfinder.findShortestPath(origin.room, bestExit.id, {
+        wheelchairAccessible: isAccessible,
+        avoidStairs: isAccessible,
+        preferElevators: isAccessible,
+      });
+      if (indoorPath?.length) {
+        const startNode = indoorPath[0];
+        const endNode = indoorPath[indoorPath.length - 1];
+        route.push({
+          instruction: `Exit ${origin.buildingCode} via ${bestExit.label}`,
+          distance: `${Math.max(1, indoorPath.length - 1) * 5}m`,
+          source: "indoor",
+          buildingCode: endNode.buildingId,
+          floor: endNode.floor,
+          nodeId: endNode.id,
+          nodeLabel: endNode.label,
+          startNodeId: startNode.id,
+          startNodeLabel: startNode.label,
+          endNodeId: endNode.id,
+          endNodeLabel: endNode.label,
+          coordinates: { latitude: endNode.latitude!, longitude: endNode.longitude! },
+        });
+        outdoorStart = { latitude: endNode.latitude!, longitude: endNode.longitude! };
+      }
     }
   }
 
@@ -77,12 +101,29 @@ export async function getStitchedRoute(
 
   // Leg 3: Indoor Arrival
   if (dest.room && bestEntry) {
-    const arrivalPath = pathfinder.findShortestPath(bestEntry.label, dest.room, isAccessible);
-    arrivalPath.forEach(n => route.push({
-      instruction: `Head to ${dest.room}`,
-      distance: "5m", source: "indoor", buildingCode: n.buildingId, floor: n.floor,
-      coordinates: { latitude: n.latitude!, longitude: n.longitude! }
-    }));
+    const arrivalPath = pathfinder.findShortestPath(bestEntry.id, dest.room, {
+      wheelchairAccessible: isAccessible,
+      avoidStairs: isAccessible,
+      preferElevators: isAccessible,
+    });
+    if (arrivalPath?.length) {
+      const startNode = arrivalPath[0];
+      const endNode = arrivalPath[arrivalPath.length - 1];
+      route.push({
+        instruction: `Head to ${dest.room}`,
+        distance: `${Math.max(1, arrivalPath.length - 1) * 5}m`,
+        source: "indoor",
+        buildingCode: endNode.buildingId,
+        floor: endNode.floor,
+        nodeId: endNode.id,
+        nodeLabel: endNode.label,
+        startNodeId: startNode.id,
+        startNodeLabel: startNode.label,
+        endNodeId: endNode.id,
+        endNodeLabel: endNode.label,
+        coordinates: { latitude: endNode.latitude!, longitude: endNode.longitude! },
+      });
+    }
   }
 
   return route;

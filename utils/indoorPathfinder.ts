@@ -64,6 +64,17 @@ export class IndoorPathfinder {
     this.adjacencyList.get(edge.source)?.push(edge);
   }
 
+  private resolveNode(reference: string): IndoorNode | null {
+    const ref = reference.trim();
+    if (!ref) return null;
+
+    const byId = this.nodes.get(ref);
+    if (byId) return byId;
+
+    const byLabel = Array.from(this.nodes.values()).find((n) => n.label.trim() === ref);
+    return byLabel ?? null;
+  }
+
   private getEdgeWeight(
     edge: IndoorEdge,
     wheelchairAccessible: boolean,
@@ -97,23 +108,22 @@ export class IndoorPathfinder {
   }
 
   public findShortestPath(
-    startLabel: string,
-    endLabel: string,
+    startReference: string,
+    endReference: string,
     options: PathfindingOptions = {}
   ): IndoorNode[] | null {
     const wheelchairAccessible = options.wheelchairAccessible ?? true;
     const avoidStairs = options.avoidStairs ?? true;
     const preferElevators = options.preferElevators ?? true;
-    const nodes = Array.from(this.nodes.values());
-
-    const startNode = nodes.find(n => n.label.trim() === startLabel.trim() && n.type === 'room');
+    const startNode = this.resolveNode(startReference);
     if (!startNode) return null;
 
-    const endNode = nodes.find(n => 
-      n.label.trim() === endLabel.trim() && 
-      n.type === 'room' && 
-      n.buildingId === startNode.buildingId
-    );
+    const endNodeCandidate = this.resolveNode(endReference);
+    if (!endNodeCandidate) return null;
+
+    const endNode = endNodeCandidate.buildingId === startNode.buildingId
+      ? endNodeCandidate
+      : null;
     if (!endNode) return null;
 
     const distances: Record<string, number> = {};
