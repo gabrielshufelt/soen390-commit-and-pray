@@ -1,7 +1,9 @@
 import { Tabs } from 'expo-router';
 import React from 'react';
 import { FontAwesome } from '@expo/vector-icons';
+import { Pressable } from 'react-native';
 import { useTheme } from '../../context/ThemeContext';
+import { triggerDevMenu } from '../../utils/devMenuController';
 
 export default function TabLayout() {
   const { colorScheme } = useTheme();
@@ -27,6 +29,17 @@ export default function TabLayout() {
           title: 'Home',
           tabBarIcon: ({ color, size }) => (
             <FontAwesome name="home" size={size} color={color} />
+          ),
+          tabBarButton: ({ onPress, onLongPress: _ignored, children, style, accessibilityState }) => (
+            <Pressable
+              onPress={onPress}
+              onLongPress={triggerDevMenu}
+              delayLongPress={500}
+              style={style}
+              accessibilityState={accessibilityState}
+            >
+              {children}
+            </Pressable>
           ),
         }}
       />
