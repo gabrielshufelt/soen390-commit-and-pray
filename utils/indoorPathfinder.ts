@@ -79,11 +79,16 @@ export class IndoorPathfinder {
     edge: IndoorEdge,
     wheelchairAccessible: boolean,
     avoidStairs: boolean,
-    preferElevators: boolean
+    preferElevators: boolean,
+    sourceNode: IndoorNode,
+    targetNode: IndoorNode,
+    routeStartsAndEndsSameFloor: boolean,
+    targetFloor: number
   ): number {
     const edgeType = edge.type.toLowerCase();
     const isStair = edgeType.includes('stair');
     const isElevator = edgeType.includes('elevator');
+    const isFloorTransition = sourceNode.floor !== targetNode.floor;
 
     if (wheelchairAccessible && !edge.accessible) {
       return Infinity;
@@ -101,6 +106,20 @@ export class IndoorPathfinder {
       // Prefer elevator transitions over other vertical alternatives.
       if (isElevator) {
         return edge.weight * 0.5;
+      }
+    }
+
+    // Strongly discourage pointless vertical travel when both endpoints are on the same floor.
+    if (routeStartsAndEndsSameFloor && isFloorTransition) {
+      return edge.weight + 10000;
+    }
+
+    // Prefer transitions that move toward the destination floor over those that move away.
+    if (!routeStartsAndEndsSameFloor && isFloorTransition) {
+      const currentDistanceToTarget = Math.abs(sourceNode.floor - targetFloor);
+      const nextDistanceToTarget = Math.abs(targetNode.floor - targetFloor);
+      if (nextDistanceToTarget > currentDistanceToTarget) {
+        return edge.weight + 200;
       }
     }
 
@@ -126,6 +145,9 @@ export class IndoorPathfinder {
       : null;
     if (!endNode) return null;
 
+    const routeStartsAndEndsSameFloor = startNode.floor === endNode.floor;
+    const targetFloor = endNode.floor;
+
     const distances: Record<string, number> = {};
     const previous: Record<string, string | null> = {};
     const pq = new PriorityQueue<string>();
@@ -144,11 +166,19 @@ export class IndoorPathfinder {
 
       const neighbors = this.adjacencyList.get(currentId) || [];
       for (const edge of neighbors) {
+        const sourceNode = this.nodes.get(edge.source);
+        const targetNode = this.nodes.get(edge.target);
+        if (!sourceNode || !targetNode) continue;
+
         const weight = this.getEdgeWeight(
           edge,
           wheelchairAccessible,
           avoidStairs,
-          preferElevators
+          preferElevators,
+          sourceNode,
+          targetNode,
+          routeStartsAndEndsSameFloor,
+          targetFloor
         );
         if (weight === Infinity) continue;
 

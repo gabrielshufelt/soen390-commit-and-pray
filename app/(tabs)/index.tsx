@@ -35,6 +35,13 @@ import { AllCampusData } from "../../data/buildings";
 
 const LABEL_ZOOM_THRESHOLD = 0.015;
 const ANCHOR_OFFSET = { x: 0.5, y: 0.5 };
+
+function isValidCoordinate(
+  coord: { latitude: number; longitude: number } | undefined | null
+): coord is { latitude: number; longitude: number } {
+  return !!coord && Number.isFinite(coord.latitude) && Number.isFinite(coord.longitude);
+}
+
 export default function Index() {
   const { colorScheme } = useTheme();
   const isDark = colorScheme === "dark";
@@ -209,8 +216,14 @@ export default function Index() {
         return route.slice(0, idx).some((previous) => previous.source === "outdoor");
       });
       const outdoorDestination = firstIndoorAfterOutdoor?.coordinates ?? destChoice?.coordinate;
-      if (outdoorDestination) {
+
+      if (isValidCoordinate(outdoorOrigin) && isValidCoordinate(outdoorDestination)) {
         startDirections(outdoorOrigin, outdoorDestination);
+      } else {
+        console.warn("[Index] Skipping outdoor handoff due to invalid coordinates", {
+          outdoorOrigin,
+          outdoorDestination,
+        });
       }
       return;
     }

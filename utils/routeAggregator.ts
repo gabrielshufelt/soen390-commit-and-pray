@@ -23,15 +23,71 @@ export type CombinedNavigationStep = {
 
 const pathfinder = new IndoorPathfinder(AllCampusData);
 
-function findBestEntryNode(buildingCode: string, referencePoint: { latitude: number; longitude: number }, transportMode: string) {
+type Coordinates = { latitude: number; longitude: number };
+
+function isValidCoordinate(coord: Partial<Coordinates> | null | undefined): coord is Coordinates {
+  return !!coord && Number.isFinite(coord.latitude) && Number.isFinite(coord.longitude);
+}
+
+function pickCoordinate(
+  primary: Partial<Coordinates> | null | undefined,
+  fallback: Coordinates
+): Coordinates {
+  return isValidCoordinate(primary) ? { latitude: primary.latitude, longitude: primary.longitude } : fallback;
+}
+
+function inferFloorFromRoom(room: string): number | null {
+  const normalized = room.trim().toUpperCase();
+  if (!normalized) return null;
+
+  // Basement notation like S2.134 or S2
+  const basementMatch = /^S\s*([0-9]+)/.exec(normalized);
+  if (basementMatch) {
+    return -Number(basementMatch[1]);
+  }
+
+  // Dot notation like 1.294 or 8.120
+  const dotFloorMatch = /^([0-9]+)\./.exec(normalized);
+  if (dotFloorMatch) {
+    return Number(dotFloorMatch[1]);
+  }
+
+  // Plain room like 820 -> usually floor 8
+  const plainMatch = /^([0-9]{2,4})$/.exec(normalized);
+  if (plainMatch) {
+    return Number(plainMatch[1][0]);
+  }
+
+  return null;
+}
+
+function findBestEntryNode(
+  buildingCode: string,
+  referencePoint: { latitude: number; longitude: number },
+  transportMode: string,
+  targetFloor?: number | null
+) {
   const buildingFloors = AllCampusData.filter(f => f.meta.buildingId === buildingCode);
-  const allEntries = buildingFloors.flatMap(f => f.nodes.filter(n => n.type === 'building_entry'));
+  const allEntries = buildingFloors
+    .flatMap(f => f.nodes.filter(n => n.type === 'building_entry'))
+    .filter((n) => isValidCoordinate({ latitude: n.latitude, longitude: n.longitude }));
 
   if (allEntries.length === 0) return null;
 
-  if (buildingCode === 'MB' && transportMode === 'TRANSIT') {
+  if (buildingCode === 'MB' && transportMode === 'TRANSIT' && (targetFloor == null || targetFloor === -2)) {
     const s2Entry = allEntries.find(n => n.floor === -2);
     if (s2Entry) return s2Entry;
+  }
+
+  if (targetFloor != null) {
+    const sameFloorEntries = allEntries.filter((entry) => entry.floor === targetFloor);
+    if (sameFloorEntries.length > 0) {
+      return sameFloorEntries.sort((a, b) => {
+        const distA = getDistanceMeters(referencePoint.latitude, referencePoint.longitude, a.latitude!, a.longitude!);
+        const distB = getDistanceMeters(referencePoint.latitude, referencePoint.longitude, b.latitude!, b.longitude!);
+        return distA - distB;
+      })[0];
+    }
   }
 
   return allEntries.sort((a, b) => {
@@ -68,6 +124,11 @@ export async function getStitchedRoute(
       if (indoorPath?.length) {
         const startNode = indoorPath[0];
         const endNode = indoorPath[indoorPath.length - 1];
+        const indoorExitCoordinate = pickCoordinate(
+          { latitude: endNode.latitude, longitude: endNode.longitude },
+          { latitude: bestExit.latitude!, longitude: bestExit.longitude! }
+        );
+
         route.push({
           instruction: `Exit ${origin.buildingCode} via ${bestExit.label}`,
           distance: `${Math.max(1, indoorPath.length - 1) * 5}m`,
@@ -80,17 +141,23 @@ export async function getStitchedRoute(
           startNodeLabel: startNode.label,
           endNodeId: endNode.id,
           endNodeLabel: endNode.label,
-          coordinates: { latitude: endNode.latitude!, longitude: endNode.longitude! },
+          coordinates: indoorExitCoordinate,
         });
-        outdoorStart = { latitude: endNode.latitude!, longitude: endNode.longitude! };
+        outdoorStart = indoorExitCoordinate;
       }
     }
   }
 
   // Leg 2: Outdoor
-  let outdoorEnd = getBuildingCoordinate(dest.buildingCode) || { latitude: 0, longitude: 0 };
-  const bestEntry = findBestEntryNode(dest.buildingCode, outdoorStart, transportMode);
-  if (bestEntry) outdoorEnd = { latitude: bestEntry.latitude!, longitude: bestEntry.longitude! };
+  let outdoorEnd = getBuildingCoordinate(dest.buildingCode) || outdoorStart;
+  const targetFloor = dest.room ? inferFloorFromRoom(dest.room) : null;
+  const bestEntry = findBestEntryNode(dest.buildingCode, outdoorStart, transportMode, targetFloor);
+  if (bestEntry) {
+    outdoorEnd = pickCoordinate(
+      { latitude: bestEntry.latitude, longitude: bestEntry.longitude },
+      outdoorEnd
+    );
+  }
 
   const outdoorSteps = await fetchOutdoorSteps(outdoorStart, { 
   ...outdoorEnd, 
@@ -109,6 +176,14 @@ export async function getStitchedRoute(
     if (arrivalPath?.length) {
       const startNode = arrivalPath[0];
       const endNode = arrivalPath[arrivalPath.length - 1];
+      const handoffCoordinate = pickCoordinate(
+        { latitude: startNode.latitude, longitude: startNode.longitude },
+        pickCoordinate(
+          { latitude: endNode.latitude, longitude: endNode.longitude },
+          outdoorEnd
+        )
+      );
+
       route.push({
         instruction: `Head to ${dest.room}`,
         distance: `${Math.max(1, arrivalPath.length - 1) * 5}m`,
@@ -121,7 +196,7 @@ export async function getStitchedRoute(
         startNodeLabel: startNode.label,
         endNodeId: endNode.id,
         endNodeLabel: endNode.label,
-        coordinates: { latitude: endNode.latitude!, longitude: endNode.longitude! },
+        coordinates: handoffCoordinate,
       });
     }
   }
