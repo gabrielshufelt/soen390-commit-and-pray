@@ -1696,6 +1696,20 @@
       "type": "stair",
       "weight": 0,
       "accessible": true
+    },
+    {
+      "source": "MB_F1_doorway_10",
+      "target": "MB_F1_hallway_waypoint_16_exit",
+      "type": "room_to_door",
+      "weight": 65,
+      "accessible": true
+    },
+    {
+      "source": "MB_F1_doorway_6",
+      "target": "MB_F1_doorway_7_exit",
+      "type": "room_to_door",
+      "weight": 65,
+      "accessible": true
     }
   ]
 }

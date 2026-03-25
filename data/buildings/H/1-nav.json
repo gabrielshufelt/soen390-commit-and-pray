@@ -1263,6 +1263,34 @@
       "type": "stair",
       "weight": 0,
       "accessible": false
+    },
+    {
+      "source": "H_F1_room_54",
+      "target": "H_F1_room_92",
+      "type": "room_to_door",
+      "weight": 81,
+      "accessible": true
+    },
+    {
+      "source": "H_F1_room_54",
+      "target": "H_F1_room_92_exit",
+      "type": "room_to_door",
+      "weight": 85,
+      "accessible": true
+    },
+    {
+      "source": "H_F1_room_55",
+      "target": "H_F1_room_93",
+      "type": "room_to_door",
+      "weight": 85,
+      "accessible": true
+    },
+    {
+      "source": "H_F1_room_55",
+      "target": "H_F1_room_93_exit",
+      "type": "room_to_door",
+      "weight": 87,
+      "accessible": true
     }
   ]
 }

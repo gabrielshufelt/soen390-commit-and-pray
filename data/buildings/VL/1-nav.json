@@ -1,7 +1,6 @@
 {
   "meta": {
-    "buildingId": "VL",
-    "floor": 1
+    "buildingId": "VL"
   },
   "nodes": [
     {
@@ -161,7 +160,7 @@
       "floor": 1,
       "x": 976,
       "y": 1913,
-      "latitude": 45.459073760236066, 
+      "latitude": 45.459073760236066,
       "longitude": -73.63892445678594,
       "label": "",
       "accessible": true
@@ -1983,6 +1982,13 @@
       "target": "VL_F1_room_33",
       "type": "room_to_door",
       "weight": 56,
+      "accessible": true
+    },
+    {
+      "source": "VL_F1_hallway_waypoint_71",
+      "target": "VL_F1_room_38_exit",
+      "type": "hallway",
+      "weight": 165,
       "accessible": true
     }
   ]

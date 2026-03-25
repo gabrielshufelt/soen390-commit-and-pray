@@ -37,9 +37,9 @@ export type IndoorBuildingMap = {
 };
 
 type IndoorNavFile = {
-  meta: {
+  meta?: {
     buildingId: string;
-    floor: number;
+    floor?: number;
   };
   nodes: IndoorNode[];
   edges: FloorData["edges"];
@@ -47,9 +47,14 @@ type IndoorNavFile = {
 
 const DEFAULT_CANVAS_SIZE = 2048;
 
+const getNavForFloor = (floors: IndoorNavFile[], floor: number): IndoorNavFile | undefined => {
+  return floors.find((entry) => entry?.meta?.floor === floor || entry?.nodes?.[0]?.floor === floor);
+};
+
 const buildFloor = (
-  nav: IndoorNavFile,
+  nav: IndoorNavFile | undefined,
   image: ImageSourcePropType,
+  fallbackFloor: number,
   calibration?: {
     offsetX?: number;
     offsetY?: number;
@@ -57,9 +62,9 @@ const buildFloor = (
     scaleY?: number;
   }
 ): IndoorFloorMap => ({
-  floor: nav.meta.floor,
+  floor: nav?.meta?.floor ?? nav?.nodes?.[0]?.floor ?? fallbackFloor,
   image,
-  nodes: nav.nodes,
+  nodes: nav?.nodes ?? [],
   canvasWidth: DEFAULT_CANVAS_SIZE,
   canvasHeight: DEFAULT_CANVAS_SIZE,
   offsetX: calibration?.offsetX ?? 0,
@@ -143,4 +148,3 @@ export const getFloorLabel = (floor: number): string => {
   }
   return `${floor}`;
 };
-

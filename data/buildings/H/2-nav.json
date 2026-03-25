@@ -1182,6 +1182,20 @@
       "type": "elevator",
       "weight": 0,
       "accessible": true
+    },
+    {
+      "source": "H_F2_room_172",
+      "target": "H_F2_doorway_250_exit",
+      "type": "room_to_door",
+      "weight": 34,
+      "accessible": true
+    },
+    {
+      "source": "H_F2_hallway_waypoint_252",
+      "target": "H_F2_hallway_waypoint_253_exit",
+      "type": "hallway",
+      "weight": 74,
+      "accessible": true
     }
   ]
 }
