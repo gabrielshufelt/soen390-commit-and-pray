@@ -145,9 +145,9 @@ export default function IndoorMapModal({
   const [routePath, setRoutePath] = useState<PathfinderIndoorNode[]>([]);
   const [routeError, setRouteError] = useState<string | null>(null);
   const [showRouteOptions, setShowRouteOptions] = useState(false);
-  const [wheelchairAccessible, setWheelchairAccessible] = useState(true);
-  const [avoidStairs, setAvoidStairs] = useState(true);
-  const [preferElevators, setPreferElevators] = useState(true);
+  const [wheelchairAccessible, setWheelchairAccessible] = useState(false);
+  const [avoidStairs, setAvoidStairs] = useState(false);
+  const [preferElevators, setPreferElevators] = useState(false);
   const [zoom, setZoom] = useState(1);
   const [panX, setPanX] = useState(0);
   const [panY, setPanY] = useState(0);
