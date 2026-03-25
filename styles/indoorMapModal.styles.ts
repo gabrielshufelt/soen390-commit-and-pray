@@ -29,6 +29,27 @@ export const styles = StyleSheet.create({
     fontWeight: "700",
     color: BLACK,
   },
+  headerActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  menuButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: MUTED_LIGHT,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: WHITE,
+  },
+  menuButtonText: {
+    color: BLACK,
+    fontSize: 20,
+    lineHeight: 20,
+    fontWeight: "700",
+  },
   closeButton: {
     paddingHorizontal: 12,
     paddingVertical: 8,
@@ -459,5 +480,66 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 6,
     fontSize: 12,
     fontWeight: "700",
+  },
+
+  // Route Options Modal
+  optionsOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.35)",
+    justifyContent: "center",
+    paddingHorizontal: 16,
+  },
+  optionsCard: {
+    backgroundColor: WHITE,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: MUTED_LIGHT,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    gap: 10,
+  },
+  optionsHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingBottom: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: MUTED_LIGHT,
+  },
+  optionsTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: BLACK,
+  },
+  optionsCloseButton: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    backgroundColor: CONCORDIA_RED,
+    borderRadius: 8,
+  },
+  optionsCloseButtonText: {
+    color: WHITE,
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  optionsToggleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 10,
+  },
+  optionsToggleTextContainer: {
+    flex: 1,
+  },
+  optionsToggleTitle: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: BLACK,
+  },
+  optionsToggleDescription: {
+    marginTop: 2,
+    fontSize: 12,
+    color: MUTED,
+    fontWeight: "500",
   },
 });

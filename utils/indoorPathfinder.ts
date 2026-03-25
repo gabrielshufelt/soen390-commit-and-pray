@@ -24,6 +24,12 @@ export interface FloorData {
   edges: IndoorEdge[];
 }
 
+export interface PathfindingOptions {
+  wheelchairAccessible?: boolean;
+  avoidStairs?: boolean;
+  preferElevators?: boolean;
+}
+
 export class IndoorPathfinder {
   private readonly nodes: Map<string, IndoorNode> = new Map();
   private readonly adjacencyList: Map<string, IndoorEdge[]> = new Map();
@@ -58,12 +64,46 @@ export class IndoorPathfinder {
     this.adjacencyList.get(edge.source)?.push(edge);
   }
 
-  private getEdgeWeight(edge: IndoorEdge): number {
-    if (edge.type === 'stair' || !edge.accessible) return Infinity;
-    return edge.type === 'elevator' ? 0 : edge.weight;
+  private getEdgeWeight(
+    edge: IndoorEdge,
+    wheelchairAccessible: boolean,
+    avoidStairs: boolean,
+    preferElevators: boolean
+  ): number {
+    const edgeType = edge.type.toLowerCase();
+    const isStair = edgeType.includes('stair');
+    const isElevator = edgeType.includes('elevator');
+
+    if (wheelchairAccessible && !edge.accessible) {
+      return Infinity;
+    }
+
+    if (avoidStairs && isStair) {
+      return Infinity;
+    }
+
+    if (preferElevators) {
+      if (isStair) {
+        return Infinity;
+      }
+
+      // Prefer elevator transitions over other vertical alternatives.
+      if (isElevator) {
+        return edge.weight * 0.5;
+      }
+    }
+
+    return edge.weight;
   }
 
-  public findShortestPath(startLabel: string, endLabel: string): IndoorNode[] | null {
+  public findShortestPath(
+    startLabel: string,
+    endLabel: string,
+    options: PathfindingOptions = {}
+  ): IndoorNode[] | null {
+    const wheelchairAccessible = options.wheelchairAccessible ?? true;
+    const avoidStairs = options.avoidStairs ?? true;
+    const preferElevators = options.preferElevators ?? true;
     const nodes = Array.from(this.nodes.values());
 
     const startNode = nodes.find(n => n.label.trim() === startLabel.trim() && n.type === 'room');
@@ -94,7 +134,12 @@ export class IndoorPathfinder {
 
       const neighbors = this.adjacencyList.get(currentId) || [];
       for (const edge of neighbors) {
-        const weight = this.getEdgeWeight(edge);
+        const weight = this.getEdgeWeight(
+          edge,
+          wheelchairAccessible,
+          avoidStairs,
+          preferElevators
+        );
         if (weight === Infinity) continue;
 
         const alt = distances[currentId] + weight;

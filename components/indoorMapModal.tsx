@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Modal,
   View,
@@ -19,6 +19,7 @@ import {
   type IndoorFloorMap,
 } from "@/utils/indoorMapData";
 import { IndoorPathfinder, type IndoorNode as PathfinderIndoorNode } from "@/utils/indoorPathfinder";
+import IndoorRouteOptionsModal from "@/components/IndoorRouteOptionsModal";
 import { styles } from "@/styles/indoorMapModal.styles";
 
 type IndoorMapModalProps = {
@@ -143,6 +144,10 @@ export default function IndoorMapModal({
   const [routeEndNode, setRouteEndNode] = useState<IndoorNode | null>(null);
   const [routePath, setRoutePath] = useState<PathfinderIndoorNode[]>([]);
   const [routeError, setRouteError] = useState<string | null>(null);
+  const [showRouteOptions, setShowRouteOptions] = useState(false);
+  const [wheelchairAccessible, setWheelchairAccessible] = useState(false);
+  const [avoidStairs, setAvoidStairs] = useState(false);
+  const [preferElevators, setPreferElevators] = useState(false);
   const [zoom, setZoom] = useState(1);
   const [panX, setPanX] = useState(0);
   const [panY, setPanY] = useState(0);
@@ -215,11 +220,25 @@ export default function IndoorMapModal({
 
       if (start.floor === currentFloor.floor) {
         const startPct = getNodePositionPercent(start, currentFloor);
+        const isStairTransition =
+          start.type.toLowerCase().includes("stair") ||
+          end.type.toLowerCase().includes("stair");
+        const isElevatorTransition =
+          start.type.toLowerCase().includes("elevator") ||
+          end.type.toLowerCase().includes("elevator");
+        let transitionMessage = `Continue to Floor ${getFloorLabel(end.floor)}`;
+
+        if (isStairTransition) {
+          transitionMessage = `Take stairs to Floor ${getFloorLabel(end.floor)}`;
+        } else if (isElevatorTransition) {
+          transitionMessage = `Take elevator to Floor ${getFloorLabel(end.floor)}`;
+        }
+
         transitions.push({
           id: `up-${start.id}-${end.id}`,
           left: startPct.left,
           top: startPct.top,
-          message: `Take elevator to Floor ${getFloorLabel(end.floor)}`,
+          message: transitionMessage,
         });
       }
 
@@ -285,7 +304,7 @@ export default function IndoorMapModal({
     }
   };
 
-  const computeRoute = (fromNode: IndoorNode, toNode: IndoorNode) => {
+  const computeRoute = useCallback((fromNode: IndoorNode, toNode: IndoorNode) => {
     if (!pathfinder) {
       setRoutePath([]);
       setRouteError("Indoor routing data is unavailable for this building.");
@@ -307,7 +326,11 @@ export default function IndoorMapModal({
       return;
     }
 
-    const path = pathfinder.findShortestPath(startLabel, endLabel);
+    const path = pathfinder.findShortestPath(startLabel, endLabel, {
+      wheelchairAccessible,
+      avoidStairs,
+      preferElevators,
+    });
     if (!path || path.length < 2) {
       setRoutePath([]);
       setRouteError(`No indoor route found from ${startLabel} to ${endLabel}.`);
@@ -316,7 +339,13 @@ export default function IndoorMapModal({
 
     setRoutePath(path);
     setRouteError(null);
-  };
+  }, [pathfinder, wheelchairAccessible, avoidStairs, preferElevators]);
+
+  useEffect(() => {
+    if (routeStartNode && routeEndNode) {
+      computeRoute(routeStartNode, routeEndNode);
+    }
+  }, [routeStartNode, routeEndNode, computeRoute]);
 
   const handleSetRouteFrom = () => {
     if (!selectedRoom) return;
@@ -455,9 +484,20 @@ export default function IndoorMapModal({
           <Text style={styles.headerTitle}>
             {indoorMap ? `${indoorMap.buildingId} Indoor Map` : "Indoor Map"}
           </Text>
-          <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-            <Text style={styles.closeButtonText}>Close</Text>
-          </TouchableOpacity>
+          <View style={styles.headerActions}>
+            <TouchableOpacity
+              style={styles.menuButton}
+              onPress={() => setShowRouteOptions(true)}
+              accessibilityRole="button"
+              accessibilityLabel="Route options"
+              testID="indoor.options.menu"
+            >
+              <Text style={styles.menuButtonText}>☰</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+              <Text style={styles.closeButtonText}>Close</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
         {!indoorMap || !currentFloor ? (
@@ -729,6 +769,16 @@ export default function IndoorMapModal({
             )}
           </>
         )}
+        <IndoorRouteOptionsModal
+          visible={showRouteOptions}
+          wheelchairAccessible={wheelchairAccessible}
+          avoidStairs={avoidStairs}
+          preferElevators={preferElevators}
+          onChangeWheelchairAccessible={setWheelchairAccessible}
+          onChangeAvoidStairs={setAvoidStairs}
+          onChangePreferElevators={setPreferElevators}
+          onClose={() => setShowRouteOptions(false)}
+        />
         </SafeAreaView>
       </SafeAreaProvider>
     </Modal>

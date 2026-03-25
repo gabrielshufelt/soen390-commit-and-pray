@@ -51,6 +51,62 @@ describe('IndoorPathfinder Logic Tests', () => {
     
     expect(path).toBeNull();
   });
+
+  it('allows non-accessible elevator when wheelchair accessibility is disabled', () => {
+    const inaccessibleElevatorMock: FloorData[] = [
+      {
+        nodes: [
+          { id: 'F1_A', label: 'A', type: 'room', floor: 1, x: 0, y: 0, accessible: true },
+          { id: 'F1_E', label: '', type: 'elevator_door', floor: 1, x: 5, y: 5, accessible: false },
+          { id: 'F2_E', label: '', type: 'elevator_door', floor: 2, x: 5, y: 5, accessible: false },
+          { id: 'F2_B', label: 'B', type: 'room', floor: 2, x: 10, y: 10, accessible: true }
+        ],
+        edges: [
+          { source: 'F1_A', target: 'F1_E', type: 'hallway', weight: 2, accessible: true },
+          { source: 'F1_E', target: 'F2_E', type: 'elevator', weight: 1, accessible: false },
+          { source: 'F2_E', target: 'F2_B', type: 'hallway', weight: 2, accessible: true }
+        ]
+      }
+    ];
+
+    const pathfinder = new IndoorPathfinder(inaccessibleElevatorMock);
+    const path = pathfinder.findShortestPath('A', 'B', {
+      wheelchairAccessible: false,
+      avoidStairs: true,
+      preferElevators: true,
+    });
+
+    expect(path).not.toBeNull();
+    expect(path?.[0].id).toBe('F1_A');
+    expect(path?.[path.length - 1].id).toBe('F2_B');
+  });
+
+  it('blocks non-accessible elevator when wheelchair accessibility is enabled', () => {
+    const inaccessibleElevatorMock: FloorData[] = [
+      {
+        nodes: [
+          { id: 'F1_A', label: 'A', type: 'room', floor: 1, x: 0, y: 0, accessible: true },
+          { id: 'F1_E', label: '', type: 'elevator_door', floor: 1, x: 5, y: 5, accessible: false },
+          { id: 'F2_E', label: '', type: 'elevator_door', floor: 2, x: 5, y: 5, accessible: false },
+          { id: 'F2_B', label: 'B', type: 'room', floor: 2, x: 10, y: 10, accessible: true }
+        ],
+        edges: [
+          { source: 'F1_A', target: 'F1_E', type: 'hallway', weight: 2, accessible: true },
+          { source: 'F1_E', target: 'F2_E', type: 'elevator', weight: 1, accessible: false },
+          { source: 'F2_E', target: 'F2_B', type: 'hallway', weight: 2, accessible: true }
+        ]
+      }
+    ];
+
+    const pathfinder = new IndoorPathfinder(inaccessibleElevatorMock);
+    const path = pathfinder.findShortestPath('A', 'B', {
+      wheelchairAccessible: true,
+      avoidStairs: true,
+      preferElevators: true,
+    });
+
+    expect(path).toBeNull();
+  });
 });
 
 describe('IndoorPathfinder Integration Tests (Real Data)', () => {
