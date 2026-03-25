@@ -89,7 +89,7 @@ export class IndoorPathfinder {
 
       // Prefer elevator transitions over other vertical alternatives.
       if (isElevator) {
-        return edge.accessible ? edge.weight * 0.5 : Infinity;
+        return edge.weight * 0.5;
       }
     }
 
