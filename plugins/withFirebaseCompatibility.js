@@ -45,6 +45,17 @@ const withFirebaseCompatibility = (config) => {
         console.log('[withFirebaseCompatibility] Added $RNFirebaseAsStaticFramework = true');
       }
 
+      // Step 1b: add modular_headers for GoogleUtilities so FirebaseCoreInternal
+      //          Swift can import it when linking as static libraries.
+      const modularHeadersMarker = 'pod \'GoogleUtilities\', :modular_headers => true';
+      if (!podfile.includes(modularHeadersMarker)) {
+        podfile = podfile.replace(
+          'use_expo_modules!',
+          `use_expo_modules!\n\n  ${modularHeadersMarker}`
+        );
+        console.log('[withFirebaseCompatibility] Added modular_headers for GoogleUtilities');
+      }
+
       // Step 2: in post_install, empty the .modulemap files for RNFB pods
       //         so Clang does not treat them as separate module boundaries.
       //         Also inject the missing NSData+zlib import into the GoogleUtilities

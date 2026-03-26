@@ -10,6 +10,10 @@ build/
 .expo/
 web-build/
 
+# Firebase config (generated from base64 env vars, contains secrets)
+GoogleService-Info.plist
+google-services.json
+
 # React native
 .bundle/
 vendor/bundle/
