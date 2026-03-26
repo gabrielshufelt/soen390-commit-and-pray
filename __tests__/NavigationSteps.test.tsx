@@ -78,6 +78,82 @@ describe('<NavigationSteps />', () => {
       const { getByText } = render(<NavigationSteps {...defaultProps} />);
       expect(getByText('1.5 km · 10 min')).toBeTruthy();
     });
+
+    it('renders uppercase source label for outdoor steps', () => {
+      const { getByText } = render(
+        <NavigationSteps
+          {...defaultProps}
+          steps={[makeStep({ source: 'outdoor' })]}
+        />
+      );
+      expect(getByText('OUTDOOR')).toBeTruthy();
+    });
+
+    it('renders indoor building and floor text when source is indoor and buildingCode exists', () => {
+      const { getByText } = render(
+        <NavigationSteps
+          {...defaultProps}
+          steps={[
+            makeStep({
+              source: 'indoor',
+              buildingCode: 'H',
+              floor: 8,
+            }),
+          ]}
+        />
+      );
+      expect(getByText('INDOOR')).toBeTruthy();
+      expect(getByText('H · Floor 8')).toBeTruthy();
+    });
+
+    it('renders indoor building text without floor when floor is not provided', () => {
+      const { getByText, queryByText } = render(
+        <NavigationSteps
+          {...defaultProps}
+          steps={[
+            makeStep({
+              source: 'indoor',
+              buildingCode: 'MB',
+            }),
+          ]}
+        />
+      );
+      expect(getByText('MB')).toBeTruthy();
+      expect(queryByText('MB · Floor')).toBeNull();
+    });
+
+    it('does not render building text when source is indoor but buildingCode is missing', () => {
+      const { queryByText } = render(
+        <NavigationSteps
+          {...defaultProps}
+          steps={[makeStep({ source: 'indoor', floor: 2 })]}
+        />
+      );
+      expect(queryByText(' · Floor 2')).toBeNull();
+    });
+
+    it('accepts optional metadata fields without crashing', () => {
+      const { getByText } = render(
+        <NavigationSteps
+          {...defaultProps}
+          steps={[
+            makeStep({
+              duration: '3 min',
+              source: 'outdoor',
+              buildingCode: 'H',
+              floor: 1,
+              coordinates: { latitude: 45.497, longitude: -73.579 },
+              maneuver: 'straight',
+              startLocation: { latitude: 45.496, longitude: -73.578 },
+              endLocation: { latitude: 45.497, longitude: -73.579 },
+            }),
+          ]}
+        />
+      );
+      expect(getByText('OUTDOOR')).toBeTruthy();
+      expect(getByText('100 m')).toBeTruthy();
+      expect(getByText('Go straight')).toBeTruthy();
+    });
   });
 
   describe('Off-route', () => {

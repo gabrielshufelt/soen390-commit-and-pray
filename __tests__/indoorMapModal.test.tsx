@@ -406,7 +406,7 @@ describe('<IndoorMapModal />', () => {
     fireEvent.press(getByText('H-201'));
     fireEvent.press(getByText('Get Directions To'));
 
-    expect(mockFindShortestPath).toHaveBeenCalledWith('H-101', 'H-201', {
+    expect(mockFindShortestPath).toHaveBeenCalledWith('r1', 'r2', {
       wheelchairAccessible: false,
       avoidStairs: false,
       preferElevators: false,
@@ -477,10 +477,48 @@ describe('<IndoorMapModal />', () => {
     fireEvent.press(getByText('H-201'));
     fireEvent.press(getByText('Get Directions To'));
 
-    expect(mockFindShortestPath).toHaveBeenLastCalledWith('H-101', 'H-201', {
+    expect(mockFindShortestPath).toHaveBeenLastCalledWith('r1', 'r2', {
       wheelchairAccessible: true,
       avoidStairs: true,
       preferElevators: true,
+    });
+  });
+
+  it('uses preset route node ids and hides manual direction actions', async () => {
+    const { findByText, queryByText } = render(
+      <IndoorMapModal
+        visible={true}
+        initialBuildingCode="H"
+        presetRoute={{ startNodeId: 'r1', endNodeId: 'r2' }}
+        onClose={onClose}
+      />
+    );
+
+    expect(await findByText('Route: H-101 to H-201')).toBeTruthy();
+    expect(mockFindShortestPath).toHaveBeenCalledWith('r1', 'r2', {
+      wheelchairAccessible: false,
+      avoidStairs: false,
+      preferElevators: false,
+    });
+    expect(queryByText('Get Directions To')).toBeNull();
+    expect(queryByText('Get Directions From')).toBeNull();
+  });
+
+  it('sets floor to preset route start floor when preset route is provided', async () => {
+    const { findByText } = render(
+      <IndoorMapModal
+        visible={true}
+        initialBuildingCode="H"
+        presetRoute={{ startNodeId: 'r2', endNodeId: 'r1' }}
+        onClose={onClose}
+      />
+    );
+
+    expect(await findByText('Floor 2')).toBeTruthy();
+    expect(mockFindShortestPath).toHaveBeenCalledWith('r2', 'r1', {
+      wheelchairAccessible: false,
+      avoidStairs: false,
+      preferElevators: false,
     });
   });
 
@@ -500,8 +538,8 @@ describe('<IndoorMapModal />', () => {
     expect(getByText('Indoor routing data is unavailable for this building.')).toBeTruthy();
   });
 
-  it('shows an error when trying to route between a room and a facility', () => {
-    const { getByText } = render(
+  it('allows routing between a facility and a room when a path exists', () => {
+    const { getByText, queryByText } = render(
       <IndoorMapModal visible={true} initialBuildingCode="H" onClose={onClose} />
     );
 
@@ -510,7 +548,8 @@ describe('<IndoorMapModal />', () => {
     fireEvent.press(getByText('H-101'));
     fireEvent.press(getByText('Get Directions To'));
 
-    expect(getByText('Directions are only supported between rooms.')).toBeTruthy();
+    expect(getByText('Route: Main Elevator to H-101')).toBeTruthy();
+    expect(queryByText('Directions are only supported between rooms.')).toBeNull();
   });
 
   it('shows an error when no route is found between selected rooms', () => {

@@ -84,6 +84,26 @@ describe('useCombinedNavigation', () => {
   });
 
   describe('calculateRoute', () => {
+    it('returns the calculated route on success', async () => {
+      mockedGetStitchedRoute.mockResolvedValueOnce(mockCombinedRouteSteps);
+
+      const { result } = renderHook(() => useCombinedNavigation());
+
+      let returnedRoute: CombinedNavigationStep[] = [];
+      await act(async () => {
+        returnedRoute = await result.current.calculateRoute(
+          mockStartLocation,
+          mockEndLocation,
+          false,
+          'DRIVING',
+          mockUserLocation
+        );
+      });
+
+      expect(returnedRoute).toEqual(mockCombinedRouteSteps);
+      expect(result.current.fullRoute).toEqual(mockCombinedRouteSteps);
+    });
+
     it('successfully calculates and sets a combined route', async () => {
       mockedGetStitchedRoute.mockResolvedValueOnce(mockCombinedRouteSteps);
 
@@ -235,6 +255,60 @@ describe('useCombinedNavigation', () => {
       consoleErrorSpy.mockRestore();
     });
 
+    it('returns an empty array on error', async () => {
+      mockedGetStitchedRoute.mockRejectedValueOnce(new Error('Boom'));
+      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
+
+      const { result } = renderHook(() => useCombinedNavigation());
+
+      let returnedRoute: CombinedNavigationStep[] = [mockCombinedRouteStep];
+      await act(async () => {
+        returnedRoute = await result.current.calculateRoute(
+          mockStartLocation,
+          mockEndLocation,
+          false,
+          'DRIVING',
+          mockUserLocation
+        );
+      });
+
+      expect(returnedRoute).toEqual([]);
+      expect(result.current.fullRoute).toEqual([]);
+      consoleErrorSpy.mockRestore();
+    });
+
+    it('clears an existing fullRoute when a later calculation fails', async () => {
+      mockedGetStitchedRoute.mockResolvedValueOnce(mockCombinedRouteSteps);
+      mockedGetStitchedRoute.mockRejectedValueOnce(new Error('Later failure'));
+      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
+
+      const { result } = renderHook(() => useCombinedNavigation());
+
+      await act(async () => {
+        await result.current.calculateRoute(
+          mockStartLocation,
+          mockEndLocation,
+          false,
+          'DRIVING',
+          mockUserLocation
+        );
+      });
+      expect(result.current.fullRoute).toEqual(mockCombinedRouteSteps);
+
+      await act(async () => {
+        await result.current.calculateRoute(
+          mockStartLocation,
+          'Broken destination',
+          false,
+          'DRIVING',
+          mockUserLocation
+        );
+      });
+
+      expect(result.current.fullRoute).toEqual([]);
+      consoleErrorSpy.mockRestore();
+    });
+
     it('handles accessible parameter correctly', async () => {
       mockedGetStitchedRoute.mockResolvedValueOnce(mockCombinedRouteSteps);
 
@@ -329,6 +403,42 @@ describe('useCombinedNavigation', () => {
       });
 
       expect(result.current.fullRoute).toEqual(secondRoute);
+    });
+  });
+
+  describe('clearRoute', () => {
+    it('clears fullRoute after a successful route calculation', async () => {
+      mockedGetStitchedRoute.mockResolvedValueOnce(mockCombinedRouteSteps);
+
+      const { result } = renderHook(() => useCombinedNavigation());
+
+      await act(async () => {
+        await result.current.calculateRoute(
+          mockStartLocation,
+          mockEndLocation,
+          false,
+          'DRIVING',
+          mockUserLocation
+        );
+      });
+
+      expect(result.current.fullRoute).toEqual(mockCombinedRouteSteps);
+
+      act(() => {
+        result.current.clearRoute();
+      });
+
+      expect(result.current.fullRoute).toEqual([]);
+    });
+
+    it('is safe to call when fullRoute is already empty', () => {
+      const { result } = renderHook(() => useCombinedNavigation());
+
+      expect(result.current.fullRoute).toEqual([]);
+      act(() => {
+        result.current.clearRoute();
+      });
+      expect(result.current.fullRoute).toEqual([]);
     });
   });
 

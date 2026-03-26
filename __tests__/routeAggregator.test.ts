@@ -13,6 +13,7 @@ jest.mock('../data/buildings', () => ({
       meta: { buildingId: 'BA' },
       nodes: [
         {
+          id: 'BA_ENTRY',
           type: 'building_entry',
           label: 'BA_ENTRY',
           buildingId: 'BA',
@@ -26,6 +27,7 @@ jest.mock('../data/buildings', () => ({
       meta: { buildingId: 'MB' },
       nodes: [
         {
+          id: 'MB_S2',
           type: 'building_entry',
           label: 'MB_S2',
           buildingId: 'MB',
@@ -34,12 +36,31 @@ jest.mock('../data/buildings', () => ({
           longitude: -73.5821,
         },
         {
+          id: 'MB_MAIN',
           type: 'building_entry',
           label: 'MB_MAIN',
           buildingId: 'MB',
           floor: 1,
           latitude: 45.5002,
           longitude: -73.5822,
+        },
+        {
+          id: 'MB_MAIN_B',
+          type: 'building_entry',
+          label: 'MB_MAIN_B',
+          buildingId: 'MB',
+          floor: 1,
+          latitude: 45.5003,
+          longitude: -73.5823,
+        },
+        {
+          id: 'MB_F8',
+          type: 'building_entry',
+          label: 'MB_F8',
+          buildingId: 'MB',
+          floor: 8,
+          latitude: 45.5008,
+          longitude: -73.5828,
         },
       ],
     },
@@ -286,7 +307,15 @@ describe('routeAggregator - getStitchedRoute', () => {
 
       expect(result.some(step => step.source === 'indoor')).toBe(true);
       expect(result[0].instruction).toContain('Exit BA via BA_ENTRY');
-      expect(mockedFindShortestPath).toHaveBeenCalledWith('101', 'BA_ENTRY', false);
+      expect(mockedFindShortestPath).toHaveBeenCalledWith(
+        '101',
+        'BA_ENTRY',
+        expect.objectContaining({
+          wheelchairAccessible: false,
+          avoidStairs: false,
+          preferElevators: false,
+        })
+      );
     });
 
     it('adds indoor arrival steps when destination includes a room', async () => {
@@ -315,7 +344,15 @@ describe('routeAggregator - getStitchedRoute', () => {
       const lastStep = result[result.length - 1];
       expect(lastStep.instruction).toBe('Head to S261');
       expect(lastStep.source).toBe('indoor');
-      expect(mockedFindShortestPath).toHaveBeenCalledWith('MB_S2', 'S261', true);
+      expect(mockedFindShortestPath).toHaveBeenCalledWith(
+        'MB_S2',
+        'S261',
+        expect.objectContaining({
+          wheelchairAccessible: true,
+          avoidStairs: true,
+          preferElevators: true,
+        })
+      );
     });
 
     it('maps both indoor legs when origin and destination both include rooms', async () => {
@@ -359,8 +396,26 @@ describe('routeAggregator - getStitchedRoute', () => {
       expect(outdoorSteps).toHaveLength(1);
       expect(indoorSteps[0].instruction).toContain('Exit BA via BA_ENTRY');
       expect(indoorSteps[indoorSteps.length - 1].instruction).toBe('Head to S261');
-      expect(mockedFindShortestPath).toHaveBeenNthCalledWith(1, '101', 'BA_ENTRY', false);
-      expect(mockedFindShortestPath).toHaveBeenNthCalledWith(2, 'MB_S2', 'S261', false);
+      expect(mockedFindShortestPath).toHaveBeenNthCalledWith(
+        1,
+        '101',
+        'BA_ENTRY',
+        expect.objectContaining({
+          wheelchairAccessible: false,
+          avoidStairs: false,
+          preferElevators: false,
+        })
+      );
+      expect(mockedFindShortestPath).toHaveBeenNthCalledWith(
+        2,
+        'MB_S2',
+        'S261',
+        expect.objectContaining({
+          wheelchairAccessible: false,
+          avoidStairs: false,
+          preferElevators: false,
+        })
+      );
     });
 
     it('uses MB S2 entry when transport mode is TRANSIT', async () => {
@@ -414,9 +469,157 @@ describe('routeAggregator - getStitchedRoute', () => {
 
       const destinationArg = mockFetchOutdoor.mock.calls[0][1];
       expect(destinationArg.transportMode).toBe('DRIVING');
-      expect([45.5001, 45.5002]).toContain(destinationArg.latitude);
-      expect([-73.5821, -73.5822]).toContain(destinationArg.longitude);
+      expect([45.5001, 45.5002, 45.5003, 45.5008]).toContain(destinationArg.latitude);
+      expect([-73.5821, -73.5822, -73.5823, -73.5828]).toContain(destinationArg.longitude);
       expect(mockedGetDistanceMeters).toHaveBeenCalled();
+    });
+
+    it('uses dot-notation room floor to choose closest same-floor MB entry', async () => {
+      const mockOrigin = { buildingCode: 'BA', buildingName: 'Building A', room: '' };
+      const mockDest = { buildingCode: 'MB', buildingName: 'MB', room: '1.294' };
+
+      mockedParseBuildingLocation.mockReturnValueOnce(mockOrigin);
+      mockedParseBuildingLocation.mockReturnValueOnce(mockDest);
+      mockedGetBuildingCoordinate.mockReturnValueOnce({ latitude: 0, longitude: 0 });
+      mockedGetDistanceMeters.mockImplementation((_, __, latitude, longitude) => {
+        if (latitude === 45.5003 && longitude === -73.5823) return 5;
+        if (latitude === 45.5002 && longitude === -73.5822) return 20;
+        return 50;
+      });
+
+      const mockFetchOutdoor = jest.fn().mockResolvedValueOnce([]);
+
+      await getStitchedRoute(
+        'Building A',
+        'MB Room 1.294',
+        false,
+        'WALKING',
+        mockUserLocation,
+        mockFetchOutdoor
+      );
+
+      expect(mockFetchOutdoor).toHaveBeenCalledWith(
+        expect.any(Object),
+        expect.objectContaining({
+          latitude: 45.5003,
+          longitude: -73.5823,
+          transportMode: 'WALKING',
+        })
+      );
+    });
+
+    it('uses plain-number room floor inference to pick floor-8 MB entry', async () => {
+      const mockOrigin = { buildingCode: 'BA', buildingName: 'Building A', room: '' };
+      const mockDest = { buildingCode: 'MB', buildingName: 'MB', room: '820' };
+
+      mockedParseBuildingLocation.mockReturnValueOnce(mockOrigin);
+      mockedParseBuildingLocation.mockReturnValueOnce(mockDest);
+      mockedGetBuildingCoordinate.mockReturnValueOnce({ latitude: 0, longitude: 0 });
+
+      const mockFetchOutdoor = jest.fn().mockResolvedValueOnce([]);
+
+      await getStitchedRoute(
+        'Building A',
+        'MB Room 820',
+        false,
+        'WALKING',
+        mockUserLocation,
+        mockFetchOutdoor
+      );
+
+      expect(mockFetchOutdoor).toHaveBeenCalledWith(
+        expect.any(Object),
+        expect.objectContaining({
+          latitude: 45.5008,
+          longitude: -73.5828,
+          transportMode: 'WALKING',
+        })
+      );
+    });
+
+    it('treats non-numeric room floor as unknown and still uses MB S2 for transit', async () => {
+      const mockOrigin = { buildingCode: 'BA', buildingName: 'Building A', room: '' };
+      const mockDest = { buildingCode: 'MB', buildingName: 'MB', room: 'Lobby' };
+
+      mockedParseBuildingLocation.mockReturnValueOnce(mockOrigin);
+      mockedParseBuildingLocation.mockReturnValueOnce(mockDest);
+      mockedGetBuildingCoordinate.mockReturnValueOnce({ latitude: 0, longitude: 0 });
+
+      const mockFetchOutdoor = jest.fn().mockResolvedValueOnce([]);
+
+      await getStitchedRoute(
+        'Building A',
+        'MB Lobby',
+        false,
+        'TRANSIT',
+        mockUserLocation,
+        mockFetchOutdoor
+      );
+
+      expect(mockFetchOutdoor).toHaveBeenCalledWith(
+        expect.any(Object),
+        expect.objectContaining({
+          latitude: 45.5001,
+          longitude: -73.5821,
+          transportMode: 'TRANSIT',
+        })
+      );
+    });
+
+    it('uses MB S2 entry for TRANSIT when destination room infers floor -2', async () => {
+      const mockOrigin = { buildingCode: 'BA', buildingName: 'Building A', room: '' };
+      const mockDest = { buildingCode: 'MB', buildingName: 'MB', room: 'S2.134' };
+
+      mockedParseBuildingLocation.mockReturnValueOnce(mockOrigin);
+      mockedParseBuildingLocation.mockReturnValueOnce(mockDest);
+      mockedGetBuildingCoordinate.mockReturnValueOnce({ latitude: 0, longitude: 0 });
+
+      const mockFetchOutdoor = jest.fn().mockResolvedValueOnce([]);
+
+      await getStitchedRoute(
+        'Building A',
+        'MB Room S2.134',
+        false,
+        'TRANSIT',
+        mockUserLocation,
+        mockFetchOutdoor
+      );
+
+      expect(mockFetchOutdoor).toHaveBeenCalledWith(
+        expect.any(Object),
+        expect.objectContaining({
+          latitude: 45.5001,
+          longitude: -73.5821,
+          transportMode: 'TRANSIT',
+        })
+      );
+    });
+
+    it('treats whitespace destination room as unknown floor and still routes outdoors', async () => {
+      const mockOrigin = { buildingCode: 'BA', buildingName: 'Building A', room: '' };
+      const mockDest = { buildingCode: 'MB', buildingName: 'MB', room: '   ' };
+
+      mockedParseBuildingLocation.mockReturnValueOnce(mockOrigin);
+      mockedParseBuildingLocation.mockReturnValueOnce(mockDest);
+      mockedGetBuildingCoordinate.mockReturnValueOnce({ latitude: 0, longitude: 0 });
+
+      const mockFetchOutdoor = jest.fn().mockResolvedValueOnce([]);
+
+      await getStitchedRoute(
+        'Building A',
+        'MB',
+        false,
+        'DRIVING',
+        mockUserLocation,
+        mockFetchOutdoor
+      );
+
+      expect(mockFetchOutdoor).toHaveBeenCalledWith(
+        expect.any(Object),
+        expect.objectContaining({
+          transportMode: 'DRIVING',
+        })
+      );
     });
   });
 
@@ -504,6 +707,33 @@ describe('routeAggregator - getStitchedRoute', () => {
   });
 
   describe('error handling and edge cases', () => {
+    it('falls back to outdoor-only when origin indoor path is unavailable', async () => {
+      const mockOrigin = { buildingCode: 'BA', buildingName: 'Building A', room: '101' };
+      const mockDest = { buildingCode: 'BB', buildingName: 'Building B', room: '' };
+
+      mockedParseBuildingLocation.mockReturnValueOnce(mockOrigin);
+      mockedParseBuildingLocation.mockReturnValueOnce(mockDest);
+      mockedGetBuildingCoordinate.mockReturnValueOnce(mockBuildingBCoord);
+      mockedFindShortestPath.mockReturnValueOnce(null);
+
+      const mockFetchOutdoor = jest.fn().mockResolvedValueOnce([]);
+
+      const result = await getStitchedRoute(
+        'Building A Room 101',
+        'Building B',
+        false,
+        'DRIVING',
+        mockUserLocation,
+        mockFetchOutdoor
+      );
+
+      expect(result.filter((step) => step.source === 'indoor')).toHaveLength(0);
+      expect(mockFetchOutdoor).toHaveBeenCalledWith(
+        mockUserLocation,
+        expect.objectContaining({ transportMode: 'DRIVING' })
+      );
+    });
+
     it('returns empty array when fetchOutdoor returns empty', async () => {
       const mockOrigin = { buildingCode: 'BA', buildingName: 'Building A', room: '' };
       const mockDest = { buildingCode: 'BB', buildingName: 'Building B', room: '' };

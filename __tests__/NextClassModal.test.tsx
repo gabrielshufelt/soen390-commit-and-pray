@@ -189,7 +189,9 @@ describe('NextClassModal', () => {
     const button = getByText('Get Directions');
     fireEvent.press(button);
    
-    expect(mockOnGetDirections).toHaveBeenCalledWith('H');
+    expect(mockOnGetDirections).toHaveBeenCalledWith(
+      expect.objectContaining({ buildingCode: 'H' })
+    );
   });
 
   it('cleans up the timer on unmount', () => {

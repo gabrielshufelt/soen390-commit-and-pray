@@ -92,6 +92,9 @@ const mockCheckProgress = jest.fn();
 const mockNextStep = jest.fn();
 const mockPrevStep = jest.fn();
 const mockSetTransportMode = jest.fn();
+const mockCalculateCombinedRoute = jest.fn();
+const mockClearCombinedRoute = jest.fn();
+const mockCombinedNavigationHook = jest.fn();
 
 jest.mock('../hooks/useLocationPermissions', () => ({
   useLocationPermissions: () => mockPermissionState(),
@@ -107,6 +110,10 @@ jest.mock('../hooks/useUserBuilding', () => ({
 
 jest.mock('@/hooks/useDirections', () => ({
   useDirections: () => mockDirectionsHook(),
+}));
+
+jest.mock('../hooks/useCombinedNavigation', () => ({
+  useCombinedNavigation: () => mockCombinedNavigationHook(),
 }));
 
 // --- MapViewDirections mock with controllable behavior ---
@@ -182,6 +189,7 @@ jest.mock('react-native-maps', () => {
 // --- Test Starting and Ending Directions ---
 let mockSearchBarProperties: any = {};
 let mockBuildingModalProperties: any = {};
+let mockIndoorMapModalProperties: any = {};
 
 jest.mock('../components/searchBar', () => {
   const React = require('react');
@@ -225,6 +233,26 @@ jest.mock('../components/buildingModal', () => {
             }}
           >
             <Text>Get Directions To</Text>
+          </TouchableOpacity>
+        </View>
+      );
+    },
+  };
+});
+
+jest.mock('../components/indoorMapModal', () => {
+  const React = require('react');
+  const { View, Text, TouchableOpacity } = require('react-native');
+  return {
+    __esModule: true,
+    default: (props: any) => {
+      mockIndoorMapModalProperties = props;
+      if (!props.visible) return null;
+      return (
+        <View testID="indoor-map-modal">
+          <Text testID="indoor-map-building-code">{props.initialBuildingCode}</Text>
+          <TouchableOpacity testID="indoor-map-close" onPress={props.onClose}>
+            <Text>Close Indoor Map</Text>
           </TouchableOpacity>
         </View>
       );
@@ -280,6 +308,13 @@ const defaultDirections = {
   setPreviewRouteInfo: jest.fn(),
 };
 
+const defaultCombinedNavigation = {
+  fullRoute: [],
+  calculateRoute: mockCalculateCombinedRoute,
+  clearRoute: mockClearCombinedRoute,
+  isCalculating: false,
+};
+
 const activeDirections = {
   ...defaultDirections,
   state: {
@@ -317,6 +352,8 @@ function setupDefaults() {
   mockWatchLocation.mockReturnValue(defaultWatch);
   mockUserBuilding.mockReturnValue(null);
   mockDirectionsHook.mockReturnValue(defaultDirections);
+  mockCombinedNavigationHook.mockReturnValue(defaultCombinedNavigation);
+  mockCalculateCombinedRoute.mockResolvedValue([]);
 }
 
 async function renderWithTheme(component: React.ReactElement) {
@@ -330,6 +367,7 @@ describe('<Index />', () => {
     jest.clearAllMocks();
     mockSearchBarProperties = {};
     mockBuildingModalProperties = {};
+    mockIndoorMapModalProperties = {};
     mockPolygonRenderCount = 0;
     mockMapDirectionsBehavior = 'none';
     setupDefaults();
@@ -503,7 +541,9 @@ describe('<Index />', () => {
         expect(mockSearchBarProperties.destination).toBeTruthy();
       });
 
-      mockSearchBarProperties.onStartRoute();
+      await act(async () => {
+        mockSearchBarProperties.onStartRoute();
+      });
 
       expect(mockStartDirections).toHaveBeenCalledWith(
         { latitude: 45.4972, longitude: -73.579 },
@@ -571,6 +611,7 @@ describe('<Index />', () => {
       });
 
       expect(mockEndDirections).toHaveBeenCalled();
+      expect(mockClearCombinedRoute).toHaveBeenCalled();
 
       await waitFor(() => {
         expect(mockSearchBarProperties.start).toBeNull();
@@ -1110,6 +1151,484 @@ describe('<Index />', () => {
       expect(routeLine.props.strokeColor).toBe(ROUTE_LINE_STYLES.TRANSIT.strokeColor);
       expect(routeLine.props.strokeWidth).toBe(ROUTE_LINE_STYLES.TRANSIT.strokeWidth);
       expect(routeLine.props.lineDashPattern).toBeUndefined();
+    });
+  });
+
+  describe('Indoor map entry points', () => {
+    it('opens IndoorMapModal when Indoor quick-access button is pressed', async () => {
+      const { getByText, getByTestId } = await renderWithTheme(<Index />);
+
+      fireEvent.press(getByText('Indoor'));
+
+      await waitFor(() => {
+        expect(getByTestId('indoor-map-modal')).toBeTruthy();
+        expect(mockIndoorMapModalProperties.visible).toBe(true);
+        expect(mockIndoorMapModalProperties.initialBuildingCode).toBeTruthy();
+      });
+    });
+
+    it('opens IndoorMapModal from SearchBar onOpenBuilding when indoor map exists', async () => {
+      await renderWithTheme(<Index />);
+      await waitFor(() => expect(mockSearchBarProperties.onOpenBuilding).toBeDefined());
+
+      await act(async () => {
+        mockSearchBarProperties.onOpenBuilding({
+          id: 'H',
+          name: 'Hall Building (H)',
+          code: 'H',
+          coordinate: { latitude: 45.497, longitude: -73.579 },
+          campus: 'SGW',
+        });
+      });
+
+      await waitFor(() => {
+        expect(mockIndoorMapModalProperties.visible).toBe(true);
+        expect(mockIndoorMapModalProperties.initialBuildingCode).toBe('H');
+      });
+    });
+
+    it('does not open IndoorMapModal from SearchBar onOpenBuilding when no indoor map exists', async () => {
+      await renderWithTheme(<Index />);
+      await waitFor(() => expect(mockSearchBarProperties.onOpenBuilding).toBeDefined());
+
+      await act(async () => {
+        mockSearchBarProperties.onOpenBuilding({
+          id: 'ZZZ',
+          name: 'Unknown Building (ZZZ)',
+          code: 'ZZZ',
+          coordinate: { latitude: 45.5, longitude: -73.6 },
+          campus: 'SGW',
+        });
+      });
+
+      await waitFor(() => {
+        expect(mockIndoorMapModalProperties.visible).toBeFalsy();
+      });
+    });
+  });
+
+  describe('Combined routing for room destinations', () => {
+    it('uses calculateRoute instead of startDirections when destination includes a room', async () => {
+      await renderWithTheme(<Index />);
+      await waitFor(() => expect(mockSearchBarProperties.onStartRoute).toBeDefined());
+
+      await act(async () => {
+        mockSearchBarProperties.onChangeDestination({
+          id: 'H',
+          name: 'Hall Building',
+          code: 'H',
+          room: '820',
+          coordinate: { latitude: 45.497, longitude: -73.579 },
+          campus: 'SGW',
+        });
+      });
+
+      await act(async () => {
+        mockSearchBarProperties.onStartRoute();
+      });
+
+      await waitFor(() => {
+        expect(mockCalculateCombinedRoute).toHaveBeenCalledWith(
+          '',
+          'H 820',
+          false,
+          'WALKING',
+          { latitude: 45.4972, longitude: -73.579 }
+        );
+      });
+      expect(mockStartDirections).not.toHaveBeenCalled();
+    });
+
+    it('uses combined routing from NextClassModal when next class has a room', async () => {
+      const { getByText } = await renderWithTheme(<Index />);
+
+      await waitFor(() => {
+        expect(getByText('Get Directions')).toBeTruthy();
+      });
+
+      fireEvent.press(getByText('Get Directions'));
+
+      await waitFor(() => {
+        expect(mockCalculateCombinedRoute).toHaveBeenCalledWith(
+          '',
+          'H 820',
+          false,
+          'WALKING',
+          { latitude: 45.4972, longitude: -73.579 }
+        );
+      });
+    });
+
+    it('builds route raw correctly when start has room and destination has only code', async () => {
+      await renderWithTheme(<Index />);
+
+      await act(async () => {
+        mockSearchBarProperties.onChangeStart({
+          id: 'H',
+          name: 'Hall Building',
+          code: 'H',
+          room: '820',
+          coordinate: { latitude: 45.497, longitude: -73.579 },
+          campus: 'SGW',
+        });
+        mockSearchBarProperties.onChangeDestination({
+          id: 'MB',
+          name: 'Molson Building',
+          code: 'MB',
+          coordinate: { latitude: 45.495, longitude: -73.578 },
+          campus: 'SGW',
+        });
+      });
+
+      await act(async () => {
+        mockSearchBarProperties.onStartRoute();
+      });
+
+      await waitFor(() => {
+        expect(mockCalculateCombinedRoute).toHaveBeenCalledWith(
+          'H 820',
+          'MB',
+          false,
+          'WALKING',
+          { latitude: 45.4972, longitude: -73.579 }
+        );
+      });
+    });
+
+    it('starts outdoor handoff directions when combined route contains outdoor then indoor steps', async () => {
+      const combinedState: any = {
+        fullRoute: [],
+        isCalculating: false,
+        clearRoute: mockClearCombinedRoute,
+        calculateRoute: jest.fn(async () => {
+          combinedState.fullRoute = [
+            {
+              instruction: 'Walk outside',
+              distance: '100 m',
+              source: 'outdoor',
+              coordinates: { latitude: 45.51, longitude: -73.6 },
+            },
+            {
+              instruction: 'Enter building',
+              distance: '20 m',
+              source: 'indoor',
+              buildingCode: 'H',
+              startNodeId: 'A',
+              endNodeId: 'B',
+              startNodeLabel: 'A',
+              endNodeLabel: 'B',
+              coordinates: { latitude: 45.52, longitude: -73.61 },
+            },
+          ];
+          return combinedState.fullRoute;
+        }),
+      };
+      mockCombinedNavigationHook.mockImplementation(() => combinedState);
+
+      await renderWithTheme(<Index />);
+
+      await act(async () => {
+        mockSearchBarProperties.onChangeDestination({
+          id: 'H',
+          name: 'Hall Building',
+          code: 'H',
+          room: '820',
+          coordinate: { latitude: 45.497, longitude: -73.579 },
+          campus: 'SGW',
+        });
+      });
+
+      await act(async () => {
+        mockSearchBarProperties.onStartRoute();
+      });
+
+      await waitFor(() => {
+        expect(mockStartDirections).toHaveBeenCalledWith(
+          { latitude: 45.51, longitude: -73.6 },
+          { latitude: 45.52, longitude: -73.61 }
+        );
+      });
+    });
+
+    it('calls endDirections when combined route has no outdoor steps', async () => {
+      const combinedState: any = {
+        fullRoute: [],
+        isCalculating: false,
+        clearRoute: mockClearCombinedRoute,
+        calculateRoute: jest.fn(async () => {
+          combinedState.fullRoute = [
+            {
+              instruction: 'Indoor only',
+              distance: '20 m',
+              source: 'indoor',
+              buildingCode: 'H',
+              startNodeId: 'A',
+              endNodeId: 'B',
+              startNodeLabel: 'A',
+              endNodeLabel: 'B',
+              coordinates: { latitude: 45.52, longitude: -73.61 },
+            },
+          ];
+          return combinedState.fullRoute;
+        }),
+      };
+      mockCombinedNavigationHook.mockImplementation(() => combinedState);
+
+      await renderWithTheme(<Index />);
+
+      await act(async () => {
+        mockSearchBarProperties.onChangeDestination({
+          id: 'H',
+          name: 'Hall Building',
+          code: 'H',
+          room: '820',
+          coordinate: { latitude: 45.497, longitude: -73.579 },
+          campus: 'SGW',
+        });
+      });
+
+      await act(async () => {
+        mockSearchBarProperties.onStartRoute();
+      });
+
+      await waitFor(() => {
+        expect(mockEndDirections).toHaveBeenCalled();
+      });
+    });
+
+    it('opens indoor modal with preset route when active combined step is indoor', async () => {
+      const combinedState: any = {
+        fullRoute: [],
+        isCalculating: false,
+        clearRoute: mockClearCombinedRoute,
+        calculateRoute: jest.fn(async () => {
+          combinedState.fullRoute = [
+            {
+              instruction: 'Head to 820',
+              distance: '15 m',
+              source: 'indoor',
+              buildingCode: 'H',
+              startNodeId: 'NODE_START',
+              endNodeId: 'NODE_END',
+              startNodeLabel: 'Lobby',
+              endNodeLabel: 'Room 820',
+              coordinates: { latitude: 45.52, longitude: -73.61 },
+            },
+          ];
+          return combinedState.fullRoute;
+        }),
+      };
+      mockCombinedNavigationHook.mockImplementation(() => combinedState);
+
+      await renderWithTheme(<Index />);
+
+      await act(async () => {
+        mockSearchBarProperties.onChangeDestination({
+          id: 'H',
+          name: 'Hall Building',
+          code: 'H',
+          room: '820',
+          coordinate: { latitude: 45.497, longitude: -73.579 },
+          campus: 'SGW',
+        });
+      });
+
+      await act(async () => {
+        mockSearchBarProperties.onStartRoute();
+      });
+
+      await waitFor(() => {
+        expect(mockIndoorMapModalProperties.visible).toBe(true);
+        expect(mockIndoorMapModalProperties.initialBuildingCode).toBe('H');
+        expect(mockIndoorMapModalProperties.presetRoute).toEqual({
+          startNodeId: 'NODE_START',
+          endNodeId: 'NODE_END',
+          startLabel: 'Lobby',
+          endLabel: 'Room 820',
+        });
+      });
+
+      await act(async () => {
+        mockSearchBarProperties.onEndRoute();
+      });
+
+      await waitFor(() => {
+        expect(mockIndoorMapModalProperties.presetRoute).toBeNull();
+      });
+    });
+
+    it('auto-advances combined step when user is within 20m of next step', async () => {
+      const combinedState: any = {
+        fullRoute: [],
+        isCalculating: false,
+        clearRoute: mockClearCombinedRoute,
+        calculateRoute: jest.fn(async () => {
+          combinedState.fullRoute = [
+            {
+              instruction: 'Step One',
+              distance: '10 m',
+              source: 'outdoor',
+              coordinates: { latitude: 45.4972, longitude: -73.579 },
+            },
+            {
+              instruction: 'Step Two',
+              distance: '10 m',
+              source: 'outdoor',
+              coordinates: { latitude: 45.49725, longitude: -73.579 },
+            },
+          ];
+          return combinedState.fullRoute;
+        }),
+      };
+      mockCombinedNavigationHook.mockImplementation(() => combinedState);
+
+      const { getByText } = await renderWithTheme(<Index />);
+
+      await act(async () => {
+        mockSearchBarProperties.onChangeDestination({
+          id: 'H',
+          name: 'Hall Building',
+          code: 'H',
+          room: '820',
+          coordinate: { latitude: 45.497, longitude: -73.579 },
+          campus: 'SGW',
+        });
+      });
+
+      await act(async () => {
+        mockSearchBarProperties.onStartRoute();
+      });
+
+      await waitFor(() => {
+        expect(getByText(/Step Two/)).toBeTruthy();
+      });
+    });
+
+    it('jumps to next indoor leg when user is within 35m of indoor handoff', async () => {
+      const combinedState: any = {
+        fullRoute: [],
+        isCalculating: false,
+        clearRoute: mockClearCombinedRoute,
+        calculateRoute: jest.fn(async () => {
+          combinedState.fullRoute = [
+            {
+              instruction: 'Outdoor leg',
+              distance: '100 m',
+              source: 'outdoor',
+              coordinates: { latitude: 45.4972, longitude: -73.579 },
+            },
+            {
+              instruction: 'Indoor handoff',
+              distance: '15 m',
+              source: 'indoor',
+              buildingCode: 'H',
+              startNodeId: 'S',
+              endNodeId: 'E',
+              startNodeLabel: 'Start',
+              endNodeLabel: 'End',
+              coordinates: { latitude: 45.49742, longitude: -73.579 },
+            },
+          ];
+          return combinedState.fullRoute;
+        }),
+      };
+      mockCombinedNavigationHook.mockImplementation(() => combinedState);
+
+      const { getByText } = await renderWithTheme(<Index />);
+
+      await act(async () => {
+        mockSearchBarProperties.onChangeDestination({
+          id: 'H',
+          name: 'Hall Building',
+          code: 'H',
+          room: '820',
+          coordinate: { latitude: 45.497, longitude: -73.579 },
+          campus: 'SGW',
+        });
+      });
+
+      await act(async () => {
+        mockSearchBarProperties.onStartRoute();
+      });
+
+      await waitFor(() => {
+        expect(getByText(/Indoor handoff/)).toBeTruthy();
+      });
+    });
+  });
+
+  describe('effective location and next-class non-room flow', () => {
+    it('uses DEV_OVERRIDE_LOCATION coordinates as effective origin when set', async () => {
+      const devConfig = require('../utils/devConfig');
+      devConfig.DEV_OVERRIDE_LOCATION = { latitude: 46.0, longitude: -74.0 };
+
+      await renderWithTheme(<Index />);
+
+      await act(async () => {
+        mockSearchBarProperties.onChangeDestination({
+          id: 'H',
+          name: 'Hall Building',
+          coordinate: { latitude: 45.497, longitude: -73.579 },
+        });
+      });
+
+      await act(async () => {
+        mockSearchBarProperties.onStartRoute();
+      });
+
+      await waitFor(() => {
+        expect(mockStartDirections).toHaveBeenCalledWith(
+          { latitude: 46.0, longitude: -74.0 },
+          { latitude: 45.497, longitude: -73.579 }
+        );
+      });
+
+      devConfig.DEV_OVERRIDE_LOCATION = null;
+    });
+
+    it('for next class without room, uses building coordinate and starts directions', async () => {
+      mockNextClassData.room = undefined as any;
+      mockNextClassData.buildingCode = 'H';
+
+      const { getByText } = await renderWithTheme(<Index />);
+      await waitFor(() => expect(getByText('Get Directions')).toBeTruthy());
+
+      fireEvent.press(getByText('Get Directions'));
+
+      await waitFor(() => {
+        expect(mockStartDirections).toHaveBeenCalledWith(
+          { latitude: 45.4972, longitude: -73.579 },
+          expect.objectContaining({ latitude: expect.any(Number), longitude: expect.any(Number) })
+        );
+      });
+    });
+
+    it('for next class without room and unknown building, shows alert', async () => {
+      const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => { });
+      mockNextClassData.room = undefined as any;
+      mockNextClassData.buildingCode = 'UNKNOWN_BUILDING';
+
+      const { getByText } = await renderWithTheme(<Index />);
+      await waitFor(() => expect(getByText('Get Directions')).toBeTruthy());
+
+      fireEvent.press(getByText('Get Directions'));
+
+      await waitFor(() => {
+        expect(alertSpy).toHaveBeenCalledWith('Error', 'Could not find coordinates for this building.');
+      });
+
+      alertSpy.mockRestore();
+    });
+  });
+
+  describe('search options payloads', () => {
+    it('passes computed roomOptionsByBuilding to SearchBar', async () => {
+      await renderWithTheme(<Index />);
+
+      await waitFor(() => {
+        expect(mockSearchBarProperties.roomOptionsByBuilding).toBeDefined();
+        expect(Object.keys(mockSearchBarProperties.roomOptionsByBuilding).length).toBeGreaterThan(0);
+      });
     });
   });
 });
