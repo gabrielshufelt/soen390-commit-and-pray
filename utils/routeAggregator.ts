@@ -160,8 +160,7 @@ export async function getStitchedRoute(
   }
 
   const outdoorSteps = await fetchOutdoorSteps(outdoorStart, { 
-  ...outdoorEnd, 
-  transportMode 
+  ...outdoorEnd
   });
 
   outdoorSteps.forEach(s => route.push({ ...s, source: "outdoor" }));

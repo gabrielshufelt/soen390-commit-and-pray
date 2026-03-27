@@ -28,6 +28,7 @@ import { useNextClass, type ParsedNextClass } from "../../hooks/useNextClass";
 import { getRouteLineStyle } from "../../constants/routeStyles";
 import NextClassModal from "../../components/NextClassModal";
 import { getBuildingCoordinate } from "../../utils/buildingCoordinates";
+import { buildRouteRaw } from "@/utils/buildingParser";
 import IndoorMapModal from "../../components/indoorMapModal";
 import { getBuildingIndoorMap, getIndoorBuildingCodes } from "@/utils/indoorMapData";
 import { useCombinedNavigation } from "../../hooks/useCombinedNavigation";
@@ -184,12 +185,6 @@ export default function Index() {
     });
   };
 
-  const buildRouteRaw = (choice: BuildingChoice | null): string => {
-    if (!choice?.code) return "";
-    if (choice.room?.trim()) return `${choice.code} ${choice.room.trim()}`;
-    return choice.code;
-  };
-
   const shouldUseCombinedFlow = !!(startChoice?.room?.trim() || destChoice?.room?.trim());
 
   const startCombinedRoute = async (
@@ -202,7 +197,8 @@ export default function Index() {
       destinationRaw,
       false,
       directionsState.transportMode,
-      userCoords
+      userCoords,
+      apiKey
     );
 
     setCombinedStepIndex(0);
@@ -231,7 +227,7 @@ export default function Index() {
     endDirections();
   };
 
-  const handleStartRoute = () => {
+  const handleStartRoute = async () => {
     if (!destChoice || !effectiveLocation) return;
 
     if (!shouldUseCombinedFlow) {
@@ -249,9 +245,7 @@ export default function Index() {
     const originRaw = buildRouteRaw(startChoice);
     const destinationRaw = buildRouteRaw(destChoice);
 
-    void (async () => {
-      await startCombinedRoute(originRaw, destinationRaw, userCoords);
-    })();
+    await startCombinedRoute(originRaw, destinationRaw, userCoords);
   };
 
   const handleNextClassDirections = (classInfo: ParsedNextClass) => {
@@ -880,13 +874,15 @@ export default function Index() {
            <Text style={styles.indoorButtonText}>Indoor</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity
-        style={styles.shuttleButton}
-        onPress={() => setShowShuttleModal(true)}
-        activeOpacity={0.8}
-      >
-        <Text style={styles.shuttleButtonText}>🚌</Text>
-      </TouchableOpacity>
+      {userBuilding && (
+        <TouchableOpacity
+          style={styles.indoorButton}
+          onPress={handleOpenIndoorQuickAccess}
+          activeOpacity={0.85}
+        >
+          <Text style={styles.indoorButtonText}>Indoor</Text>
+        </TouchableOpacity>
+      )}
 
       {navigationActive && activeSteps.length > 0 && (
         <NavigationSteps

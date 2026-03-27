@@ -1,3 +1,5 @@
+import type { BuildingChoice } from "@/constants/searchBar.types";
+
 // Parses a Concordia building + room location string (typically from a Google
 // Calendar event's LOCATION field) into a structured { buildingCode, buildingName, room }.
 
@@ -156,6 +158,12 @@ const CODE_TO_NAME: Record<string, string> = {
 
 // Set of valid building codes for direct matching (uppercase)
 const VALID_CODES = new Set(Object.keys(CODE_TO_NAME));
+
+export function buildRouteRaw(choice: BuildingChoice | null): string {
+  if (!choice?.code) return "";
+  if (choice.room?.trim()) return `${choice.code} ${choice.room.trim()}`;
+  return choice.code;
+}
 
 // Parse a Concordia raw location string from a calendar event.
 export function parseBuildingLocation(location: string): ParsedLocation | null {

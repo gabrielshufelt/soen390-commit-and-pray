@@ -6,9 +6,8 @@ import { useDirections } from './useDirections';
 export function useCombinedNavigation() {
   const [fullRoute, setFullRoute] = useState<CombinedNavigationStep[]>([]);
   const [isCalculating, setIsCalculating] = useState(false);
-  const { apiKey } = useDirections(); 
 
-  const calculateRoute = async (start: string, end: string, accessible: boolean, mode: string, userLoc: any) => {
+  const calculateRoute = async (start: string, end: string, accessible: boolean, mode: string, userLoc: any, apiKey: string): Promise<CombinedNavigationStep[]> => {
     setIsCalculating(true);
     try {
       const route = await getStitchedRoute(start, end, accessible, mode, userLoc, 
