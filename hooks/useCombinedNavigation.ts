@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { getStitchedRoute, type CombinedNavigationStep } from '../utils/routeAggregator';
 import { fetchOutdoorRoute } from '../utils/googleMapsService';
-import { useDirections } from './useDirections';
 
 export function useCombinedNavigation() {
   const [fullRoute, setFullRoute] = useState<CombinedNavigationStep[]>([]);

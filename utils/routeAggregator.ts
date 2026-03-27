@@ -37,24 +37,45 @@ function inferFloorFromRoom(room: string): number | null {
   if (!normalized) return null;
 
   // Basement notation like S2.134 or S2
-  const basementMatch = /^S\s*([0-9]+)/.exec(normalized);
+  const basementMatch = /^S\s*(\d+)/.exec(normalized);
   if (basementMatch) {
     return -Number(basementMatch[1]);
   }
 
   // Dot notation like 1.294 or 8.120
-  const dotFloorMatch = /^([0-9]+)\./.exec(normalized);
+  const dotFloorMatch = /^(\d+)\./.exec(normalized);
   if (dotFloorMatch) {
     return Number(dotFloorMatch[1]);
   }
 
   // Plain room like 820 -> usually floor 8
-  const plainMatch = /^([0-9]{2,4})$/.exec(normalized);
+  const plainMatch = /^(\d{2,4})$/.exec(normalized);
   if (plainMatch) {
     return Number(plainMatch[1][0]);
   }
 
   return null;
+}
+
+function findClosestEntry<T extends { latitude?: number | null; longitude?: number | null }>(
+  entries: T[],
+  referencePoint: { latitude: number; longitude: number }
+): T {
+  return entries.toSorted((a, b) => {
+    const distA = getDistanceMeters(
+      referencePoint.latitude,
+      referencePoint.longitude,
+      a.latitude!,
+      a.longitude!
+    );
+    const distB = getDistanceMeters(
+      referencePoint.latitude,
+      referencePoint.longitude,
+      b.latitude!,
+      b.longitude!
+    );
+    return distA - distB;
+  })[0];
 }
 
 function findBestEntryNode(
@@ -78,19 +99,11 @@ function findBestEntryNode(
   if (targetFloor != null) {
     const sameFloorEntries = allEntries.filter((entry) => entry.floor === targetFloor);
     if (sameFloorEntries.length > 0) {
-      return sameFloorEntries.sort((a, b) => {
-        const distA = getDistanceMeters(referencePoint.latitude, referencePoint.longitude, a.latitude!, a.longitude!);
-        const distB = getDistanceMeters(referencePoint.latitude, referencePoint.longitude, b.latitude!, b.longitude!);
-        return distA - distB;
-      })[0];
+      return findClosestEntry(sameFloorEntries, referencePoint);
     }
   }
 
-  return allEntries.sort((a, b) => {
-    const distA = getDistanceMeters(referencePoint.latitude, referencePoint.longitude, a.latitude!, a.longitude!);
-    const distB = getDistanceMeters(referencePoint.latitude, referencePoint.longitude, b.latitude!, b.longitude!);
-    return distA - distB;
-  })[0];
+  return findClosestEntry(allEntries, referencePoint);
 }
 
 export async function getStitchedRoute(
@@ -119,7 +132,7 @@ export async function getStitchedRoute(
       });
       if (indoorPath?.length) {
         const startNode = indoorPath[0];
-        const endNode = indoorPath[indoorPath.length - 1];
+        const endNode = indoorPath.at(-1)!;
         const indoorExitCoordinate = pickCoordinate(
           { latitude: endNode.latitude, longitude: endNode.longitude },
           { latitude: bestExit.latitude!, longitude: bestExit.longitude! }
@@ -170,7 +183,7 @@ export async function getStitchedRoute(
     });
     if (arrivalPath?.length) {
       const startNode = arrivalPath[0];
-      const endNode = arrivalPath[arrivalPath.length - 1];
+      const endNode = arrivalPath.at(-1)!;
       const handoffCoordinate = pickCoordinate(
         { latitude: startNode.latitude, longitude: startNode.longitude },
         pickCoordinate(

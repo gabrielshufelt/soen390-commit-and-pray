@@ -250,11 +250,15 @@ export default function Index() {
       longitude: effectiveLocation.coords.longitude,
     };
 
-    const destinationRaw = classInfo.rawLocation?.trim()
-      ? classInfo.rawLocation.trim()
-      : classInfo.room?.trim()
-        ? `${classInfo.buildingCode} ${classInfo.room.trim()}`
-        : classInfo.buildingCode;
+    const trimmedRawLocation = classInfo.rawLocation?.trim();
+    const trimmedRoom = classInfo.room?.trim();
+    let destinationRaw = classInfo.buildingCode;
+
+    if (trimmedRawLocation) {
+      destinationRaw = trimmedRawLocation;
+    } else if (trimmedRoom) {
+      destinationRaw = `${classInfo.buildingCode} ${trimmedRoom}`;
+    }
 
     const originRaw = userBuilding?.code ?? "";
 
@@ -530,7 +534,7 @@ export default function Index() {
   useEffect(() => {
     if (!combinedRouteActive) return;
     const currentStep = fullRoute[combinedStepIndex];
-    if (!currentStep || currentStep.source !== "indoor") return;
+    if (currentStep?.source !== "indoor") return;
     if (!currentStep.buildingCode || !getBuildingIndoorMap(currentStep.buildingCode)) return;
 
     const startLabel = currentStep.startNodeLabel;

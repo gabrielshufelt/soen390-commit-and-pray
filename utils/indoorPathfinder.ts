@@ -30,6 +30,16 @@ export interface PathfindingOptions {
   preferElevators?: boolean;
 }
 
+interface EdgeWeightContext {
+  wheelchairAccessible: boolean;
+  avoidStairs: boolean;
+  preferElevators: boolean;
+  sourceNode: IndoorNode;
+  targetNode: IndoorNode;
+  routeStartsAndEndsSameFloor: boolean;
+  targetFloor: number;
+}
+
 export class IndoorPathfinder {
   private readonly nodes: Map<string, IndoorNode> = new Map();
   private readonly adjacencyList: Map<string, IndoorEdge[]> = new Map();
@@ -77,14 +87,18 @@ export class IndoorPathfinder {
 
   private getEdgeWeight(
     edge: IndoorEdge,
-    wheelchairAccessible: boolean,
-    avoidStairs: boolean,
-    preferElevators: boolean,
-    sourceNode: IndoorNode,
-    targetNode: IndoorNode,
-    routeStartsAndEndsSameFloor: boolean,
-    targetFloor: number
+    context: EdgeWeightContext
   ): number {
+    const {
+      wheelchairAccessible,
+      avoidStairs,
+      preferElevators,
+      sourceNode,
+      targetNode,
+      routeStartsAndEndsSameFloor,
+      targetFloor,
+    } = context;
+
     const edgeType = edge.type.toLowerCase();
     const isStair = edgeType.includes('stair');
     const isElevator = edgeType.includes('elevator');
@@ -134,19 +148,20 @@ export class IndoorPathfinder {
     const wheelchairAccessible = options.wheelchairAccessible ?? true;
     const avoidStairs = options.avoidStairs ?? true;
     const preferElevators = options.preferElevators ?? true;
+
     const startNode = this.resolveNode(startReference);
     if (!startNode) return null;
 
-    const endNodeCandidate = this.resolveNode(endReference);
-    if (!endNodeCandidate) return null;
+    const endNode = this.resolveNode(endReference);
+    if (!endNode || endNode.buildingId !== startNode.buildingId) return null;
 
-    const endNode = endNodeCandidate.buildingId === startNode.buildingId
-      ? endNodeCandidate
-      : null;
-    if (!endNode) return null;
-
-    const routeStartsAndEndsSameFloor = startNode.floor === endNode.floor;
-    const targetFloor = endNode.floor;
+    const context: Omit<EdgeWeightContext, 'sourceNode' | 'targetNode'> = {
+      wheelchairAccessible,
+      avoidStairs,
+      preferElevators,
+      routeStartsAndEndsSameFloor: startNode.floor === endNode.floor,
+      targetFloor: endNode.floor,
+    };
 
     const distances: Record<string, number> = {};
     const previous: Record<string, string | null> = {};
@@ -164,35 +179,37 @@ export class IndoorPathfinder {
       const currentId = pq.dequeue()!;
       if (currentId === endNode.id) break;
 
-      const neighbors = this.adjacencyList.get(currentId) || [];
+      const neighbors = this.adjacencyList.get(currentId) ?? [];
       for (const edge of neighbors) {
-        const sourceNode = this.nodes.get(edge.source);
-        const targetNode = this.nodes.get(edge.target);
-        if (!sourceNode || !targetNode) continue;
-
-        const weight = this.getEdgeWeight(
-          edge,
-          wheelchairAccessible,
-          avoidStairs,
-          preferElevators,
-          sourceNode,
-          targetNode,
-          routeStartsAndEndsSameFloor,
-          targetFloor
-        );
-        if (weight === Infinity) continue;
-
-        const alt = distances[currentId] + weight;
-        if (alt < distances[edge.target]) {
-          distances[edge.target] = alt;
-          previous[edge.target] = currentId;
-          pq.enqueue(edge.target, alt);
-        }
+        this.relaxEdge(edge, currentId, distances, previous, pq, context);
       }
     }
 
     const path = this.reconstructPath(previous, endNode.id);
     return path.length > 1 ? path : null;
+  }
+
+  private relaxEdge(
+    edge: IndoorEdge,
+    currentId: string,
+    distances: Record<string, number>,
+    previous: Record<string, string | null>,
+    pq: PriorityQueue<string>,
+    context: Omit<EdgeWeightContext, 'sourceNode' | 'targetNode'>
+  ): void {
+    const sourceNode = this.nodes.get(edge.source);
+    const targetNode = this.nodes.get(edge.target);
+    if (!sourceNode || !targetNode) return;
+
+    const weight = this.getEdgeWeight(edge, { ...context, sourceNode, targetNode });
+    if (weight === Infinity) return;
+    
+    const alt = distances[currentId] + weight;
+    if (alt < distances[edge.target]) {
+      distances[edge.target] = alt;
+      previous[edge.target] = currentId;
+      pq.enqueue(edge.target, alt);
+    }
   }
 
   private reconstructPath(previous: Record<string, string | null>, endId: string): IndoorNode[] {
