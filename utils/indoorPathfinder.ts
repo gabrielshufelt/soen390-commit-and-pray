@@ -153,7 +153,7 @@ export class IndoorPathfinder {
     if (!startNode) return null;
 
     const endNode = this.resolveNode(endReference);
-    if (!endNode || endNode.buildingId !== startNode.buildingId) return null;
+    if (endNode?.buildingId !== startNode.buildingId) return null;
 
     const context: Omit<EdgeWeightContext, 'sourceNode' | 'targetNode'> = {
       wheelchairAccessible,
@@ -203,7 +203,7 @@ export class IndoorPathfinder {
 
     const weight = this.getEdgeWeight(edge, { ...context, sourceNode, targetNode });
     if (weight === Infinity) return;
-    
+
     const alt = distances[currentId] + weight;
     if (alt < distances[edge.target]) {
       distances[edge.target] = alt;
