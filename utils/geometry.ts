@@ -1,10 +1,18 @@
+export type LatLng = { latitude: number; longitude: number };
+
+export function isValidCoordinate(
+    coord: Partial<LatLng> | null | undefined
+): coord is LatLng {
+    return !!coord && Number.isFinite(coord.latitude) && Number.isFinite(coord.longitude);
+}
+
 /**
  * Ray-Casting Algorithm: This determines if a point is inside a polygon.
  * @param point - The user's current latitude and longitude
  * @param polygon - An array of longtitude and latitude (paris from GeoJSON)
 */
 export const isPointInPolygon = (
-	point: { latitude: number; longitude: number },
+	point: LatLng,
 	polygon: number[][]
 ) => {
 	const { latitude: ptLat, longitude: ptLng } = point;

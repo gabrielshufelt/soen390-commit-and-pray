@@ -2,7 +2,7 @@ import { parseBuildingLocation } from "./buildingParser";
 import { getBuildingCoordinate } from "./buildingCoordinates";
 import { IndoorPathfinder } from "./indoorPathfinder";
 import { AllCampusData } from "../data/buildings";
-import { getDistanceMeters } from "./geometry";
+import { getDistanceMeters, isValidCoordinate, type LatLng } from "./geometry";
 
 export type CombinedNavigationStep = {
   instruction: string;
@@ -23,11 +23,7 @@ export type CombinedNavigationStep = {
 
 const pathfinder = new IndoorPathfinder(AllCampusData);
 
-type Coordinates = { latitude: number; longitude: number };
-
-function isValidCoordinate(coord: Partial<Coordinates> | null | undefined): coord is Coordinates {
-  return !!coord && Number.isFinite(coord.latitude) && Number.isFinite(coord.longitude);
-}
+type Coordinates = LatLng;
 
 function pickCoordinate(
   primary: Partial<Coordinates> | null | undefined,
@@ -159,8 +155,8 @@ export async function getStitchedRoute(
     );
   }
 
-  const outdoorSteps = await fetchOutdoorSteps(outdoorStart, { 
-  ...outdoorEnd
+  const outdoorSteps = await fetchOutdoorSteps(outdoorStart, {
+    ...outdoorEnd
   });
 
   outdoorSteps.forEach(s => route.push({ ...s, source: "outdoor" }));

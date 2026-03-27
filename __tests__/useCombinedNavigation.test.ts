@@ -76,10 +76,10 @@ describe('useCombinedNavigation', () => {
       expect(result.current.isCalculating).toBe(false);
     });
 
-    it('retrieves API key from useDirections hook', () => {
+    it('does not require useDirections hook on initialization', () => {
       renderHook(() => useCombinedNavigation());
 
-      expect(mockedUseDirections).toHaveBeenCalled();
+      expect(mockedUseDirections).not.toHaveBeenCalled();
     });
   });
 
@@ -218,7 +218,8 @@ describe('useCombinedNavigation', () => {
           mockEndLocation,
           false,
           'WALKING',
-          mockUserLocation
+          mockUserLocation,
+          mockApiKey
         );
       });
 

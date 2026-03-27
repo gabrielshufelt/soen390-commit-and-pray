@@ -190,6 +190,7 @@ export function useDirections(): DirectionsResult {
     (result: MapDirectionsResult) => {
       const leg = result.legs?.[0];
       const steps: NavigationStep[] = leg?.steps?.map((step) => ({
+        source: "outdoor",
         instruction: step.html_instructions,
         distance: step.distance.text,
         duration: step.duration.text,

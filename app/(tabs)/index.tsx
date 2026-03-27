@@ -10,7 +10,7 @@ import { BUILDING_POLYGON_COLORS } from "../../constants/mapColors";
 import { useLocationPermissions } from "../../hooks/useLocationPermissions";
 import { useWatchLocation } from "../../hooks/useWatchLocation";
 import { useUserBuilding } from "../../hooks/useUserBuilding";
-import { getDistanceMeters, getInteriorPoint } from "../../utils/geometry";
+import { getDistanceMeters, getInteriorPoint, isValidCoordinate } from "../../utils/geometry";
 import sgwBuildingsData from "../../data/buildings/sgw.json";
 import loyolaBuildingsData from "../../data/buildings/loyola.json";
 import shuttleData from "../../data/shuttleSchedule.json";
@@ -36,12 +36,6 @@ import { AllCampusData } from "../../data/buildings";
 
 const LABEL_ZOOM_THRESHOLD = 0.015;
 const ANCHOR_OFFSET = { x: 0.5, y: 0.5 };
-
-function isValidCoordinate(
-  coord: { latitude: number; longitude: number } | undefined | null
-): coord is { latitude: number; longitude: number } {
-  return !!coord && Number.isFinite(coord.latitude) && Number.isFinite(coord.longitude);
-}
 
 export default function Index() {
   const { colorScheme } = useTheme();
@@ -865,6 +859,17 @@ export default function Index() {
 
       {!navigationActive && (
         <CampusToggle selectedCampus={campusKey} onCampusChange={setCampusKey} />
+      )}
+      {!navigationActive && (
+        <TouchableOpacity
+          style={styles.shuttleButton}
+          onPress={() => setShowShuttleModal(true)}
+          activeOpacity={0.85}
+          accessibilityRole="button"
+          accessibilityLabel="Open shuttle schedule"
+        >
+          <Text style={styles.shuttleButtonText}>🚌</Text>
+        </TouchableOpacity>
       )}
       <TouchableOpacity
          style={styles.indoorButton}

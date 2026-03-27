@@ -2,7 +2,7 @@ import { getStitchedRoute, type CombinedNavigationStep } from '../utils/routeAgg
 import { parseBuildingLocation } from '../utils/buildingParser';
 import { getBuildingCoordinate } from '../utils/buildingCoordinates';
 import { IndoorPathfinder } from '../utils/indoorPathfinder';
-import { getDistanceMeters } from '../utils/geometry';
+import { getDistanceMeters, isValidCoordinate } from '../utils/geometry';
 
 jest.mock('../utils/buildingParser');
 jest.mock('../utils/buildingCoordinates');
@@ -70,6 +70,7 @@ jest.mock('../data/buildings', () => ({
 const mockedParseBuildingLocation = jest.mocked(parseBuildingLocation);
 const mockedGetBuildingCoordinate = jest.mocked(getBuildingCoordinate);
 const mockedGetDistanceMeters = jest.mocked(getDistanceMeters);
+const mockedIsValidCoordinate = jest.mocked(isValidCoordinate);
 const mockedFindShortestPath = jest.spyOn(IndoorPathfinder.prototype, 'findShortestPath');
 
 describe('routeAggregator - getStitchedRoute', () => {
@@ -79,6 +80,9 @@ describe('routeAggregator - getStitchedRoute', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockedFindShortestPath.mockReset();
+    mockedIsValidCoordinate.mockImplementation((coord: any) => (
+      !!coord && Number.isFinite(coord.latitude) && Number.isFinite(coord.longitude)
+    ));
   });
 
   describe('invalid inputs', () => {
@@ -178,7 +182,6 @@ describe('routeAggregator - getStitchedRoute', () => {
         expect.objectContaining({
           latitude: mockBuildingBCoord.latitude,
           longitude: mockBuildingBCoord.longitude,
-          transportMode: 'DRIVING',
         })
       );
     });
@@ -257,7 +260,7 @@ describe('routeAggregator - getStitchedRoute', () => {
       expect(result).toEqual(mockOutdoorSteps);
     });
 
-    it('passes transport mode to fetchOutdoor callback', async () => {
+    it('passes destination coordinates to fetchOutdoor callback', async () => {
       const mockOrigin = { buildingCode: 'BA', buildingName: 'Building A', room: '' };
       const mockDest = { buildingCode: 'BB', buildingName: 'Building B', room: '' };
 
@@ -279,7 +282,7 @@ describe('routeAggregator - getStitchedRoute', () => {
       // Verify the callback was called with the correct parameters
       expect(mockFetchOutdoor).toHaveBeenCalled();
       const callArgs = mockFetchOutdoor.mock.calls[0];
-      expect(callArgs[1]).toHaveProperty('transportMode', 'WALKING');
+      expect(callArgs[1]).toEqual(expect.objectContaining(mockBuildingBCoord));
     });
 
     it('adds indoor exit steps when origin includes a room', async () => {
@@ -442,7 +445,6 @@ describe('routeAggregator - getStitchedRoute', () => {
         expect.objectContaining({
           latitude: 45.5001,
           longitude: -73.5821,
-          transportMode: 'TRANSIT',
         })
       );
     });
@@ -468,7 +470,6 @@ describe('routeAggregator - getStitchedRoute', () => {
       );
 
       const destinationArg = mockFetchOutdoor.mock.calls[0][1];
-      expect(destinationArg.transportMode).toBe('DRIVING');
       expect([45.5001, 45.5002, 45.5003, 45.5008]).toContain(destinationArg.latitude);
       expect([-73.5821, -73.5822, -73.5823, -73.5828]).toContain(destinationArg.longitude);
       expect(mockedGetDistanceMeters).toHaveBeenCalled();
@@ -503,7 +504,6 @@ describe('routeAggregator - getStitchedRoute', () => {
         expect.objectContaining({
           latitude: 45.5003,
           longitude: -73.5823,
-          transportMode: 'WALKING',
         })
       );
     });
@@ -532,7 +532,6 @@ describe('routeAggregator - getStitchedRoute', () => {
         expect.objectContaining({
           latitude: 45.5008,
           longitude: -73.5828,
-          transportMode: 'WALKING',
         })
       );
     });
@@ -561,7 +560,6 @@ describe('routeAggregator - getStitchedRoute', () => {
         expect.objectContaining({
           latitude: 45.5001,
           longitude: -73.5821,
-          transportMode: 'TRANSIT',
         })
       );
     });
@@ -590,7 +588,6 @@ describe('routeAggregator - getStitchedRoute', () => {
         expect.objectContaining({
           latitude: 45.5001,
           longitude: -73.5821,
-          transportMode: 'TRANSIT',
         })
       );
     });
@@ -616,9 +613,7 @@ describe('routeAggregator - getStitchedRoute', () => {
 
       expect(mockFetchOutdoor).toHaveBeenCalledWith(
         expect.any(Object),
-        expect.objectContaining({
-          transportMode: 'DRIVING',
-        })
+        expect.objectContaining({ latitude: expect.any(Number), longitude: expect.any(Number) })
       );
     });
   });
@@ -647,7 +642,10 @@ describe('routeAggregator - getStitchedRoute', () => {
 
       expect(mockFetchOutdoor).toHaveBeenCalledWith(
         expect.any(Object),
-        expect.objectContaining({ transportMode: 'DRIVING' })
+        expect.objectContaining({
+          latitude: mockBuildingBCoord.latitude,
+          longitude: mockBuildingBCoord.longitude,
+        })
       );
     });
 
@@ -674,7 +672,10 @@ describe('routeAggregator - getStitchedRoute', () => {
 
       expect(mockFetchOutdoor).toHaveBeenCalledWith(
         expect.any(Object),
-        expect.objectContaining({ transportMode: 'WALKING' })
+        expect.objectContaining({
+          latitude: mockBuildingBCoord.latitude,
+          longitude: mockBuildingBCoord.longitude,
+        })
       );
     });
 
@@ -701,7 +702,10 @@ describe('routeAggregator - getStitchedRoute', () => {
 
       expect(mockFetchOutdoor).toHaveBeenCalledWith(
         expect.any(Object),
-        expect.objectContaining({ transportMode: 'TRANSIT' })
+        expect.objectContaining({
+          latitude: mockBuildingBCoord.latitude,
+          longitude: mockBuildingBCoord.longitude,
+        })
       );
     });
   });
@@ -730,7 +734,10 @@ describe('routeAggregator - getStitchedRoute', () => {
       expect(result.filter((step) => step.source === 'indoor')).toHaveLength(0);
       expect(mockFetchOutdoor).toHaveBeenCalledWith(
         mockUserLocation,
-        expect.objectContaining({ transportMode: 'DRIVING' })
+        expect.objectContaining({
+          latitude: mockBuildingBCoord.latitude,
+          longitude: mockBuildingBCoord.longitude,
+        })
       );
     });
 

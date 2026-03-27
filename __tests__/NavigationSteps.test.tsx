@@ -11,6 +11,7 @@ jest.mock('@expo/vector-icons', () => {
 
 function makeStep(overrides: Partial<NavigationStep> = {}): NavigationStep {
   return {
+    source: 'outdoor',
     instruction: 'Go straight',
     distance: '100 m',
     duration: '1 min',

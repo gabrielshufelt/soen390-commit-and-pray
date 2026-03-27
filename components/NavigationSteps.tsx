@@ -3,18 +3,33 @@ import { View, Text, TouchableOpacity, Animated } from "react-native";
 import { FontAwesome } from "@expo/vector-icons";
 import { styles, WHITE, MUTED, DISABLED, MAROON, WARNING } from "../styles/navigationSteps.styles";
 
-export type NavigationStep = {
+type LatLng = { latitude: number; longitude: number };
+
+type BaseStep = {
   instruction: string;
   distance: string;
+  coordinates?: LatLng;
+};
+
+type OutdoorStep = BaseStep & {
+  source: "outdoor";
   duration?: string;
-  source?: "indoor" | "outdoor";
+  maneuver?: string;
+  startLocation: LatLng;
+  endLocation: LatLng;
+};
+
+type IndoorStep = BaseStep & {
+  source: "indoor";
   buildingCode?: string;
   floor?: number;
-  coordinates?: { latitude: number; longitude: number };
-  maneuver?: string;
-  startLocation?: { latitude: number; longitude: number };
-  endLocation?: { latitude: number; longitude: number };
+  startNodeId?: string;
+  endNodeId?: string;
+  startNodeLabel?: string;
+  endNodeLabel?: string;
 };
+
+export type NavigationStep = OutdoorStep | IndoorStep;
 
 type Props = {
   steps: NavigationStep[];
@@ -102,7 +117,11 @@ export default function NavigationSteps({
       {/* Current Step Card */}
       <Animated.View style={[styles.currentStepCard, { opacity: fadeAnim }]}>
         <View style={styles.iconContainer}>
-          <FontAwesome name={getManeuverIcon(currentStep.maneuver) as any} size={32} color={WHITE}/>
+          <FontAwesome
+            name={getManeuverIcon(currentStep.source === "outdoor" ? currentStep.maneuver : undefined) as any}
+            size={32}
+            color={WHITE}
+          />
         </View>
 
         <View style={styles.instructionContainer}>
@@ -126,7 +145,10 @@ export default function NavigationSteps({
         <View style={styles.nextStepCard}>
           <Text style={styles.nextLabel}>NEXT</Text>
           <View style={styles.nextContent}>
-            <FontAwesome name={getManeuverIcon(nextStep.maneuver) as any} size={16} color={MUTED}
+            <FontAwesome
+              name={getManeuverIcon(nextStep.source === "outdoor" ? nextStep.maneuver : undefined) as any}
+              size={16}
+              color={MUTED}
             />
             <Text style={styles.nextInstruction} numberOfLines={1}>
               {stripHtml(nextStep.instruction)}

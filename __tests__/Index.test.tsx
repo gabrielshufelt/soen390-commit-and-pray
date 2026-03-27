@@ -1233,7 +1233,8 @@ describe('<Index />', () => {
           'H 820',
           false,
           'WALKING',
-          { latitude: 45.4972, longitude: -73.579 }
+          { latitude: 45.4972, longitude: -73.579 },
+          'test-api-key'
         );
       });
       expect(mockStartDirections).not.toHaveBeenCalled();
@@ -1254,7 +1255,8 @@ describe('<Index />', () => {
           'H 820',
           false,
           'WALKING',
-          { latitude: 45.4972, longitude: -73.579 }
+          { latitude: 45.4972, longitude: -73.579 },
+          'test-api-key'
         );
       });
     });
@@ -1290,7 +1292,8 @@ describe('<Index />', () => {
           'MB',
           false,
           'WALKING',
-          { latitude: 45.4972, longitude: -73.579 }
+          { latitude: 45.4972, longitude: -73.579 },
+          'test-api-key'
         );
       });
     });
