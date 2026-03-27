@@ -3,7 +3,7 @@
 These are the steps to get the app running on your machine for the pilot usability test.
 Firebase Analytics is wired in, so every interaction during the test will be tracked automatically.
 
-All custom events use the prefix `pilot_` (for example `pilot_building_selected`) so they
+All custom events use the prefix `ut_` (for example `ut_building_selected`) so they
 are easy to find in the Firebase Analytics dashboard and separate from any test clicks made
 before the actual testing sessions.
 
@@ -98,7 +98,7 @@ Firebase DebugView now tracks events when running through `npx expo start`.
 
 Go to [Firebase Console → Analytics → DebugView](https://console.firebase.google.com/project/soen390-usability/analytics/app/ios:com.commitandpray.soen390project/debugview)
 
-Your active device/session will appear in the device dropdown after a few seconds. `pilot_` events will
+Your active device/session will appear in the device dropdown after a few seconds. `ut_` events will
 stream in real time as the participant interacts with the app.
 
 ---
@@ -108,45 +108,54 @@ stream in real time as the participant interacts with the app.
 - Steps 1-5 are one-time setup per machine. After that, use Step 6 and Step 7 for each testing session.
 - Do not commit `GoogleService-Info.plist` or `google-services.json`. They are in `.gitignore` already.
 - Do not run the app on this branch for anything other than the usability test. All events use the
-  `pilot_` prefix so the data stays clean and only reflects real test sessions.
+  `ut_` prefix so the data stays clean and only reflects real test sessions.
 
 ---
 
 ## Tracked Events in Firebase DebugView
 
-All custom events use the `pilot_` prefix. They appear by name in DebugView as the participant interacts with the app.
-Screen views are tracked automatically by Firebase (no `pilot_` prefix) whenever the participant navigates between screens.
+All custom events use the `ut_` prefix. They appear by name in DebugView as the participant interacts with the app.
+Screen views are tracked automatically by Firebase (no `ut_` prefix) whenever the participant navigates between screens.
+
+### Task Lifecycle Events (fired by moderator via Dev Menu)
 
 | Event Name | Trigger | Parameters |
 |---|---|---|
-| `pilot_building_selected` | User taps a building polygon/label on map | `building_name`, `campus` |
-| `pilot_building_directions_set` | User sets start or destination from building modal | `building_name`, `role` (`start`/`destination`) |
-| `pilot_search_performed` | User selects a destination from search suggestions | `query_length`, `result_selected` |
-| `pilot_search_no_results` | User types at least 2 chars and no building matches | `query_length`, `field` (`start`/`destination`) |
-| `pilot_search_abandoned` | User leaves search field with no result selected | `query_length`, `field` (`start`/`destination`) |
-| `pilot_route_preview` | User previews route before starting navigation | `transport_mode`, `destination` |
-| `pilot_directions_started` | User starts active navigation (search or next-class card) | `transport_mode`, `destination` |
-| `pilot_directions_ended` | User ends navigation or exits preview | `reason`, `destination` |
-| `pilot_transport_mode_changed` | User switches transport mode | `mode` |
-| `pilot_campus_toggled` | User switches SGW/Loyola toggle | `campus_selected` |
-| `pilot_feature_tap` | User taps generic tracked feature (ex: shuttle button) | `feature_name`, `screen_name` |
-| `pilot_shuttle_route_shown` | User taps “Show Route” in shuttle schedule modal | *(none)* |
-| `pilot_next_class_card_shown` | Next class card/modal becomes visible on Home screen (Task 17 validation; class time is visual only) | `class_title`, `building_code` |
-| `pilot_next_class_directions_tapped` | User taps “Get Directions” in next class card | `building_code` |
-| `pilot_google_sign_in` | User signs in with Google | *(none)* |
-| `pilot_google_sign_out` | User signs out from Settings | *(none)* |
-| `pilot_calendar_selected` | User selects a Google calendar | `calendar_name` |
-| `pilot_calendar_deselected` | User deselects a Google calendar | `calendar_name` |
-| `pilot_appearance_changed` | User changes app appearance | `theme` |
-| `screen_view` *(auto)* | Firebase built-in screen tracking | `firebase_screen` |
+| `ut_task_start` | Moderator taps "Start Task Tracking" in Dev Menu | `participant_id`, `task_id` |
+| `ut_task_end` | Moderator taps End (Pass/Fail/Abandoned) in Dev Menu | `status`, `nav_error_count`, `misclick_count`, `help_asked_count`, `confused_count` |
 
+### Participant Interaction Events (fired automatically by the app)
+
+| Event Name | Trigger | Parameters |
+|---|---|---|
+| `ut_building_selected` | User taps a building polygon/label on map | `building_name`, `campus` |
+| `ut_building_directions_set` | User sets start or destination from building modal | `building_name`, `role` (`start`/`destination`) |
+| `ut_search_performed` | User selects a destination from search suggestions | `query_length`, `result_selected` |
+| `ut_search_no_results` | User types at least 2 chars and no building matches | `query_length`, `field` (`start`/`destination`) |
+| `ut_search_abandoned` | User leaves search field with no result selected | `query_length`, `field` (`start`/`destination`) |
+| `ut_route_preview` | User previews route before starting navigation | `transport_mode`, `destination` |
+| `ut_directions_started` | User starts active navigation (search or next-class card) | `transport_mode`, `destination` |
+| `ut_directions_ended` | User ends navigation or exits preview | `reason`, `destination` |
+| `ut_transport_mode_changed` | User switches transport mode | `mode` |
+| `ut_campus_toggled` | User switches SGW/Loyola toggle | `campus_selected` |
+| `ut_feature_tap` | User taps generic tracked feature (ex: shuttle button) | `feature_name`, `screen_name` |
+| `ut_shuttle_route_shown` | User taps "Show Route" in shuttle schedule modal | *(none)* |
+| `ut_next_class_card_shown` | Next class card/modal becomes visible on Home screen | `class_title`, `building_code` |
+| `ut_next_class_directions_tapped` | User taps "Get Directions" in next class card | `building_code` |
+| `ut_google_sign_in` | User signs in with Google | *(none)* |
+| `ut_google_sign_out` | User signs out from Settings | *(none)* |
+| `ut_calendar_selected` | User selects a Google calendar | `calendar_name` |
+| `ut_calendar_deselected` | User deselects a Google calendar | `calendar_name` |
+| `ut_appearance_changed` | User changes app appearance | `theme` |
+| `ut_rage_click` | 3 rapid taps anywhere on screen (auto-detected frustration signal) | `screen_name` |
+| `screen_view` *(auto)* | Firebase built-in screen tracking | `firebase_screen` |
 ---
 
 ## Core Tasks for Full-Scale Usability Testing
 
 Give these tasks to the participant one at a time as written below. Do not help them unless they are completely stuck.
 Record time on task with a stopwatch. Note first click success, errors, misclicks, and help requests per task.
-NOTE: BEFORE HANDING DEVICE TO PARTICIPANT — set dev variables to weekday morning, location to Hall Building, and open the Usability Dev Menu (long-press "Appearance" in Settings) to set Participant ID and start Task 1 tracking.
+NOTE: BEFORE HANDING DEVICE TO PARTICIPANT — set dev variables to weekday morning, location to Hall Building, and open the Usability Dev Menu (long-press "Appearance" in Settings) to set Participant ID and start Task 1 tracking. After each task, take the device back, open the Dev Menu, tally error counts using the +/− buttons, then tap End (Pass/Fail/Abandoned). The `ut_task_end` event logs timing and all error counts automatically.
 
 Target sample size for full-scale testing: **12–15 participants**.
 
@@ -160,21 +169,21 @@ Target sample size for full-scale testing: **12–15 participants**.
 ---
 
 **Task 2 — Searching for a Destination**
-> "Tap the search bar at the top of the screen to open it. In the **Destination** field, type **EV** and select the **EV Building** from the list. Then tap any building on the map to open its info card, and tap **Get Directions From** to set it as your starting point."
+> "Tap the search bar at the top of the screen to open it. In the **Destination** field, type **EV** and select the **EV Building** from the list. Then go back to the map and tap any building to open its info card, and tap **Get Directions From** to set it as your starting point."
 
 *Moderator notes: The search bar is collapsed by default — the participant must tap it first. After picking EV as a destination, the bar stays open. To set a start via map, they close/dismiss the search bar, tap a different building polygon, and use the "Get Directions From" button in the building card.*
 
 ---
 
 **Task 3 — Previewing and Starting a Route**
-> "You have a start and destination set. Tap **Preview Route** in the search bar to see the route on the map. Look at the estimated time and distance shown. Then tap **Start Directions** to begin navigation. Once navigation has started, tap **End** to cancel and go back to the map."
+> "Tap the search bar. You have a start and destination set. Tap **Preview Route** in the search component to see the route on the map. After analyzing the route, tap **Exit Preview** to cancel."
 
 *Moderator notes: "Preview Route" only appears when start is a building (not current location). The "Start Directions" button replaces "Preview Route" once preview is active. The "End" button is inside the navigation step card that appears at the bottom during active navigation.*
 
 ---
 
 **Task 4 — Switching Transport Modes**
-> "Open the search bar. Using the transport mode row (the icons showing a car, person, bicycle, and bus), switch to **Cycling**, then switch to **Transit**. Set any Loyola campus building as a destination and tap **Start Directions**."
+> "Open the search bar and set the destination to a Loyola Campus building (for example CC), then close the indoor map if it opens. Using the transport mode row (the icons showing a car, person, bicycle, and bus), switch to **Cycling**, then switch to **Transit**. Tap **Preview Route / Start Directions**. Finally, tap the search bar and exit the directions."
 
 *Moderator notes: Transport mode buttons are labeled Driving, Walking, Cycling, Transit. The campus can be changed inside the expanded search bar via the SGW/Loyola toggle at the top of the search bar. End directions after this task before handing off Task 5.*
 
@@ -194,8 +203,8 @@ Target sample size for full-scale testing: **12–15 participants**.
 
 ---
 
-**Task 7 — Indoor Directions** *(include only if the indoor map feature is available)*
-> "Tap the **H** building on the map and open its info card. From there, open the indoor map. Find room **H-110**, request the shortest path to it, then switch to the accessible route. Try navigating to a room on a different floor."
+**Task 7 — Indoor Directions**
+> "Search the **H** building on the search bar and open its indoor map. Using the map view, get indoor directions from room **H-822** to room **H-110**. Then switch to the accessible route. Finally, switch to the **Rooms** view, and filter for only **Elevators** on the 9th floor."
 
 *Moderator notes: Only include this task if the indoor map feature has been merged and is accessible from the building modal.*
 
