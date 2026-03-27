@@ -153,7 +153,7 @@ export class IndoorPathfinder {
     if (!startNode) return null;
 
     const endNode = this.resolveNode(endReference);
-    if (endNode?.buildingId !== startNode.buildingId) return null;
+    if (!endNode || endNode.buildingId !== startNode.buildingId) return null;
 
     const context: Omit<EdgeWeightContext, 'sourceNode' | 'targetNode'> = {
       wheelchairAccessible,
