@@ -19,6 +19,10 @@ import { useShuttleAvailability } from "../hooks/useShuttleAvailability";
 import { styles, MAROON, MUTED, TEXT } from "../styles/searchBar.styles";
 import TransportModeSelector from "./TransportModeSelector";
 import { stripCodePrefix, displayName, makeHaystack } from "@/constants/searchBar.utils";
+import { useWatchLocation } from "../hooks/useWatchLocation";
+import { useUserBuilding } from "../hooks/useUserBuilding";
+import { searchNearbyPois } from "../utils/poiSearch";
+import PoiCard from "./PoiCard"; 
 
 type Props = {
   buildings: BuildingChoice[];
@@ -195,6 +199,24 @@ export default function ExpandedSearchBar({
     return options.filter((room) => room.toLowerCase().includes(query)).slice(0, 10);
   }, [destination, destRoomFocused, routeActive, roomOptionsByBuilding, destRoomText]);
 
+  const { location } = useWatchLocation();
+  const currentBuilding = useUserBuilding(location);
+
+  const poiResults = useMemo(() => {
+    const query = destText.toLowerCase().trim();
+    const keywords = ["water", "washroom", "elevator", "stairs", "food"];
+    
+    if (keywords.includes(query) && location) {
+      return searchNearbyPois(
+        query, 
+        location.coords.latitude, 
+        location.coords.longitude,
+        currentBuilding?.code || null
+      );
+    }
+    return [];
+  }, [destText, currentBuilding, location]);
+
   function addToHistory(b: BuildingChoice) {
     setHistory((prev) => {
       const without = prev.filter((x) => x.id !== b.id);
@@ -203,18 +225,18 @@ export default function ExpandedSearchBar({
   }
 
   function pickDestination(b: BuildingChoice) {
-    onChangeDestination({ ...b, room: undefined });
+    onChangeDestination(b);
     addToHistory(b);
     setDestText(displayName(b));
-    setDestRoomText("");
+    setDestRoomText(b.room ?? "");
     setDestFocused(false);
     Keyboard.dismiss();
   }
 
   function pickStart(b: BuildingChoice) {
-    onChangeStart({ ...b, room: undefined });
+    onChangeStart(b);
     setStartText(displayName(b));
-    setStartRoomText("");
+    setStartRoomText(b.room ?? "");
     setStartFocused(false);
     Keyboard.dismiss();
   }
@@ -278,6 +300,29 @@ export default function ExpandedSearchBar({
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.scrollContent}
           >
+	  {/* POI RESULTS SECTION */}
+  	  {poiResults.length > 0 && (
+    	    <View style={styles.suggestedSection}>
+      	      <Text style={styles.listTitle}>Nearby Facilities</Text>
+              <View style={styles.suggestedListContent}>
+        	{poiResults.map((poi) => (
+          	<PoiCard 
+            	  key={poi.id} 
+            	  poi={poi} 
+            	  onPress={(p) => { 
+                  pickDestination({
+                    id: p.id,
+                    name: p.name,
+                    code: p.buildingCode,
+                    room: p.name, 
+                    coordinate: p.coordinates
+                  });
+                }} 
+              />
+            ))}
+          </View>
+        </View>
+      )}
 
           {/* Route card */}
           <View style={styles.routeCard}>
