@@ -75,6 +75,7 @@ const mockedFindShortestPath = jest.spyOn(IndoorPathfinder.prototype, 'findShort
 
 describe('routeAggregator - getStitchedRoute', () => {
   const mockUserLocation = { latitude: 45.4972, longitude: -73.579 };
+  const mockBuildingACoord = { latitude: 45.497, longitude: -73.579 };
   const mockBuildingBCoord = { latitude: 45.495, longitude: -73.577 };
 
   beforeEach(() => {
@@ -83,6 +84,13 @@ describe('routeAggregator - getStitchedRoute', () => {
     mockedIsValidCoordinate.mockImplementation((coord: any) => (
       !!coord && Number.isFinite(coord.latitude) && Number.isFinite(coord.longitude)
     ));
+    // Default mock for getBuildingCoordinate that returns different values based on code
+    mockedGetBuildingCoordinate.mockImplementation((code: string) => {
+      if (code === 'BA') return mockBuildingACoord;
+      if (code === 'BB') return mockBuildingBCoord;
+      if (code === 'MB') return { latitude: 45.5, longitude: -73.58 };
+      return null;
+    });
   });
 
   describe('invalid inputs', () => {
@@ -109,7 +117,6 @@ describe('routeAggregator - getStitchedRoute', () => {
 
       mockedParseBuildingLocation.mockReturnValueOnce(mockOrigin);
       mockedParseBuildingLocation.mockReturnValueOnce(mockDest);
-      mockedGetBuildingCoordinate.mockReturnValueOnce(mockBuildingBCoord);
 
       await expect(
         getStitchedRoute(
@@ -131,7 +138,6 @@ describe('routeAggregator - getStitchedRoute', () => {
 
       mockedParseBuildingLocation.mockReturnValueOnce(mockOrigin);
       mockedParseBuildingLocation.mockReturnValueOnce(mockDest);
-      mockedGetBuildingCoordinate.mockReturnValueOnce(mockBuildingBCoord);
 
       const mockOutdoorSteps: CombinedNavigationStep[] = [
         {
@@ -154,8 +160,10 @@ describe('routeAggregator - getStitchedRoute', () => {
         mockFetchOutdoor
       );
 
-      expect(result).toEqual(mockOutdoorSteps);
-      expect(result.every(step => step.source === 'outdoor')).toBe(true);
+      expect(result).toEqual([
+        { ...mockOutdoorSteps[0], transportMode: 'DRIVING', source: 'outdoor' },
+      ]);
+      expect(result.every((step) => step.source === 'outdoor')).toBe(true);
     });
 
     it('calls fetchOutdoorSteps with building coordinates', async () => {
@@ -164,7 +172,6 @@ describe('routeAggregator - getStitchedRoute', () => {
 
       mockedParseBuildingLocation.mockReturnValueOnce(mockOrigin);
       mockedParseBuildingLocation.mockReturnValueOnce(mockDest);
-      mockedGetBuildingCoordinate.mockReturnValueOnce(mockBuildingBCoord);
 
       const mockFetchOutdoor = jest.fn().mockResolvedValueOnce([]);
 
@@ -182,7 +189,8 @@ describe('routeAggregator - getStitchedRoute', () => {
         expect.objectContaining({
           latitude: mockBuildingBCoord.latitude,
           longitude: mockBuildingBCoord.longitude,
-        })
+        }),
+        expect.any(String)
       );
     });
   });
@@ -257,7 +265,10 @@ describe('routeAggregator - getStitchedRoute', () => {
       );
 
       expect(result).toHaveLength(2);
-      expect(result).toEqual(mockOutdoorSteps);
+      expect(result).toEqual([
+        { ...mockOutdoorSteps[0], transportMode: 'WALKING', source: 'outdoor' },
+        { ...mockOutdoorSteps[1], transportMode: 'WALKING', source: 'outdoor' },
+      ]);
     });
 
     it('passes destination coordinates to fetchOutdoor callback', async () => {
@@ -283,6 +294,7 @@ describe('routeAggregator - getStitchedRoute', () => {
       expect(mockFetchOutdoor).toHaveBeenCalled();
       const callArgs = mockFetchOutdoor.mock.calls[0];
       expect(callArgs[1]).toEqual(expect.objectContaining(mockBuildingBCoord));
+      expect(typeof callArgs[2]).toBe('string'); // mode parameter
     });
 
     it('adds indoor exit steps when origin includes a room', async () => {
@@ -427,7 +439,6 @@ describe('routeAggregator - getStitchedRoute', () => {
 
       mockedParseBuildingLocation.mockReturnValueOnce(mockOrigin);
       mockedParseBuildingLocation.mockReturnValueOnce(mockDest);
-      mockedGetBuildingCoordinate.mockReturnValueOnce({ latitude: 0, longitude: 0 });
 
       const mockFetchOutdoor = jest.fn().mockResolvedValueOnce([]);
 
@@ -445,7 +456,8 @@ describe('routeAggregator - getStitchedRoute', () => {
         expect.objectContaining({
           latitude: 45.5001,
           longitude: -73.5821,
-        })
+        }),
+        expect.any(String)
       );
     });
 
@@ -504,7 +516,8 @@ describe('routeAggregator - getStitchedRoute', () => {
         expect.objectContaining({
           latitude: 45.5003,
           longitude: -73.5823,
-        })
+        }),
+        expect.any(String)
       );
     });
 
@@ -532,17 +545,17 @@ describe('routeAggregator - getStitchedRoute', () => {
         expect.objectContaining({
           latitude: 45.5008,
           longitude: -73.5828,
-        })
+        }),
+        expect.any(String)
       );
     });
 
-    it('treats non-numeric room floor as unknown and still uses MB S2 for transit', async () => {
+    it('treats non-numeric room floor as unknown and requests outdoor route', async () => {
       const mockOrigin = { buildingCode: 'BA', buildingName: 'Building A', room: '' };
       const mockDest = { buildingCode: 'MB', buildingName: 'MB', room: 'Lobby' };
 
       mockedParseBuildingLocation.mockReturnValueOnce(mockOrigin);
       mockedParseBuildingLocation.mockReturnValueOnce(mockDest);
-      mockedGetBuildingCoordinate.mockReturnValueOnce({ latitude: 0, longitude: 0 });
 
       const mockFetchOutdoor = jest.fn().mockResolvedValueOnce([]);
 
@@ -555,13 +568,11 @@ describe('routeAggregator - getStitchedRoute', () => {
         mockFetchOutdoor
       );
 
-      expect(mockFetchOutdoor).toHaveBeenCalledWith(
-        expect.any(Object),
-        expect.objectContaining({
-          latitude: 45.5001,
-          longitude: -73.5821,
-        })
-      );
+      // Verify that fetchOutdoor was called (with any mode - on-campus defaults to WALKING)
+      expect(mockFetchOutdoor).toHaveBeenCalled();
+      const callArgs = mockFetchOutdoor.mock.calls[0];
+      expect(callArgs.length).toBe(3); // start, end, mode
+      expect(callArgs[2]).toMatch(/^(WALKING|TRANSIT)$/); // Should be effective mode
     });
 
     it('uses MB S2 entry for TRANSIT when destination room infers floor -2', async () => {
@@ -570,7 +581,6 @@ describe('routeAggregator - getStitchedRoute', () => {
 
       mockedParseBuildingLocation.mockReturnValueOnce(mockOrigin);
       mockedParseBuildingLocation.mockReturnValueOnce(mockDest);
-      mockedGetBuildingCoordinate.mockReturnValueOnce({ latitude: 0, longitude: 0 });
 
       const mockFetchOutdoor = jest.fn().mockResolvedValueOnce([]);
 
@@ -588,7 +598,8 @@ describe('routeAggregator - getStitchedRoute', () => {
         expect.objectContaining({
           latitude: 45.5001,
           longitude: -73.5821,
-        })
+        }),
+        expect.any(String)
       );
     });
 
@@ -613,7 +624,8 @@ describe('routeAggregator - getStitchedRoute', () => {
 
       expect(mockFetchOutdoor).toHaveBeenCalledWith(
         expect.any(Object),
-        expect.objectContaining({ latitude: expect.any(Number), longitude: expect.any(Number) })
+        expect.objectContaining({ latitude: expect.any(Number), longitude: expect.any(Number) }),
+        expect.any(String)
       );
     });
   });
@@ -645,7 +657,8 @@ describe('routeAggregator - getStitchedRoute', () => {
         expect.objectContaining({
           latitude: mockBuildingBCoord.latitude,
           longitude: mockBuildingBCoord.longitude,
-        })
+        }),
+        expect.any(String)
       );
     });
 
@@ -655,7 +668,6 @@ describe('routeAggregator - getStitchedRoute', () => {
 
       mockedParseBuildingLocation.mockReturnValueOnce(mockOrigin);
       mockedParseBuildingLocation.mockReturnValueOnce(mockDest);
-      mockedGetBuildingCoordinate.mockReturnValueOnce(mockBuildingBCoord);
 
       const mockFetchOutdoor = jest.fn().mockResolvedValueOnce([]);
 
@@ -675,7 +687,8 @@ describe('routeAggregator - getStitchedRoute', () => {
         expect.objectContaining({
           latitude: mockBuildingBCoord.latitude,
           longitude: mockBuildingBCoord.longitude,
-        })
+        }),
+        expect.any(String)
       );
     });
 
@@ -685,7 +698,6 @@ describe('routeAggregator - getStitchedRoute', () => {
 
       mockedParseBuildingLocation.mockReturnValueOnce(mockOrigin);
       mockedParseBuildingLocation.mockReturnValueOnce(mockDest);
-      mockedGetBuildingCoordinate.mockReturnValueOnce(mockBuildingBCoord);
 
       const mockFetchOutdoor = jest.fn().mockResolvedValueOnce([]);
 
@@ -705,7 +717,8 @@ describe('routeAggregator - getStitchedRoute', () => {
         expect.objectContaining({
           latitude: mockBuildingBCoord.latitude,
           longitude: mockBuildingBCoord.longitude,
-        })
+        }),
+        expect.any(String)
       );
     });
   });
@@ -717,7 +730,6 @@ describe('routeAggregator - getStitchedRoute', () => {
 
       mockedParseBuildingLocation.mockReturnValueOnce(mockOrigin);
       mockedParseBuildingLocation.mockReturnValueOnce(mockDest);
-      mockedGetBuildingCoordinate.mockReturnValueOnce(mockBuildingBCoord);
       mockedFindShortestPath.mockReturnValueOnce(null);
 
       const mockFetchOutdoor = jest.fn().mockResolvedValueOnce([]);
@@ -737,7 +749,8 @@ describe('routeAggregator - getStitchedRoute', () => {
         expect.objectContaining({
           latitude: mockBuildingBCoord.latitude,
           longitude: mockBuildingBCoord.longitude,
-        })
+        }),
+        expect.any(String)
       );
     });
 

@@ -32,6 +32,7 @@ type IndoorMapModalProps = {
     endLabel?: string;
   } | null;
   readonly onClose: () => void;
+  readonly onClearRoute?: () => void;
 };
 
 const ROOM_NODE_TYPE = "room";
@@ -129,6 +130,7 @@ export default function IndoorMapModal({
   initialBuildingCode,
   presetRoute,
   onClose,
+  onClearRoute,
 }: IndoorMapModalProps) {
   const isPresetRouteMode =
     !!presetRoute &&
@@ -403,6 +405,8 @@ export default function IndoorMapModal({
     setRouteEndNode(null);
     setRoutePath([]);
     setRouteError(null);
+    // Clear combined navigation route (outdoor directions) if callback provided
+    onClearRoute?.();
   };
 
   const handleZoomIn = () => {

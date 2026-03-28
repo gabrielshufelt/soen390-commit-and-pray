@@ -9,6 +9,7 @@ export type CombinedNavigationStep = {
   distance: string; 
   source: "indoor" | "outdoor";
   duration?: string;
+  transportMode?: string; // Store mode for outdoor segments
   nodeId?: string;
   nodeLabel?: string;
   startNodeId?: string;
@@ -61,7 +62,7 @@ function findClosestEntry<T extends { latitude?: number | null; longitude?: numb
   entries: T[],
   referencePoint: { latitude: number; longitude: number }
 ): T {
-  return entries.toSorted((a, b) => {
+  return [...entries].sort((a, b) => {
     const distA = getDistanceMeters(
       referencePoint.latitude,
       referencePoint.longitude,
@@ -106,24 +107,57 @@ function findBestEntryNode(
   return findClosestEntry(allEntries, referencePoint);
 }
 
+// Determines effective transport mode: defaults to WALKING if user is close to destination
+function getEffectiveTransportMode(
+  userCoord: { latitude: number; longitude: number } | null,
+  destCoord: { latitude: number; longitude: number } | null,
+  requestedMode: string
+): string {
+  if (!userCoord || !destCoord) {
+    return requestedMode; // Fall back if coordinates unavailable
+  }
+
+  // Calculate distance from user's current location to destination
+  const distance = getDistanceMeters(
+    userCoord.latitude,
+    userCoord.longitude,
+    destCoord.latitude,
+    destCoord.longitude
+  );
+
+  // If user is within 1.5km of destination, default to WALKING
+  if (distance <= 1500) {
+    return "WALKING";
+  }
+
+  return requestedMode;
+}
+
 export async function getStitchedRoute(
   originRaw: string,
   destinationRaw: string,
   isAccessible: boolean,
   transportMode: string,
   userLocation: { latitude: number; longitude: number },
-  fetchOutdoorSteps: (s: any, e: any) => Promise<any[]>
+  fetchOutdoorSteps: (start: any, end: any, mode: string) => Promise<any[]>
 ): Promise<CombinedNavigationStep[]> {
   const origin = parseBuildingLocation(originRaw);
   const dest = parseBuildingLocation(destinationRaw);
   if (!dest) return [];
+
+  // Get building coordinates for on-campus detection
+  const originCoord = origin ? getBuildingCoordinate(origin.buildingCode) : null;
+  const destCoord = getBuildingCoordinate(dest.buildingCode);
+
+  // Determine effective transport mode using user's actual location
+  const effectiveMode = getEffectiveTransportMode(userLocation, destCoord, transportMode);
 
   const route: CombinedNavigationStep[] = [];
   let outdoorStart = userLocation;
 
   // Leg 1: Indoor Exit
   if (origin?.room) {
-    const bestExit = findBestEntryNode(origin.buildingCode, userLocation, transportMode);
+    const bestExit = findBestEntryNode(origin.buildingCode, userLocation, effectiveMode);
     if (bestExit) {
       const indoorPath = pathfinder.findShortestPath(origin.room, bestExit.id, {
         wheelchairAccessible: isAccessible,
@@ -158,9 +192,9 @@ export async function getStitchedRoute(
   }
 
   // Leg 2: Outdoor
-  let outdoorEnd = getBuildingCoordinate(dest.buildingCode) || outdoorStart;
+  let outdoorEnd = destCoord || outdoorStart;
   const targetFloor = dest.room ? inferFloorFromRoom(dest.room) : null;
-  const bestEntry = findBestEntryNode(dest.buildingCode, outdoorStart, transportMode, targetFloor);
+  const bestEntry = findBestEntryNode(dest.buildingCode, outdoorStart, effectiveMode, targetFloor);
   if (bestEntry) {
     outdoorEnd = pickCoordinate(
       { latitude: bestEntry.latitude, longitude: bestEntry.longitude },
@@ -168,11 +202,9 @@ export async function getStitchedRoute(
     );
   }
 
-  const outdoorSteps = await fetchOutdoorSteps(outdoorStart, {
-    ...outdoorEnd
-  });
+  const outdoorSteps = await fetchOutdoorSteps(outdoorStart, outdoorEnd, effectiveMode);
 
-  outdoorSteps.forEach(s => route.push({ ...s, source: "outdoor" }));
+  outdoorSteps.forEach(s => route.push({ ...s, source: "outdoor", transportMode: effectiveMode }));
 
   // Leg 3: Indoor Arrival
   if (dest.room && bestEntry) {

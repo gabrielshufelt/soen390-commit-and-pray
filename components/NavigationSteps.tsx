@@ -103,6 +103,10 @@ export default function NavigationSteps({
 
   const isFirstStep = currentStepIndex === 0;
   const isLastStep = currentStepIndex === steps.length - 1;
+  
+  // Detect if this is the last outdoor step before indoor begins
+  const isLastOutdoorStep =
+    currentStep.source === "outdoor" && nextStep?.source === "indoor";
 
   return (
     <View style={styles.container}>
@@ -191,16 +195,24 @@ export default function NavigationSteps({
             <Text style={styles.endButtonText}>End</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity
-            style={[styles.stepButton, isLastStep && styles.stepButtonDisabled]}
-            onPress={onNextStep}
-            disabled={isLastStep}
-            accessibilityRole="button"
-            accessibilityLabel="Next step"
-            accessibilityState={{ disabled: isLastStep }}
-          >
-            <Text style={{ fontSize: 20, fontWeight: 'bold', color: isLastStep ? DISABLED : MAROON }}>›</Text>
-          </TouchableOpacity>
+          {/* Conditional button: "Enter Building" at last outdoor step, else "Next ›" */}
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <TouchableOpacity
+              style={[styles.stepButton, isLastStep && styles.stepButtonDisabled]}
+              onPress={onNextStep}
+              disabled={isLastStep}
+              accessibilityRole="button"
+              accessibilityLabel={isLastOutdoorStep ? "Enter building" : "Next step"}
+              accessibilityState={{ disabled: isLastStep }}
+            >
+              <Text style={{ fontSize: 18, fontWeight: 'bold', color: isLastStep ? DISABLED : MAROON }}>
+                {isLastOutdoorStep ? "⬆" : "›"}
+              </Text>
+            </TouchableOpacity>
+            {isLastOutdoorStep && (
+              <Text style={{ fontSize: 12, fontWeight: '600', color: MAROON }}>Indoor</Text>
+            )}
+          </View>
         </View>
       </View>
     </View>

@@ -10,7 +10,7 @@ export function useCombinedNavigation() {
     setIsCalculating(true);
     try {
       const route = await getStitchedRoute(start, end, accessible, mode, userLoc, 
-        (s, e) => fetchOutdoorRoute(s, e, mode, apiKey)
+        (s, e, m) => fetchOutdoorRoute(s, e, m, apiKey)
       );
       setFullRoute(route);
       return route;

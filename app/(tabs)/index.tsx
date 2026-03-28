@@ -106,6 +106,7 @@ export default function Index() {
 
   const [combinedStepIndex, setCombinedStepIndex] = useState(0);
   const [combinedRouteActive, setCombinedRouteActive] = useState(false);
+  const [outdoorLegMode, setOutdoorLegMode] = useState<string>("DRIVING");
 
   const [showLabels, setShowLabels] = useState(
     defaultCampus.initialRegion.latitudeDelta <= LABEL_ZOOM_THRESHOLD
@@ -167,6 +168,7 @@ export default function Index() {
     clearRoute();
     setCombinedStepIndex(0);
     setCombinedRouteActive(false);
+    setOutdoorLegMode("DRIVING");
     setIndoorPresetRoute(null);
     setStartChoice(null);
     setDestChoice(null);
@@ -200,6 +202,9 @@ export default function Index() {
 
     const outdoorSteps = route.filter((step) => step.source === "outdoor");
     if (outdoorSteps.length > 0) {
+      // Store the transport mode for the outdoor leg
+      setOutdoorLegMode(outdoorSteps[0].transportMode || "DRIVING");
+      
       const outdoorOrigin = outdoorSteps[0].coordinates;
       const firstIndoorAfterOutdoor = route.find((step, idx) => {
         if (step.source !== "indoor") return false;
@@ -226,6 +231,7 @@ export default function Index() {
 
     if (!shouldUseCombinedFlow) {
       setCombinedRouteActive(false);
+      setOutdoorLegMode("DRIVING");
       clearRoute();
       startDirections({ latitude: effectiveLocation.coords.latitude, longitude: effectiveLocation.coords.longitude }, destChoice.coordinate);
       return;
@@ -510,24 +516,23 @@ export default function Index() {
   useEffect(() => {
     if (!combinedRouteActive || !effectiveLocation || fullRoute.length === 0) return;
 
-    const nextIndoorIndex = fullRoute.findIndex(
-      (step, idx) => idx > combinedStepIndex && step.source === "indoor"
-    );
-    if (nextIndoorIndex < 0) return;
+    const currentStep = fullRoute[combinedStepIndex];
+    const nextStep = fullRoute[combinedStepIndex + 1];
+    
+    // Only auto-advance if we're on the last outdoor step and next step is indoor
+    if (currentStep?.source !== "outdoor" || nextStep?.source !== "indoor") return;
+    if (!nextStep?.coordinates) return;
 
-    const nextIndoorStep = fullRoute[nextIndoorIndex];
-    if (!nextIndoorStep?.coordinates) return;
-
-    const distanceToIndoorLeg = getDistanceMeters(
+    const distanceToNextStep = getDistanceMeters(
       effectiveLocation.coords.latitude,
       effectiveLocation.coords.longitude,
-      nextIndoorStep.coordinates.latitude,
-      nextIndoorStep.coordinates.longitude
+      nextStep.coordinates.latitude,
+      nextStep.coordinates.longitude
     );
 
-    // Switch into indoor leg once user reaches the building handoff area.
-    if (distanceToIndoorLeg < 35) {
-      setCombinedStepIndex(nextIndoorIndex);
+    // Auto-advance to next step when very close (don't skip - just go to next)
+    if (distanceToNextStep < 35) {
+      setCombinedStepIndex((prev) => Math.min(prev + 1, fullRoute.length - 1));
     }
   }, [combinedRouteActive, combinedStepIndex, effectiveLocation, fullRoute]);
 
@@ -543,9 +548,14 @@ export default function Index() {
     const endNodeId = currentStep.endNodeId;
     if ((!startNodeId || !endNodeId) && (!startLabel || !endLabel)) return;
 
-    setIndoorBuildingCode(currentStep.buildingCode);
-    setIndoorPresetRoute({ startNodeId, endNodeId, startLabel, endLabel });
-    setShowIndoorMapModal(true);
+    // Delay modal opening slightly so user sees the step displayed first
+    const timer = setTimeout(() => {
+      setIndoorBuildingCode(currentStep.buildingCode as string);
+      setIndoorPresetRoute({ startNodeId, endNodeId, startLabel, endLabel });
+      setShowIndoorMapModal(true);
+    }, 500); // 500ms delay to show the step first
+    
+    return () => clearTimeout(timer);
   }, [combinedRouteActive, combinedStepIndex, fullRoute]);
 
   const activeSteps = combinedRouteActive ? fullRoute : directionsState.steps;
@@ -566,7 +576,12 @@ export default function Index() {
   const handleNextActiveStep = () => {
     if (combinedRouteActive) {
       if (!canGoNext) return;
-      setCombinedStepIndex((prev) => Math.min(prev + 1, activeSteps.length - 1));
+      
+      // Advance to next step
+      const nextStepIndex = Math.min(combinedStepIndex + 1, activeSteps.length - 1);
+      setCombinedStepIndex(nextStepIndex);
+      
+      // Modal opens automatically via useEffect when step is indoor
       return;
     }
     nextStep();
@@ -699,8 +714,8 @@ export default function Index() {
         origin={directionsState.origin}
         destination={directionsState.destination}
         apikey={apiKey}
-        mode={effectiveMode}
-        {...getRouteLineStyle(effectiveMode)}
+        mode={combinedRouteActive ? outdoorLegMode : effectiveMode}
+        {...getRouteLineStyle(combinedRouteActive ? outdoorLegMode : effectiveMode)}
         onReady={handleActiveRouteReady}
         onError={handleActiveRouteError}
       />
@@ -708,7 +723,7 @@ export default function Index() {
   }, [
     directionsState.isActive, directionsState.origin, directionsState.destination,
     directionsState.transportMode, useShuttle, shuttleWaypoints, campusKey,
-    apiKey, effectiveMode, handleRouteReady, handleActiveRouteReady,
+    apiKey, effectiveMode, outdoorLegMode, combinedRouteActive, handleRouteReady, handleActiveRouteReady,
     handleActiveRouteError, handleLeg1Error, handleLeg2Error, handleLeg3Error,
   ]);
 
@@ -850,6 +865,7 @@ export default function Index() {
             setShowIndoorMapModal(false);
             setIndoorPresetRoute(null);
           }}
+          onClearRoute={clearRoute}
          />
 
       {!navigationActive && (

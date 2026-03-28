@@ -204,7 +204,7 @@ describe('useCombinedNavigation', () => {
 
       mockedGetStitchedRoute.mockImplementationOnce(
         (origin, dest, accessible, mode, userLoc, fetchCallback) => {
-          return fetchCallback(userLoc, { latitude: 45.5, longitude: -73.6 });
+          return fetchCallback(userLoc, { latitude: 45.5, longitude: -73.6 }, mode);
         }
       );
 
