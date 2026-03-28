@@ -228,7 +228,7 @@ export default function ExpandedSearchBar({
     onChangeDestination(b);
     addToHistory(b);
     setDestText(displayName(b));
-    setDestRoomText(b.room ?? "");
+    setDestRoomText(b.room && !b.room.includes("_") ? b.room : "");
     setDestFocused(false);
     Keyboard.dismiss();
   }
@@ -236,7 +236,7 @@ export default function ExpandedSearchBar({
   function pickStart(b: BuildingChoice) {
     onChangeStart(b);
     setStartText(displayName(b));
-    setStartRoomText(b.room ?? "");
+    setStartRoomText(b.room && !b.room.includes("_") ? b.room : "");
     setStartFocused(false);
     Keyboard.dismiss();
   }
@@ -300,29 +300,30 @@ export default function ExpandedSearchBar({
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.scrollContent}
           >
-	  {/* POI RESULTS SECTION */}
-  	  {poiResults.length > 0 && (
-    	    <View style={styles.suggestedSection}>
-      	      <Text style={styles.listTitle}>Nearby Facilities</Text>
+          {/* POI RESULTS SECTION */}
+          {poiResults.length > 0 && (
+            <View style={styles.suggestedSection}>
+              <Text style={styles.listTitle}>Nearby Facilities</Text>
               <View style={styles.suggestedListContent}>
-        	{poiResults.map((poi) => (
-          	<PoiCard 
-            	  key={poi.id} 
-            	  poi={poi} 
-            	  onPress={(p) => { 
-                  pickDestination({
-                    id: p.id,
-                    name: p.name,
-                    code: p.buildingCode,
-                    room: p.name, 
-                    coordinate: p.coordinates
-                  });
-                }} 
-              />
-            ))}
-          </View>
-        </View>
-      )}
+                {poiResults.map((poi) => (
+                  <PoiCard 
+                    key={poi.id} 
+                    poi={poi} 
+                    onPress={(p) => { 
+
+                      pickDestination({
+                        id: p.id,
+                        name: p.name,         
+                        code: p.buildingCode, 
+                        room: p.id,            
+                        coordinate: p.coordinates
+                      });
+                    }} 
+                  />
+                ))}
+              </View>
+            </View>
+          )}
 
           {/* Route card */}
           <View style={styles.routeCard}>
