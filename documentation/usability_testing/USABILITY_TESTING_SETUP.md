@@ -153,6 +153,8 @@ Screen views are tracked automatically by Firebase (no `ut_` prefix) whenever th
 
 ## Core Tasks for Full-Scale Usability Testing
 
+The participants first need to answer 4 pre-test questions in the Google Form: https://docs.google.com/forms/d/e/1FAIpQLSdUy_8AXGgi65vBA11RUgNbP1c4q4PK_bZ8s6ZQz3K-LAqkZQ/viewform?usp=header. Once they've answered the questions, continue with the tasks.
+
 Give these tasks to the participant one at a time as written below. Do not help them unless they are completely stuck.
 Note first click success, errors, misclicks, and help requests per task.
 NOTE: BEFORE HANDING DEVICE TO PARTICIPANT — set dev variables to weekday morning (8AM Monday), location to JMSB Building, and open the Usability Dev Menu (long-press the home tab) to set Participant ID and start Task 1 tracking. After each task, take the device back, open the Dev Menu, tally error counts using the +/− buttons, then tap End (Pass/Fail/Abandoned). The `ut_task_end` event logs timing and all error counts automatically.
@@ -194,3 +196,4 @@ Target sample size for full-scale testing: **12–15 participants**.
 **Task 7 — Indoor Directions**
 > "Search the **H** building on the search bar and open its indoor map. Using the map view, get indoor directions starting from room **H-822** to room **H-110**. Then switch to view the wheelchair accessible route. Finally, switch to the **Rooms** view, and filter for only **Elevators** on the 9th floor."
 
+Do not forget to ask the participants to complete the Google Form: https://docs.google.com/forms/d/e/1FAIpQLSdUy_8AXGgi65vBA11RUgNbP1c4q4PK_bZ8s6ZQz3K-LAqkZQ/viewform?usp=header
