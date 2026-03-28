@@ -134,6 +134,7 @@ Note first click success, errors, misclicks, and help requests per task.
 NOTE: BEFORE HANDING DEVICE TO PARTICIPANT — set dev variables to weekday morning (8AM Monday), location to JMSB Building, and open the Usability Dev Menu (long-press the home tab) to set Participant ID and start Task 1 tracking. After each task, take the device back, open the Dev Menu, tally error counts using the +/− buttons, then tap End (Pass/Fail/Abandoned). The `ut_task_end` event logs timing and all error counts automatically.
 
 Target sample size for full-scale testing: **12–15 participants**.
+Participant IDs left: **P12, P13, P14, P15**
 
 ---
 
