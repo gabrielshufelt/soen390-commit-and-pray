@@ -26,22 +26,22 @@
     },
     {
       "id": "VL_F1_room_44",
-      "type": "room",
+      "type": "washroom",
       "buildingId": "VL",
       "floor": 2,
       "x": 1420,
       "y": 1660,
-      "label": "",
+      "label": "F",
       "accessible": true
     },
     {
       "id": "VL_F1_room_45",
-      "type": "room",
+      "type": "washroom",
       "buildingId": "VL",
       "floor": 2,
-      "x": 1583,
-      "y": 1657,
-      "label": "",
+      "x": 1584,
+      "y": 1656,
+      "label": "M",
       "accessible": true
     },
     {
@@ -503,6 +503,26 @@
       "y": 671,
       "label": "",
       "accessible": true
+    },
+    {
+      "id": "VL_F2_hallway_waypoint_46",
+      "type": "water_fountain",
+      "buildingId": "VL",
+      "floor": 2,
+      "x": 1496,
+      "y": 1589,
+      "label": "",
+      "accessible": true
+    },
+    {
+      "id": "VL_F2_hallway_waypoint_47",
+      "type": "hallway_waypoint",
+      "buildingId": "VL",
+      "floor": 2,
+      "x": 1496,
+      "y": 1563,
+      "label": "",
+      "accessible": true
     }
   ],
   "edges": [
@@ -588,13 +608,6 @@
       "target": "VL_F1_hallway_waypoint_101",
       "type": "hallway",
       "weight": 60,
-      "accessible": true
-    },
-    {
-      "source": "VL_F1_hallway_waypoint_102",
-      "target": "VL_F1_hallway_waypoint_99",
-      "type": "hallway",
-      "weight": 260,
       "accessible": true
     },
     {
@@ -988,6 +1001,27 @@
       "type": "stair",
       "weight": 0,
       "accessible": false
+    },
+    {
+      "source": "VL_F1_hallway_waypoint_99",
+      "target": "VL_F2_hallway_waypoint_47",
+      "type": "hallway",
+      "weight": 126,
+      "accessible": true
+    },
+    {
+      "source": "VL_F2_hallway_waypoint_47",
+      "target": "VL_F2_hallway_waypoint_46",
+      "type": "hallway",
+      "weight": 26,
+      "accessible": true
+    },
+    {
+      "source": "VL_F2_hallway_waypoint_47",
+      "target": "VL_F1_hallway_waypoint_102",
+      "type": "hallway",
+      "weight": 134,
+      "accessible": true
     }
   ]
 }
