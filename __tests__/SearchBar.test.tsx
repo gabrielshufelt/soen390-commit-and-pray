@@ -39,6 +39,11 @@ const mockBuildings: BuildingChoice[] = [
 
 const defaultProps = {
     buildings: mockBuildings,
+    roomOptionsByBuilding: {
+        H: ['820', '821'],
+        MB: ['S2.120', '1.210'],
+        AD: ['100'],
+    },
     start: null,
     destination: null,
     onChangeStart: jest.fn(),

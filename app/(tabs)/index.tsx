@@ -10,7 +10,7 @@ import { BUILDING_POLYGON_COLORS } from "../../constants/mapColors";
 import { useLocationPermissions } from "../../hooks/useLocationPermissions";
 import { useWatchLocation } from "../../hooks/useWatchLocation";
 import { useUserBuilding } from "../../hooks/useUserBuilding";
-import { getInteriorPoint } from "../../utils/geometry";
+import { getDistanceMeters, getInteriorPoint, isValidCoordinate } from "../../utils/geometry";
 import sgwBuildingsData from "../../data/buildings/sgw.json";
 import loyolaBuildingsData from "../../data/buildings/loyola.json";
 import shuttleData from "../../data/shuttleSchedule.json";
@@ -24,16 +24,18 @@ import { BuildingChoice } from "@/constants/searchBar.types";
 import NavigationSteps from "../../components/NavigationSteps";
 import { HIGHLIGHT_COLOR, STROKE_COLOR } from "@/styles/index.styles";
 import { DEV_OVERRIDE_LOCATION } from "../../utils/devConfig";
-import { useNextClass } from "../../hooks/useNextClass";
+import { useNextClass, type ParsedNextClass } from "../../hooks/useNextClass";
 import { getRouteLineStyle } from "../../constants/routeStyles";
 import NextClassModal from "../../components/NextClassModal";
 import { getBuildingCoordinate } from "../../utils/buildingCoordinates";
+import { buildRouteRaw } from "@/utils/buildingParser";
 import IndoorMapModal from "../../components/indoorMapModal";
 import { getBuildingIndoorMap, getIndoorBuildingCodes } from "@/utils/indoorMapData";
+import { useCombinedNavigation } from "../../hooks/useCombinedNavigation";
+import { AllCampusData } from "../../data/buildings";
 
 const LABEL_ZOOM_THRESHOLD = 0.015;
 const ANCHOR_OFFSET = { x: 0.5, y: 0.5 };
-const SUPPORTED_INDOOR_BUILDINGS = new Set(["H", "MB", "VL", "CC"]);
 
 export default function Index() {
   const { colorScheme } = useTheme();
@@ -53,20 +55,24 @@ export default function Index() {
   // When DEV_OVERRIDE_LOCATION is set in utils/devConfig.ts, the app uses those
   // coordinates instead of real GPS everywhere (building detection, walking time,
   // navigation start).  Set it to null in devConfig.ts to use real GPS.
-  const effectiveLocation: Location.LocationObject | null = DEV_OVERRIDE_LOCATION
-    ? ({
-      coords: {
-        latitude: DEV_OVERRIDE_LOCATION.latitude,
-        longitude: DEV_OVERRIDE_LOCATION.longitude,
-        altitude: null,
-        accuracy: null,
-        altitudeAccuracy: null,
-        heading: null,
-        speed: null,
-      },
-      timestamp: Date.now(),
-    } as unknown as Location.LocationObject)
-    : location; // DO NOT CHANGE AS IT WILL CRASH IF DEV_OVERRIDE_LOCATION IS NULL
+  const effectiveLocation: Location.LocationObject | null = useMemo(() => {
+    if (DEV_OVERRIDE_LOCATION) {
+      return {
+        coords: {
+          latitude: DEV_OVERRIDE_LOCATION.latitude,
+          longitude: DEV_OVERRIDE_LOCATION.longitude,
+          altitude: null,
+          accuracy: null,
+          altitudeAccuracy: null,
+          heading: null,
+          speed: null,
+        },
+        timestamp: Date.now(),
+      } as unknown as Location.LocationObject;
+    }
+
+    return location;
+  }, [location]); // DO NOT CHANGE AS IT WILL CRASH IF DEV_OVERRIDE_LOCATION IS NULL
   // END DEVELOPPER CONFIG
 
   const userBuilding = useUserBuilding(effectiveLocation);
@@ -92,6 +98,16 @@ export default function Index() {
     setPreviewRouteInfo,
   } = useDirections();
 
+  const {
+    fullRoute,
+    calculateRoute,
+    clearRoute,
+  } = useCombinedNavigation();
+
+  const [combinedStepIndex, setCombinedStepIndex] = useState(0);
+  const [combinedRouteActive, setCombinedRouteActive] = useState(false);
+  const [outdoorLegMode, setOutdoorLegMode] = useState<string>("DRIVING");
+
   const [showLabels, setShowLabels] = useState(
     defaultCampus.initialRegion.latitudeDelta <= LABEL_ZOOM_THRESHOLD
   );
@@ -104,6 +120,12 @@ export default function Index() {
   const [showShuttleModal, setShowShuttleModal] = useState(false);
   const [showIndoorMapModal, setShowIndoorMapModal] = useState(false);
   const [indoorBuildingCode, setIndoorBuildingCode] = useState<string | null>(null);
+  const [indoorPresetRoute, setIndoorPresetRoute] = useState<{
+    startNodeId?: string;
+    endNodeId?: string;
+    startLabel?: string;
+    endLabel?: string;
+  } | null>(null);
 
   // Concordia Shuttle option
   const [useShuttle, setUseShuttle] = useState(false);
@@ -143,6 +165,11 @@ export default function Index() {
 
   const handleEndDirections = () => {
     endDirections();
+    clearRoute();
+    setCombinedStepIndex(0);
+    setCombinedRouteActive(false);
+    setOutdoorLegMode("DRIVING");
+    setIndoorPresetRoute(null);
     setStartChoice(null);
     setDestChoice(null);
     setUseShuttle(false);
@@ -154,19 +181,103 @@ export default function Index() {
     });
   };
 
-  const handleStartRoute = () => {
-    if (!destChoice || !effectiveLocation) return;
+  const shouldUseCombinedFlow = !!(startChoice?.room?.trim() || destChoice?.room?.trim());
 
-    startDirections({ latitude: effectiveLocation.coords.latitude, longitude: effectiveLocation.coords.longitude }, destChoice.coordinate);
+  const startCombinedRoute = async (
+    originRaw: string,
+    destinationRaw: string,
+    userCoords: { latitude: number; longitude: number }
+  ) => {
+    const route = await calculateRoute(
+      originRaw,
+      destinationRaw,
+      false,
+      directionsState.transportMode,
+      userCoords,
+      apiKey
+    );
+
+    setCombinedStepIndex(0);
+    setCombinedRouteActive(route.length > 0);
+
+    const outdoorSteps = route.filter((step) => step.source === "outdoor");
+    if (outdoorSteps.length > 0) {
+      // Store the transport mode for the outdoor leg
+      setOutdoorLegMode(outdoorSteps[0].transportMode || "DRIVING");
+      
+      const outdoorOrigin = outdoorSteps[0].coordinates;
+      const firstIndoorAfterOutdoor = route.find((step, idx) => {
+        if (step.source !== "indoor") return false;
+        return route.slice(0, idx).some((previous) => previous.source === "outdoor");
+      });
+      const outdoorDestination = firstIndoorAfterOutdoor?.coordinates ?? destChoice?.coordinate;
+
+      if (isValidCoordinate(outdoorOrigin) && isValidCoordinate(outdoorDestination)) {
+        startDirections(outdoorOrigin, outdoorDestination);
+      } else {
+        console.warn("[Index] Skipping outdoor handoff due to invalid coordinates", {
+          outdoorOrigin,
+          outdoorDestination,
+        });
+      }
+      return;
+    }
+
+    endDirections();
   };
 
-  const handleNextClassDirections = (buildingCode: string) => {
+  const handleStartRoute = async () => {
+    if (!destChoice || !effectiveLocation) return;
+
+    if (!shouldUseCombinedFlow) {
+      setCombinedRouteActive(false);
+      setOutdoorLegMode("DRIVING");
+      clearRoute();
+      startDirections({ latitude: effectiveLocation.coords.latitude, longitude: effectiveLocation.coords.longitude }, destChoice.coordinate);
+      return;
+    }
+
+    const userCoords = {
+      latitude: effectiveLocation.coords.latitude,
+      longitude: effectiveLocation.coords.longitude,
+    };
+
+    const originRaw = buildRouteRaw(startChoice);
+    const destinationRaw = buildRouteRaw(destChoice);
+
+    await startCombinedRoute(originRaw, destinationRaw, userCoords);
+  };
+
+  const handleNextClassDirections = (classInfo: ParsedNextClass) => {
     if (!effectiveLocation) return;
 
-    const buildingCoord = getBuildingCoordinate(buildingCode);
+    const userCoords = {
+      latitude: effectiveLocation.coords.latitude,
+      longitude: effectiveLocation.coords.longitude,
+    };
+
+    const trimmedRawLocation = classInfo.rawLocation?.trim();
+    const trimmedRoom = classInfo.room?.trim();
+    let destinationRaw = classInfo.buildingCode;
+
+    if (trimmedRawLocation) {
+      destinationRaw = trimmedRawLocation;
+    } else if (trimmedRoom) {
+      destinationRaw = `${classInfo.buildingCode} ${trimmedRoom}`;
+    }
+
+    const originRaw = userBuilding?.code ?? "";
+
+    // Prefer stitched routing when next-class contains a room destination.
+    if (classInfo.room?.trim()) {
+      void startCombinedRoute(originRaw, destinationRaw, userCoords);
+      return;
+    }
+
+    const buildingCoord = getBuildingCoordinate(classInfo.buildingCode);
     if (buildingCoord) {
       startDirections(
-        { latitude: effectiveLocation.coords.latitude, longitude: effectiveLocation.coords.longitude },
+        userCoords,
         buildingCoord
       );
     } else {
@@ -177,7 +288,7 @@ export default function Index() {
   const handlePreviewRoute = () => {
     if (!destChoice || !startChoice || startChoice.id === "current-location") return;
 
-    if (startChoice.id == destChoice.id) {
+    if (startChoice.id === destChoice.id) {
       Alert.alert("Start and destination cannot be the same building.");
       return;
     }
@@ -254,6 +365,7 @@ export default function Index() {
       }
 
       setIndoorBuildingCode(fallbackCode);
+      setIndoorPresetRoute(null);
       setShowIndoorMapModal(true);
     };
   const handleOpenIndoorMap = (building: BuildingChoice) => {
@@ -265,6 +377,7 @@ export default function Index() {
       if (!getBuildingIndoorMap(normalizedCode)) return;
 
       setIndoorBuildingCode(normalizedCode);
+      setIndoorPresetRoute(null);
       setShowIndoorMapModal(true);
     };
 
@@ -357,7 +470,122 @@ export default function Index() {
         });
       }
     }
-  }, [effectiveLocation, userBuilding, startChoice, campusKey]);
+  }, [effectiveLocation, userBuilding, startChoice, campusKey, currentCampus]);
+
+  const roomOptionsByBuilding = useMemo(() => {
+    const grouped = new Map<string, Set<string>>();
+    for (const floor of AllCampusData) {
+      for (const node of floor.nodes ?? []) {
+        if (node.type !== "room") continue;
+        const label = node.label?.trim();
+        const buildingCode = node.buildingId?.toUpperCase();
+        if (!label || !buildingCode) continue;
+        if (!grouped.has(buildingCode)) {
+          grouped.set(buildingCode, new Set<string>());
+        }
+        grouped.get(buildingCode)?.add(label);
+      }
+    }
+
+    const result: Record<string, string[]> = {};
+    for (const [code, rooms] of grouped.entries()) {
+      result[code] = Array.from(rooms).sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+    }
+    return result;
+  }, []);
+
+  useEffect(() => {
+    if (!combinedRouteActive || !effectiveLocation || fullRoute.length === 0) return;
+
+    const currentStep = fullRoute[combinedStepIndex];
+    const nextStep = fullRoute[combinedStepIndex + 1];
+    if (!currentStep || !nextStep?.coordinates) return;
+
+    const distanceToNext = getDistanceMeters(
+      effectiveLocation.coords.latitude,
+      effectiveLocation.coords.longitude,
+      nextStep.coordinates.latitude,
+      nextStep.coordinates.longitude
+    );
+
+    if (distanceToNext < 20) {
+      setCombinedStepIndex((prev) => Math.min(prev + 1, fullRoute.length - 1));
+    }
+  }, [combinedRouteActive, combinedStepIndex, effectiveLocation, fullRoute]);
+
+  useEffect(() => {
+    if (!combinedRouteActive || !effectiveLocation || fullRoute.length === 0) return;
+
+    const currentStep = fullRoute[combinedStepIndex];
+    const nextStep = fullRoute[combinedStepIndex + 1];
+    
+    // Only auto-advance if we're on the last outdoor step and next step is indoor
+    if (currentStep?.source !== "outdoor" || nextStep?.source !== "indoor") return;
+    if (!nextStep?.coordinates) return;
+
+    const distanceToNextStep = getDistanceMeters(
+      effectiveLocation.coords.latitude,
+      effectiveLocation.coords.longitude,
+      nextStep.coordinates.latitude,
+      nextStep.coordinates.longitude
+    );
+
+    // Auto-advance to next step when very close (don't skip - just go to next)
+    if (distanceToNextStep < 35) {
+      setCombinedStepIndex((prev) => Math.min(prev + 1, fullRoute.length - 1));
+    }
+  }, [combinedRouteActive, combinedStepIndex, effectiveLocation, fullRoute]);
+
+  useEffect(() => {
+    if (!combinedRouteActive) return;
+    const currentStep = fullRoute[combinedStepIndex];
+    if (currentStep?.source !== "indoor") return;
+    if (!currentStep.buildingCode || !getBuildingIndoorMap(currentStep.buildingCode)) return;
+
+    const startLabel = currentStep.startNodeLabel;
+    const endLabel = currentStep.endNodeLabel;
+    const startNodeId = currentStep.startNodeId;
+    const endNodeId = currentStep.endNodeId;
+    if ((!startNodeId || !endNodeId) && (!startLabel || !endLabel)) return;
+
+    // Delay modal opening slightly so user sees the step displayed first
+    const timer = setTimeout(() => {
+      setIndoorBuildingCode(currentStep.buildingCode as string);
+      setIndoorPresetRoute({ startNodeId, endNodeId, startLabel, endLabel });
+      setShowIndoorMapModal(true);
+    }, 500); // 500ms delay to show the step first
+    
+    return () => clearTimeout(timer);
+  }, [combinedRouteActive, combinedStepIndex, fullRoute]);
+
+  const activeSteps = combinedRouteActive ? fullRoute : directionsState.steps;
+  const currentStepIndex = combinedRouteActive ? combinedStepIndex : directionsState.currentStepIndex;
+  const navigationActive = directionsState.isActive || combinedRouteActive;
+  const canGoPrev = currentStepIndex > 0;
+  const canGoNext = currentStepIndex < activeSteps.length - 1;
+
+  const handlePrevActiveStep = () => {
+    if (combinedRouteActive) {
+      if (!canGoPrev) return;
+      setCombinedStepIndex((prev) => Math.max(prev - 1, 0));
+      return;
+    }
+    prevStep();
+  };
+
+  const handleNextActiveStep = () => {
+    if (combinedRouteActive) {
+      if (!canGoNext) return;
+      
+      // Advance to next step
+      const nextStepIndex = Math.min(combinedStepIndex + 1, activeSteps.length - 1);
+      setCombinedStepIndex(nextStepIndex);
+      
+      // Modal opens automatically via useEffect when step is indoor
+      return;
+    }
+    nextStep();
+  };
 
 
   const buildingPolygons = useMemo(() => {
@@ -422,7 +650,7 @@ export default function Index() {
           </React.Fragment>
         );
       });
-  }, [campusBuildingsData]);
+  }, [campusBuildingsData, selectedBuilding]);
 
   const buildingChoices: BuildingChoice[] = useMemo(() => {
     const toChoices = (features: any[], campus: "SGW" | "Loyola") =>
@@ -486,8 +714,8 @@ export default function Index() {
         origin={directionsState.origin}
         destination={directionsState.destination}
         apikey={apiKey}
-        mode={effectiveMode}
-        {...getRouteLineStyle(effectiveMode)}
+        mode={combinedRouteActive ? outdoorLegMode : effectiveMode}
+        {...getRouteLineStyle(combinedRouteActive ? outdoorLegMode : effectiveMode)}
         onReady={handleActiveRouteReady}
         onError={handleActiveRouteError}
       />
@@ -495,7 +723,7 @@ export default function Index() {
   }, [
     directionsState.isActive, directionsState.origin, directionsState.destination,
     directionsState.transportMode, useShuttle, shuttleWaypoints, campusKey,
-    apiKey, effectiveMode, handleRouteReady, handleActiveRouteReady,
+    apiKey, effectiveMode, outdoorLegMode, combinedRouteActive, handleRouteReady, handleActiveRouteReady,
     handleActiveRouteError, handleLeg1Error, handleLeg2Error, handleLeg3Error,
   ]);
 
@@ -606,16 +834,17 @@ export default function Index() {
         {previewRouteElement}
       </MapView>
 
-      {!directionsState.isActive && (
+      {!navigationActive && (
         <SearchBar
           buildings={buildingChoices}
+          roomOptionsByBuilding={roomOptionsByBuilding}
           start={startChoice}
           destination={destChoice}
           onChangeStart={setStartChoice}
           onChangeDestination={setDestChoice}
           transportMode={directionsState.transportMode}
           onChangeTransportMode={setTransportMode}
-          routeActive={directionsState.isActive}
+          routeActive={navigationActive}
           previewActive={!directionsState.isActive && !!directionsState.origin}
           onEndRoute={handleEndDirections}
           onStartRoute={handleStartRoute}
@@ -631,10 +860,15 @@ export default function Index() {
         <IndoorMapModal
           visible={showIndoorMapModal}
           initialBuildingCode={indoorBuildingCode}
-          onClose={() => setShowIndoorMapModal(false)}
+          presetRoute={indoorPresetRoute}
+          onClose={() => {
+            setShowIndoorMapModal(false);
+            setIndoorPresetRoute(null);
+          }}
+          onClearRoute={clearRoute}
          />
 
-      {!directionsState.isActive && (
+      {!navigationActive && (
         <NextClassModal
           nextClass={nextClass}
           status={nextClassStatus}
@@ -643,37 +877,48 @@ export default function Index() {
         />
       )}
 
-      {!directionsState.isActive && (
+      {!navigationActive && (
         <CampusToggle selectedCampus={campusKey} onCampusChange={setCampusKey} />
       )}
-        {userBuilding && (
+      {!navigationActive && (
         <TouchableOpacity
-           style={styles.indoorButton}
-           onPress={handleOpenIndoorQuickAccess}
-           activeOpacity={0.85}
+          style={styles.shuttleButton}
+          onPress={() => setShowShuttleModal(true)}
+          activeOpacity={0.85}
+          accessibilityRole="button"
+          accessibilityLabel="Open shuttle schedule"
         >
-             <Text style={styles.indoorButtonText}>Indoor</Text>
+          <Text style={styles.shuttleButtonText}>🚌</Text>
         </TouchableOpacity>
-        )}
-
+      )}
       <TouchableOpacity
-        style={styles.shuttleButton}
-        onPress={() => setShowShuttleModal(true)}
-        activeOpacity={0.8}
+         style={styles.indoorButton}
+         onPress={handleOpenIndoorQuickAccess}
+         activeOpacity={0.85}
       >
-        <Text style={styles.shuttleButtonText}>🚌</Text>
+           <Text style={styles.indoorButtonText}>Indoor</Text>
       </TouchableOpacity>
 
-      {directionsState.isActive && directionsState.steps.length > 0 && (
+      {userBuilding && (
+        <TouchableOpacity
+          style={styles.indoorButton}
+          onPress={handleOpenIndoorQuickAccess}
+          activeOpacity={0.85}
+        >
+          <Text style={styles.indoorButtonText}>Indoor</Text>
+        </TouchableOpacity>
+      )}
+
+      {navigationActive && activeSteps.length > 0 && (
         <NavigationSteps
-          steps={directionsState.steps}
-          currentStepIndex={directionsState.currentStepIndex}
+          steps={activeSteps}
+          currentStepIndex={currentStepIndex}
           totalDistance={directionsState.routeInfo.distanceText ?? ""}
           totalDuration={directionsState.routeInfo.durationText ?? ""}
-          isOffRoute={directionsState.isOffRoute}
+          isOffRoute={!combinedRouteActive && directionsState.isOffRoute}
           onEndNavigation={handleEndDirections}
-          onNextStep={nextStep}
-          onPrevStep={prevStep}
+          onNextStep={handleNextActiveStep}
+          onPrevStep={handlePrevActiveStep}
         />
       )}
 

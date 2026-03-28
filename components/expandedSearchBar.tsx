@@ -22,6 +22,7 @@ import { stripCodePrefix, displayName, makeHaystack } from "@/constants/searchBa
 
 type Props = {
   buildings: BuildingChoice[];
+  roomOptionsByBuilding: Record<string, string[]>;
 
   start: BuildingChoice | null; // null => current location
   destination: BuildingChoice | null;
@@ -93,6 +94,7 @@ function ShuttleCheckbox({ checked, available, nextDeparture, onToggle }: Shuttl
 
 export default function ExpandedSearchBar({
   buildings,
+  roomOptionsByBuilding,
   start,
   destination,
   onChangeStart,
@@ -125,6 +127,14 @@ export default function ExpandedSearchBar({
   const [startFocused, setStartFocused] = useState(false);
   const startInputRef = useRef<TextInput>(null);
 
+  const [startRoomText, setStartRoomText] = useState("");
+  const [startRoomFocused, setStartRoomFocused] = useState(false);
+  const startRoomInputRef = useRef<TextInput>(null);
+
+  const [destRoomText, setDestRoomText] = useState("");
+  const [destRoomFocused, setDestRoomFocused] = useState(false);
+  const destRoomInputRef = useRef<TextInput>(null);
+
   const [history, setHistory] = useState<BuildingChoice[]>([]);
   const [quickFilter, setQuickFilter] = useState<"Home" | "Library" | "Favorites" | null>(null);
 
@@ -135,6 +145,18 @@ export default function ExpandedSearchBar({
   useEffect(() => {
     if (!startFocused) setStartText(start ? displayName(start) : "");
   }, [start, startFocused]);
+
+  useEffect(() => {
+    if (!startRoomFocused) {
+      setStartRoomText(start?.room ?? "");
+    }
+  }, [start, startRoomFocused]);
+
+  useEffect(() => {
+    if (!destRoomFocused) {
+      setDestRoomText(destination?.room ?? "");
+    }
+  }, [destination, destRoomFocused]);
 
   const sameCampus = !!(start && start.id !== "current-location" && destination && start.campus && destination.campus && start.campus === destination.campus);
 
@@ -155,6 +177,24 @@ export default function ExpandedSearchBar({
     return buildings.filter((b) => makeHaystack(b).includes(startQuery)).slice(0, 10);
   }, [buildings, startFocused, startQuery, routeActive]);
 
+  const startRoomSuggestions = useMemo(() => {
+    const buildingCode = start?.code?.toUpperCase();
+    if (!buildingCode || !startRoomFocused || routeActive) return [];
+    const options = roomOptionsByBuilding[buildingCode] ?? [];
+    const query = startRoomText.trim().toLowerCase();
+    if (!query) return options.slice(0, 10);
+    return options.filter((room) => room.toLowerCase().includes(query)).slice(0, 10);
+  }, [start, startRoomFocused, routeActive, roomOptionsByBuilding, startRoomText]);
+
+  const destRoomSuggestions = useMemo(() => {
+    const buildingCode = destination?.code?.toUpperCase();
+    if (!buildingCode || !destRoomFocused || routeActive) return [];
+    const options = roomOptionsByBuilding[buildingCode] ?? [];
+    const query = destRoomText.trim().toLowerCase();
+    if (!query) return options.slice(0, 10);
+    return options.filter((room) => room.toLowerCase().includes(query)).slice(0, 10);
+  }, [destination, destRoomFocused, routeActive, roomOptionsByBuilding, destRoomText]);
+
   function addToHistory(b: BuildingChoice) {
     setHistory((prev) => {
       const without = prev.filter((x) => x.id !== b.id);
@@ -163,18 +203,35 @@ export default function ExpandedSearchBar({
   }
 
   function pickDestination(b: BuildingChoice) {
-    onChangeDestination(b);
+    onChangeDestination({ ...b, room: undefined });
     addToHistory(b);
     setDestText(displayName(b));
+    setDestRoomText("");
     setDestFocused(false);
-    onOpenBuilding?.(b);
     Keyboard.dismiss();
   }
 
   function pickStart(b: BuildingChoice) {
-    onChangeStart(b);
+    onChangeStart({ ...b, room: undefined });
     setStartText(displayName(b));
+    setStartRoomText("");
     setStartFocused(false);
+    Keyboard.dismiss();
+  }
+
+  function pickStartRoom(room: string) {
+    if (!start) return;
+    onChangeStart({ ...start, room });
+    setStartRoomText(room);
+    setStartRoomFocused(false);
+    Keyboard.dismiss();
+  }
+
+  function pickDestinationRoom(room: string) {
+    if (!destination) return;
+    onChangeDestination({ ...destination, room });
+    setDestRoomText(room);
+    setDestRoomFocused(false);
     Keyboard.dismiss();
   }
 
@@ -277,6 +334,61 @@ export default function ExpandedSearchBar({
               </View>
             )}
 
+            {!!start?.code && start.id !== "current-location" && (
+              <>
+                <Text style={[styles.sectionLabel, { marginTop: 10 }]}>START ROOM (OPTIONAL)</Text>
+                <TouchableOpacity
+                  style={styles.inputRow}
+                  activeOpacity={1}
+                  onPress={() => startRoomInputRef.current?.focus()}
+                  accessibilityRole="button"
+                >
+                  <View style={styles.leftIconCircleAlt}>
+                    <FontAwesome name="hashtag" size={14} color={MAROON} />
+                  </View>
+
+                  <TextInput
+                    testID="route.start.room.input"
+                    ref={startRoomInputRef}
+                    style={styles.destInput}
+                    value={startRoomText}
+                    editable={!routeActive}
+                    placeholder={`Room in ${start.code} (e.g. 920)`}
+                    placeholderTextColor="#9CA3AF"
+                    onFocus={() => setStartRoomFocused(true)}
+                    onBlur={() => setStartRoomFocused(false)}
+                    onChangeText={(t) => {
+                      setStartRoomText(t);
+                      if (!start) return;
+                      onChangeStart({ ...start, room: t.trim() || undefined });
+                    }}
+                    returnKeyType="done"
+                  />
+                </TouchableOpacity>
+
+                {startRoomSuggestions.length > 0 && (
+                  <View testID="route.start.room.suggestions" style={styles.suggestionsBox}>
+                    <ScrollView keyboardShouldPersistTaps="handled" nestedScrollEnabled>
+                      {startRoomSuggestions.map((room, idx) => (
+                        <React.Fragment key={`${start.code}-${room}`}>
+                          {idx > 0 && <Separator />}
+                          <TouchableOpacity
+                            style={styles.suggestionItem}
+                            onPress={() => pickStartRoom(room)}
+                            activeOpacity={0.85}
+                            accessibilityRole="button"
+                          >
+                            <Text style={styles.suggestionTitle}>{room}</Text>
+                            <Text style={styles.suggestionSub}>{start.code} room</Text>
+                          </TouchableOpacity>
+                        </React.Fragment>
+                      ))}
+                    </ScrollView>
+                  </View>
+                )}
+              </>
+            )}
+
             <Text style={[styles.sectionLabel, { marginTop: 14 }]}>DESTINATION</Text>
 
             <TouchableOpacity
@@ -328,6 +440,61 @@ export default function ExpandedSearchBar({
                   ))}
                 </ScrollView>
               </View>
+            )}
+
+            {!!destination?.code && (
+              <>
+                <Text style={[styles.sectionLabel, { marginTop: 10 }]}>DESTINATION ROOM (OPTIONAL)</Text>
+                <TouchableOpacity
+                  style={styles.inputRow}
+                  activeOpacity={1}
+                  onPress={() => destRoomInputRef.current?.focus()}
+                  accessibilityRole="button"
+                >
+                  <View style={styles.leftIconCircleAlt}>
+                    <FontAwesome name="hashtag" size={14} color={MAROON} />
+                  </View>
+
+                  <TextInput
+                    testID="route.dest.room.input"
+                    ref={destRoomInputRef}
+                    style={styles.destInput}
+                    value={destRoomText}
+                    editable={!routeActive}
+                    placeholder={`Room in ${destination.code} (e.g. 3.255)`}
+                    placeholderTextColor="#9CA3AF"
+                    onFocus={() => setDestRoomFocused(true)}
+                    onBlur={() => setDestRoomFocused(false)}
+                    onChangeText={(t) => {
+                      setDestRoomText(t);
+                      if (!destination) return;
+                      onChangeDestination({ ...destination, room: t.trim() || undefined });
+                    }}
+                    returnKeyType="done"
+                  />
+                </TouchableOpacity>
+
+                {destRoomSuggestions.length > 0 && (
+                  <View testID="route.dest.room.suggestions" style={styles.suggestionsBox}>
+                    <ScrollView keyboardShouldPersistTaps="handled" nestedScrollEnabled>
+                      {destRoomSuggestions.map((room, idx) => (
+                        <React.Fragment key={`${destination.code}-${room}`}>
+                          {idx > 0 && <Separator />}
+                          <TouchableOpacity
+                            style={styles.suggestionItem}
+                            onPress={() => pickDestinationRoom(room)}
+                            activeOpacity={0.85}
+                            accessibilityRole="button"
+                          >
+                            <Text style={styles.suggestionTitle}>{room}</Text>
+                            <Text style={styles.suggestionSub}>{destination.code} room</Text>
+                          </TouchableOpacity>
+                        </React.Fragment>
+                      ))}
+                    </ScrollView>
+                  </View>
+                )}
+              </>
             )}
 
             <Text style={[styles.sectionLabel, { marginTop: 14 }]}>MODE OF TRANSPORT</Text>

@@ -3,14 +3,33 @@ import { View, Text, TouchableOpacity, Animated } from "react-native";
 import { FontAwesome } from "@expo/vector-icons";
 import { styles, WHITE, MUTED, DISABLED, MAROON, WARNING } from "../styles/navigationSteps.styles";
 
-export type NavigationStep = {
+type LatLng = { latitude: number; longitude: number };
+
+type BaseStep = {
   instruction: string;
   distance: string;
-  duration: string;
-  maneuver?: string;
-  startLocation: { latitude: number; longitude: number };
-  endLocation: { latitude: number; longitude: number };
+  coordinates?: LatLng;
 };
+
+type OutdoorStep = BaseStep & {
+  source: "outdoor";
+  duration?: string;
+  maneuver?: string;
+  startLocation: LatLng;
+  endLocation: LatLng;
+};
+
+type IndoorStep = BaseStep & {
+  source: "indoor";
+  buildingCode?: string;
+  floor?: number;
+  startNodeId?: string;
+  endNodeId?: string;
+  startNodeLabel?: string;
+  endNodeLabel?: string;
+};
+
+export type NavigationStep = OutdoorStep | IndoorStep;
 
 type Props = {
   steps: NavigationStep[];
@@ -84,6 +103,10 @@ export default function NavigationSteps({
 
   const isFirstStep = currentStepIndex === 0;
   const isLastStep = currentStepIndex === steps.length - 1;
+  
+  // Detect if this is the last outdoor step before indoor begins
+  const isLastOutdoorStep =
+    currentStep.source === "outdoor" && nextStep?.source === "indoor";
 
   return (
     <View style={styles.container}>
@@ -98,11 +121,23 @@ export default function NavigationSteps({
       {/* Current Step Card */}
       <Animated.View style={[styles.currentStepCard, { opacity: fadeAnim }]}>
         <View style={styles.iconContainer}>
-          <FontAwesome name={getManeuverIcon(currentStep.maneuver) as any} size={32} color={WHITE}/>
+          <FontAwesome
+            name={getManeuverIcon(currentStep.source === "outdoor" ? currentStep.maneuver : undefined) as any}
+            size={32}
+            color={WHITE}
+          />
         </View>
 
         <View style={styles.instructionContainer}>
+          {!!currentStep.source && (
+            <Text style={styles.nextLabel}>{currentStep.source.toUpperCase()}</Text>
+          )}
           <Text style={styles.distance}>{currentStep.distance}</Text>
+          {currentStep.source === "indoor" && !!currentStep.buildingCode && (
+            <Text style={styles.nextInstruction} numberOfLines={1}>
+              {currentStep.buildingCode}{typeof currentStep.floor === "number" ? ` · Floor ${currentStep.floor}` : ""}
+            </Text>
+          )}
           <Text style={styles.instruction} numberOfLines={2}>
             {stripHtml(currentStep.instruction)}
           </Text>
@@ -114,7 +149,10 @@ export default function NavigationSteps({
         <View style={styles.nextStepCard}>
           <Text style={styles.nextLabel}>NEXT</Text>
           <View style={styles.nextContent}>
-            <FontAwesome name={getManeuverIcon(nextStep.maneuver) as any} size={16} color={MUTED}
+            <FontAwesome
+              name={getManeuverIcon(nextStep.source === "outdoor" ? nextStep.maneuver : undefined) as any}
+              size={16}
+              color={MUTED}
             />
             <Text style={styles.nextInstruction} numberOfLines={1}>
               {stripHtml(nextStep.instruction)}
@@ -157,16 +195,24 @@ export default function NavigationSteps({
             <Text style={styles.endButtonText}>End</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity
-            style={[styles.stepButton, isLastStep && styles.stepButtonDisabled]}
-            onPress={onNextStep}
-            disabled={isLastStep}
-            accessibilityRole="button"
-            accessibilityLabel="Next step"
-            accessibilityState={{ disabled: isLastStep }}
-          >
-            <Text style={{ fontSize: 20, fontWeight: 'bold', color: isLastStep ? DISABLED : MAROON }}>›</Text>
-          </TouchableOpacity>
+          {/* Conditional button: "Enter Building" at last outdoor step, else "Next ›" */}
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <TouchableOpacity
+              style={[styles.stepButton, isLastStep && styles.stepButtonDisabled]}
+              onPress={onNextStep}
+              disabled={isLastStep}
+              accessibilityRole="button"
+              accessibilityLabel={isLastOutdoorStep ? "Enter building" : "Next step"}
+              accessibilityState={{ disabled: isLastStep }}
+            >
+              <Text style={{ fontSize: 18, fontWeight: 'bold', color: isLastStep ? DISABLED : MAROON }}>
+                {isLastOutdoorStep ? "⬆" : "›"}
+              </Text>
+            </TouchableOpacity>
+            {isLastOutdoorStep && (
+              <Text style={{ fontSize: 12, fontWeight: '600', color: MAROON }}>Indoor</Text>
+            )}
+          </View>
         </View>
       </View>
     </View>

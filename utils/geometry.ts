@@ -1,10 +1,18 @@
+export type LatLng = { latitude: number; longitude: number };
+
+export function isValidCoordinate(
+    coord: Partial<LatLng> | null | undefined
+): coord is LatLng {
+    return !!coord && Number.isFinite(coord.latitude) && Number.isFinite(coord.longitude);
+}
+
 /**
  * Ray-Casting Algorithm: This determines if a point is inside a polygon.
  * @param point - The user's current latitude and longitude
  * @param polygon - An array of longtitude and latitude (paris from GeoJSON)
 */
 export const isPointInPolygon = (
-	point: { latitude: number; longitude: number },
+	point: LatLng,
 	polygon: number[][]
 ) => {
 	const { latitude: ptLat, longitude: ptLng } = point;
@@ -153,3 +161,26 @@ export const getInteriorPoint = (polygon: number[][]): { latitude: number; longi
 
     return { latitude: fineBest.lat, longitude: fineBest.lng };
 };
+
+/**
+ * Calculates the Great-circle distance between two points on a sphere (Earth).
+ * Used for "Closest Door" logic and outdoor route progress.
+ */
+export function getDistanceMeters(
+    lat1: number, lon1: number, 
+    lat2: number, lon2: number
+): number {
+    const R = 6371e3; // Earth's radius in meters
+    const φ1 = (lat1 * Math.PI) / 180;
+    const φ2 = (lat2 * Math.PI) / 180;
+    const Δφ = ((lat2 - lat1) * Math.PI) / 180;
+    const Δλ = ((lon2 - lon1) * Math.PI) / 180;
+
+    const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+              Math.cos(φ1) * Math.cos(φ2) *
+              Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+    
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+    return R * c;
+}

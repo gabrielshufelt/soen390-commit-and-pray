@@ -25,7 +25,14 @@ import { styles } from "@/styles/indoorMapModal.styles";
 type IndoorMapModalProps = {
   readonly visible: boolean;
   readonly initialBuildingCode: string | null;
+  readonly presetRoute?: {
+    startNodeId?: string;
+    endNodeId?: string;
+    startLabel?: string;
+    endLabel?: string;
+  } | null;
   readonly onClose: () => void;
+  readonly onClearRoute?: () => void;
 };
 
 const ROOM_NODE_TYPE = "room";
@@ -121,8 +128,15 @@ const getNodeDisplayLabel = (node: IndoorNode): string => {
 export default function IndoorMapModal({
   visible,
   initialBuildingCode,
+  presetRoute,
   onClose,
+  onClearRoute,
 }: IndoorMapModalProps) {
+  const isPresetRouteMode =
+    !!presetRoute &&
+    (!!(presetRoute.startNodeId && presetRoute.endNodeId) ||
+      !!(presetRoute.startLabel && presetRoute.endLabel));
+
   const indoorMap = useMemo(() => {
     if (!initialBuildingCode) return null;
     return getBuildingIndoorMap(initialBuildingCode);
@@ -311,29 +325,16 @@ export default function IndoorMapModal({
       return;
     }
 
-    if (fromNode.type !== ROOM_NODE_TYPE || toNode.type !== ROOM_NODE_TYPE) {
-      setRoutePath([]);
-      setRouteError("Directions are only supported between rooms.");
-      return;
-    }
-
-    const startLabel = fromNode.label.trim();
-    const endLabel = toNode.label.trim();
-
-    if (!startLabel || !endLabel) {
-      setRoutePath([]);
-      setRouteError("Selected rooms must have valid labels.");
-      return;
-    }
-
-    const path = pathfinder.findShortestPath(startLabel, endLabel, {
+    const path = pathfinder.findShortestPath(fromNode.id, toNode.id, {
       wheelchairAccessible,
       avoidStairs,
       preferElevators,
     });
     if (!path || path.length < 2) {
       setRoutePath([]);
-      setRouteError(`No indoor route found from ${startLabel} to ${endLabel}.`);
+      const startName = fromNode.label.trim() || fromNode.id;
+      const endName = toNode.label.trim() || toNode.id;
+      setRouteError(`No indoor route found from ${startName} to ${endName}.`);
       return;
     }
 
@@ -346,6 +347,36 @@ export default function IndoorMapModal({
       computeRoute(routeStartNode, routeEndNode);
     }
   }, [routeStartNode, routeEndNode, computeRoute]);
+
+  useEffect(() => {
+    if (!visible || !indoorMap) return;
+    const hasNodeIds = !!(presetRoute?.startNodeId && presetRoute?.endNodeId);
+    const hasLabels = !!(presetRoute?.startLabel && presetRoute?.endLabel);
+    if (!hasNodeIds && !hasLabels) return;
+
+    const allNodes = indoorMap?.floors.flatMap((floor) => floor.nodes) ?? [];
+    const startNode = hasNodeIds
+      ? allNodes.find((node) => node.id === presetRoute?.startNodeId)
+      : allNodes.find((node) => node.label.trim() === presetRoute?.startLabel?.trim());
+    const endNode = hasNodeIds
+      ? allNodes.find((node) => node.id === presetRoute?.endNodeId)
+      : allNodes.find((node) => node.label.trim() === presetRoute?.endLabel?.trim());
+
+    if (!startNode || !endNode) return;
+
+    setRouteStartNode(startNode);
+    setRouteEndNode(endNode);
+    setSelectedRoom(endNode);
+    setViewMode("map");
+    setZoom(1);
+    setPanX(0);
+    setPanY(0);
+
+    const startFloorIndex = indoorMap?.floors.findIndex((floor) => floor.floor === startNode.floor) ?? -1;
+    if (startFloorIndex >= 0) {
+      setFloorIndex(startFloorIndex);
+    }
+  }, [visible, presetRoute, indoorMap]);
 
   const handleSetRouteFrom = () => {
     if (!selectedRoom) return;
@@ -374,6 +405,8 @@ export default function IndoorMapModal({
     setRouteEndNode(null);
     setRoutePath([]);
     setRouteError(null);
+    // Clear combined navigation route (outdoor directions) if callback provided
+    onClearRoute?.();
   };
 
   const handleZoomIn = () => {
@@ -681,20 +714,24 @@ export default function IndoorMapModal({
                 {selectedRoom && (
                   <View style={styles.selectedRoomCard}>
                     <Text style={styles.selectedRoomLabel}>{selectedRoom.label}</Text>
-                    <TouchableOpacity
-                      style={[styles.directionButton, styles.directionButtonTo]}
-                      onPress={handleSetRouteTo}
-                      activeOpacity={0.7}
-                    >
-                      <Text style={styles.directionButtonToText}>Get Directions To</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={[styles.directionButton, styles.directionButtonFrom]}
-                      onPress={handleSetRouteFrom}
-                      activeOpacity={0.7}
-                    >
-                      <Text style={styles.directionButtonFromText}>Get Directions From</Text>
-                    </TouchableOpacity>
+                    {!isPresetRouteMode && (
+                      <>
+                        <TouchableOpacity
+                          style={[styles.directionButton, styles.directionButtonTo]}
+                          onPress={handleSetRouteTo}
+                          activeOpacity={0.7}
+                        >
+                          <Text style={styles.directionButtonToText}>Get Directions To</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={[styles.directionButton, styles.directionButtonFrom]}
+                          onPress={handleSetRouteFrom}
+                          activeOpacity={0.7}
+                        >
+                          <Text style={styles.directionButtonFromText}>Get Directions From</Text>
+                        </TouchableOpacity>
+                      </>
+                    )}
                   </View>
                 )}
               </>

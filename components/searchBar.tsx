@@ -6,6 +6,7 @@ import { BuildingChoice } from "@/constants/searchBar.types"
 
 type Props = {
   buildings: BuildingChoice[];
+  roomOptionsByBuilding: Record<string, string[]>;
 
   start: BuildingChoice | null; // null => current location
   destination: BuildingChoice | null;
@@ -39,6 +40,7 @@ type Props = {
 
 export default function SearchBar({
   buildings,
+  roomOptionsByBuilding,
   start,
   destination,
   onChangeStart,
@@ -74,6 +76,7 @@ export default function SearchBar({
   return (
     <ExpandedSearchBar
       buildings={buildings}
+      roomOptionsByBuilding={roomOptionsByBuilding}
       start={start}
       destination={destination}
       onChangeStart={onChangeStart}

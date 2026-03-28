@@ -18,7 +18,7 @@ interface NextClassModalProps {
   nextClass: ParsedNextClass | null;
   status: NextClassStatus;
   isLoading: boolean;
-  onGetDirections: (buildingCode: string) => void;
+  onGetDirections: (nextClass: ParsedNextClass) => void;
 }
 
 // Helpers
@@ -217,7 +217,7 @@ export default function NextClassModal({ nextClass, status, isLoading, onGetDire
           <TouchableOpacity
             style={styles.directionsButton}
             activeOpacity={0.8}
-            onPress={() => onGetDirections(nextClass.buildingCode)}
+            onPress={() => onGetDirections(nextClass)}
           >
             <Ionicons name="navigate" size={14} color="#FFFFFF" style={{ marginRight: 5 }} />
             <Text style={styles.directionsButtonText}>Get Directions</Text>
