@@ -3,7 +3,7 @@
     "buildingId": "H",
     "floor": 2
   },
-  "nodes": [
+ "nodes": [
     {
       "id": "H_F2_room_171",
       "type": "room",
@@ -613,6 +613,26 @@
       "y": 1020,
       "label": "",
       "accessible": true
+    },
+    {
+      "id": "H_F2_room_14",
+      "type": "vending_machine",
+      "buildingId": "H",
+      "floor": 2,
+      "x": 1753,
+      "y": 1450,
+      "label": "",
+      "accessible": true
+    },
+    {
+      "id": "H_F2_room_15",
+      "type": "water_fountain",
+      "buildingId": "H",
+      "floor": 2,
+      "x": 891,
+      "y": 686,
+      "label": "",
+      "accessible": true
     }
   ],
   "edges": [
@@ -1195,6 +1215,27 @@
       "target": "H_F2_hallway_waypoint_253_exit",
       "type": "hallway",
       "weight": 74,
+      "accessible": true
+    },
+    {
+      "source": "H_F2_hallway_waypoint_240",
+      "target": "H_F2_room_14",
+      "type": "hallway",
+      "weight": 86,
+      "accessible": true
+    },
+    {
+      "source": "H_F2_hallway_waypoint_285",
+      "target": "H_F2_room_14",
+      "type": "hallway",
+      "weight": 72,
+      "accessible": true
+    },
+    {
+      "source": "H_F2_room_15",
+      "target": "H_F2_hallway_waypoint_263",
+      "type": "hallway",
+      "weight": 154,
       "accessible": true
     }
   ]
