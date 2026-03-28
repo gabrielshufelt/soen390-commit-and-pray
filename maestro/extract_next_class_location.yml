@@ -1,0 +1,47 @@
+appId: com.commitandpray.soen390project
+---
+- launchApp:
+    clearState: false
+
+# When a user hasn't selected a calendar, the modal doesn't show
+- assertVisible: Google Map
+
+# Login 
+- tapOn: Settings
+- tapOn: Sign in with Google
+- tapOn: Sither Sinnappu
+- tapOn: OK
+
+# If a user has no classes today, the modal displays a "No classes today" message
+- tapOn: Jours fériés au Canada
+- tapOn: Home
+- assertVisible: No classes today
+
+# selected a Google Calendar in their calendars list
+- tapOn: Settings
+- tapOn: Concordia class
+- tapOn: Home
+
+#The class name and type (lecture, tutorial or laboratory) is shown
+- assertVisible: SOEN 357 LEC
+
+#The building of the next class is shown
+- assertVisible: H
+
+#The room of the next class is shown
+- assertVisible: H-937
+
+#The start and end time of the next class is shown
+- assertVisible: 8:45 AM – 10:00 AM
+
+#The estimated walk time to the next class is shown
+- assertVisible: " 1095h25m walk"
+
+#The countdown time for the next class is shown
+- assertVisible: In 45m
+
+#If late warning shows up
+- assertVisible: ⚠️ YOU WILL BE LATE (1095h25m WALK)
+
+#Need to mock the time in devConfig.ts to doesn't have any more classes
+- assertVisible: School day finished. See you tomorrow!
