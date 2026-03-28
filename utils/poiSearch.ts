@@ -1,8 +1,7 @@
 import { AllCampusData } from "../data/buildings";
 import { getDistanceMeters } from "./geometry";
+import { getBuildingCoordinate } from "./buildingCoordinates";
 
-// This maps user keywords to the "type" field in your JSON nodes.
-// If your teammate adds "washroom" in Task #85, just add it here.
 const POI_TYPE_MAP: Record<string, string[]> = {
   "washroom": ["washroom", "bathroom", "restroom"],
   "water": ["water_fountain", "water"],
@@ -34,28 +33,34 @@ export function searchNearbyPois(
 
   const results: PoiResult[] = [];
 
-  // Filter: Look only in the current building if we are in one, 
-  // otherwise look everywhere (to find "nearest building" POIs)
   const dataToSearch = currentBuildingCode 
     ? AllCampusData.filter(f => f.meta.buildingId === currentBuildingCode)
     : AllCampusData;
 
   dataToSearch.forEach(floor => {
+    // Get the building center as a fallback since indoor nodes usually only have x/y
+    const buildingFallback = getBuildingCoordinate(floor.meta.buildingId);
+
     floor.nodes.forEach(node => {
-      if (targetTypes.includes(node.type) && node.latitude && node.longitude) {
-        results.push({
-          id: node.id,
-          name: node.label || `${node.type.replace('_', ' ')}`,
-          type: node.type,
-          buildingCode: floor.meta.buildingId,
-          floor: floor.meta.floor,
-          distance: getDistanceMeters(userLat, userLng, node.latitude, node.longitude),
-          coordinates: { latitude: node.latitude, longitude: node.longitude }
-        });
+      if (targetTypes.includes(node.type)) {
+        // Use node GPS if available, otherwise use building GPS
+        const lat = node.latitude || buildingFallback?.latitude;
+        const lng = node.longitude || buildingFallback?.longitude;
+
+        if (lat && lng) {
+          results.push({
+            id: node.id,
+            name: node.label?.trim() || `${node.type.replace('_', ' ')}`,
+            type: node.type,
+            buildingCode: floor.meta.buildingId,
+            floor: floor.meta.floor,
+            distance: getDistanceMeters(userLat, userLng, lat, lng),
+            coordinates: { latitude: lat, longitude: lng }
+          });
+        }
       }
     });
   });
 
-  // Sort by distance and return top 5
   return results.sort((a, b) => a.distance - b.distance).slice(0, 5);
 }
