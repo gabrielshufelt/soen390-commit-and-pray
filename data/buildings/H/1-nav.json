@@ -6,11 +6,11 @@
   "nodes": [
     {
       "id": "H_F1_room_13",
-      "type": "water_fountain",
+      "type": "hallway_waypoint",
       "buildingId": "H",
       "floor": 1,
-      "x": 1122,
-      "y": 918,
+      "x": 1089,
+      "y": 1200,
       "label": "",
       "accessible": true
     },
@@ -241,6 +241,8 @@
       "floor": 1,
       "x": 1908,
       "y": 1381,
+      "latitude": 45.497413242368516, 
+      "longitude": -73.57845389601285,
       "label": "",
       "accessible": true
     },
@@ -416,7 +418,7 @@
     },
     {
       "id": "H_F1_room_76",
-      "type": "washroom",
+      "type": "room",
       "buildingId": "H",
       "floor": 1,
       "x": 977,
@@ -451,6 +453,8 @@
       "floor": 1,
       "x": 655,
       "y": 1580,
+      "latitude": 45.497007052636114, 
+      "longitude": -73.57868314622948,
       "label": "",
       "accessible": false
     },
@@ -471,6 +475,8 @@
       "floor": 1,
       "x": 831,
       "y": 1585,
+      "latitude": 45.4970757778617, 
+      "longitude": -73.5786111002341,
       "label": "",
       "accessible": true
     },
@@ -1284,13 +1290,6 @@
       "target": "H_F1_room_93_exit",
       "type": "room_to_door",
       "weight": 87,
-      "accessible": true
-    },
-    {
-      "source": "H_F1_hallway_waypoint_19",
-      "target": "H_F1_room_13",
-      "type": "hallway",
-      "weight": 60,
       "accessible": true
     }
   ]
