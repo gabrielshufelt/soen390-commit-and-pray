@@ -9,21 +9,9 @@ before the actual testing sessions.
 
 ---
 
-## Before You Start
-
-Make sure you have these installed:
-
-- **Node.js 20+** -> https://nodejs.org
-- **Git**
-- **Xcode** (from the Mac App Store, latest version)
-- **CocoaPods** -> run `sudo gem install cocoapods` if you do not have it
-- **Expo Go** on your phone (optional, if you want to run on a physical device)
----
-
 ## Step 1 - Get the .env file
 
-Ask Jeremy for the `.env` file. Place it inside the `mobile/` folder.
-The path should be `soen390-commit-and-pray/mobile/.env`.
+Make sure all variables from the #dotenv Discord channel are in the `.env` file. The path should be `soen390-commit-and-pray/.env`.
 
 ---
 
@@ -39,7 +27,6 @@ git pull
 ## Step 3 - Install dependencies
 
 ```bash
-cd mobile
 npm install
 ```
 
@@ -73,7 +60,7 @@ This prepares/builds the native app once so simulator/device launches are smooth
 
 ## Step 6 - Run the app for usability testing (use this every time)
 
-Open a terminal in the `mobile/` folder and run:
+Open a terminal in the root folder and run:
 
 ```bash
 npx expo start
@@ -90,18 +77,10 @@ Then launch the app using one of the following:
 - Press **`a`** in the Expo terminal to open Android Emulator
 - Or scan the QR code with Expo Go on a physical device
 
-Firebase DebugView now tracks events when running through `npx expo start`.
+Firebase DebugView now tracks events when running through `npx expo start`. Your events will now be tracked through Google's BigQuery.
 
 ---
 
-## Step 7 - Open Firebase DebugView
-
-Go to [Firebase Console → Analytics → DebugView](https://console.firebase.google.com/project/soen390-usability/analytics/app/ios:com.commitandpray.soen390project/debugview)
-
-Your active device/session will appear in the device dropdown after a few seconds. `ut_` events will
-stream in real time as the participant interacts with the app.
-
----
 
 ## Notes
 
@@ -111,11 +90,6 @@ stream in real time as the participant interacts with the app.
   `ut_` prefix so the data stays clean and only reflects real test sessions.
 
 ---
-
-## Tracked Events in Firebase DebugView
-
-All custom events use the `ut_` prefix. They appear by name in DebugView as the participant interacts with the app.
-Screen views are tracked automatically by Firebase (no `ut_` prefix) whenever the participant navigates between screens.
 
 ### Task Lifecycle Events (fired by moderator via Dev Menu)
 
