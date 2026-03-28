@@ -613,6 +613,36 @@
       "y": 1020,
       "label": "",
       "accessible": true
+    },
+    {
+      "id": "H_F2_hallway_waypoint_37",
+      "type": "vending_machine",
+      "buildingId": "H",
+      "floor": 2,
+      "x": 1663,
+      "y": 1499,
+      "label": "",
+      "accessible": true
+    },
+    {
+      "id": "H_F2_hallway_waypoint_38",
+      "type": "water_fountain",
+      "buildingId": "H",
+      "floor": 2,
+      "x": 908,
+      "y": 709,
+      "label": "",
+      "accessible": true
+    },
+    {
+      "id": "H_F2_hallway_waypoint_39",
+      "type": "hallway_waypoint",
+      "buildingId": "H",
+      "floor": 2,
+      "x": 901,
+      "y": 753,
+      "label": "",
+      "accessible": true
     }
   ],
   "edges": [
@@ -790,13 +820,6 @@
       "type": "hallway",
       "weight": 130,
       "accessible": false
-    },
-    {
-      "source": "H_F2_doorway_246",
-      "target": "H_F2_room_181",
-      "type": "room_to_door",
-      "weight": 173,
-      "accessible": true
     },
     {
       "source": "H_F2_room_181",
@@ -1195,6 +1218,41 @@
       "target": "H_F2_hallway_waypoint_253_exit",
       "type": "hallway",
       "weight": 74,
+      "accessible": true
+    },
+    {
+      "source": "H_F2_hallway_waypoint_37",
+      "target": "H_F2_hallway_waypoint_240",
+      "type": "hallway",
+      "weight": 50,
+      "accessible": true
+    },
+    {
+      "source": "H_F2_hallway_waypoint_37",
+      "target": "H_F2_hallway_waypoint_285",
+      "type": "hallway",
+      "weight": 37,
+      "accessible": true
+    },
+    {
+      "source": "H_F2_doorway_246",
+      "target": "H_F2_hallway_waypoint_39",
+      "type": "door_to_hallway",
+      "weight": 80,
+      "accessible": true
+    },
+    {
+      "source": "H_F2_hallway_waypoint_39",
+      "target": "H_F2_room_181",
+      "type": "door_to_hallway",
+      "weight": 93,
+      "accessible": true
+    },
+    {
+      "source": "H_F2_hallway_waypoint_39",
+      "target": "H_F2_hallway_waypoint_38",
+      "type": "hallway",
+      "weight": 44,
       "accessible": true
     }
   ]

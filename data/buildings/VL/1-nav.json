@@ -1,6 +1,7 @@
 {
   "meta": {
-    "buildingId": "VL"
+    "buildingId": "VL",
+    "floor": 1
   },
   "nodes": [
     {
@@ -387,22 +388,22 @@
     },
     {
       "id": "VL_F1_room_40",
-      "type": "room",
+      "type": "washroom",
       "buildingId": "VL",
       "floor": 1,
       "x": 1428,
-      "y": 1664,
-      "label": "",
+      "y": 1663,
+      "label": "F",
       "accessible": true
     },
     {
       "id": "VL_F1_room_41",
-      "type": "room",
+      "type": "washroom",
       "buildingId": "VL",
       "floor": 1,
-      "x": 1586,
-      "y": 1664,
-      "label": "",
+      "x": 1587,
+      "y": 1665,
+      "label": "M",
       "accessible": true
     },
     {
@@ -994,6 +995,26 @@
       "y": 232,
       "label": "",
       "accessible": true
+    },
+    {
+      "id": "VL_F-2_doorway_40",
+      "type": "water_fountain",
+      "buildingId": "VL",
+      "floor": -2,
+      "x": 1481,
+      "y": 1584,
+      "label": "",
+      "accessible": true
+    },
+    {
+      "id": "VL_F-2_hallway_waypoint_45",
+      "type": "hallway_waypoint",
+      "buildingId": "VL",
+      "floor": -2,
+      "x": 1481,
+      "y": 1531,
+      "label": "",
+      "accessible": true
     }
   ],
   "edges": [
@@ -1094,13 +1115,6 @@
       "type": "hallway",
       "weight": 78,
       "accessible": false
-    },
-    {
-      "source": "VL_F1_hallway_waypoint_79",
-      "target": "VL_F1_hallway_waypoint_81",
-      "type": "hallway",
-      "weight": 260,
-      "accessible": true
     },
     {
       "source": "VL_F1_hallway_waypoint_81",
@@ -1989,6 +2003,27 @@
       "target": "VL_F1_room_38_exit",
       "type": "hallway",
       "weight": 165,
+      "accessible": true
+    },
+    {
+      "source": "VL_F1_hallway_waypoint_79",
+      "target": "VL_F-2_hallway_waypoint_45",
+      "type": "hallway",
+      "weight": 103,
+      "accessible": true
+    },
+    {
+      "source": "VL_F-2_hallway_waypoint_45",
+      "target": "VL_F1_hallway_waypoint_81",
+      "type": "hallway",
+      "weight": 157,
+      "accessible": true
+    },
+    {
+      "source": "VL_F-2_hallway_waypoint_45",
+      "target": "VL_F-2_doorway_40",
+      "type": "hallway",
+      "weight": 53,
       "accessible": true
     }
   ]
