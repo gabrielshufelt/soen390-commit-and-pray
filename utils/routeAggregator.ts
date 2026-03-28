@@ -146,7 +146,6 @@ export async function getStitchedRoute(
   if (!dest) return [];
 
   // Get building coordinates for on-campus detection
-  const originCoord = origin ? getBuildingCoordinate(origin.buildingCode) : null;
   const destCoord = getBuildingCoordinate(dest.buildingCode);
 
   // Determine effective transport mode using user's actual location
