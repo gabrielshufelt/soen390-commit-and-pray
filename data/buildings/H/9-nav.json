@@ -1573,6 +1573,86 @@
       "y": 473,
       "label": "",
       "accessible": true
+    },
+    {
+      "id": "H_F9_doorway_23",
+      "type": "doorway",
+      "buildingId": "H",
+      "floor": 9,
+      "x": 803,
+      "y": 1536,
+      "label": "",
+      "accessible": true
+    },
+    {
+      "id": "H_F9_doorway_24",
+      "type": "washroom",
+      "buildingId": "H",
+      "floor": 9,
+      "x": 782,
+      "y": 1459,
+      "label": "M",
+      "accessible": true
+    },
+    {
+      "id": "H_F9_hallway_waypoint_21",
+      "type": "hallway_waypoint",
+      "buildingId": "H",
+      "floor": 9,
+      "x": 1167,
+      "y": 1590,
+      "label": "",
+      "accessible": true
+    },
+    {
+      "id": "H_F9_doorway_25",
+      "type": "doorway",
+      "buildingId": "H",
+      "floor": 9,
+      "x": 1167,
+      "y": 1490,
+      "label": "",
+      "accessible": true
+    },
+    {
+      "id": "H_F9_hallway_waypoint_22",
+      "type": "washroom",
+      "buildingId": "H",
+      "floor": 9,
+      "x": 1163,
+      "y": 1444,
+      "label": "F",
+      "accessible": true
+    },
+    {
+      "id": "H_F9_hallway_waypoint_23",
+      "type": "water_fountain",
+      "buildingId": "H",
+      "floor": 9,
+      "x": 700,
+      "y": 1541,
+      "label": "",
+      "accessible": true
+    },
+    {
+      "id": "H_F9_hallway_waypoint_24",
+      "type": "hallway_waypoint",
+      "buildingId": "H",
+      "floor": 9,
+      "x": 700,
+      "y": 1588,
+      "label": "",
+      "accessible": true
+    },
+    {
+      "id": "H_F9_hallway_waypoint_25",
+      "type": "vending_machine",
+      "buildingId": "H",
+      "floor": 9,
+      "x": 818,
+      "y": 620,
+      "label": "",
+      "accessible": true
     }
   ],
   "edges": [
@@ -2074,13 +2154,6 @@
       "accessible": true
     },
     {
-      "source": "H_F9_hallway_waypoint_138",
-      "target": "H_F9_hallway_waypoint_137",
-      "type": "hallway",
-      "weight": 192,
-      "accessible": true
-    },
-    {
       "source": "H_F9_hallway_waypoint_137",
       "target": "H_F9_doorway_123",
       "type": "door_to_hallway",
@@ -2372,13 +2445,6 @@
       "target": "H_F9_hallway_waypoint_144",
       "type": "hallway",
       "weight": 178,
-      "accessible": true
-    },
-    {
-      "source": "H_F9_hallway_waypoint_131",
-      "target": "H_F9_hallway_waypoint_130",
-      "type": "hallway",
-      "weight": 592,
       "accessible": true
     },
     {
@@ -2876,6 +2942,83 @@
       "target": "H_F9_doorway_118",
       "type": "elevator",
       "weight": 0,
+      "accessible": true
+    },
+    {
+      "source": "H_F9_doorway_23",
+      "target": "H_F9_hallway_waypoint_137",
+      "type": "door_to_hallway",
+      "weight": 63,
+      "accessible": true
+    },
+    {
+      "source": "H_F9_doorway_23",
+      "target": "H_F9_doorway_24",
+      "type": "room_to_door",
+      "weight": 80,
+      "accessible": true
+    },
+    {
+      "source": "H_F9_hallway_waypoint_131",
+      "target": "H_F9_hallway_waypoint_21",
+      "type": "hallway",
+      "weight": 101,
+      "accessible": true
+    },
+    {
+      "source": "H_F9_hallway_waypoint_21",
+      "target": "H_F9_hallway_waypoint_130",
+      "type": "hallway",
+      "weight": 491,
+      "accessible": true
+    },
+    {
+      "source": "H_F9_hallway_waypoint_21",
+      "target": "H_F9_doorway_25",
+      "type": "door_to_hallway",
+      "weight": 100,
+      "accessible": true
+    },
+    {
+      "source": "H_F9_doorway_25",
+      "target": "H_F9_hallway_waypoint_22",
+      "type": "room_to_door",
+      "weight": 46,
+      "accessible": true
+    },
+    {
+      "source": "H_F9_hallway_waypoint_137",
+      "target": "H_F9_hallway_waypoint_24",
+      "type": "hallway",
+      "weight": 122,
+      "accessible": true
+    },
+    {
+      "source": "H_F9_hallway_waypoint_24",
+      "target": "H_F9_hallway_waypoint_23",
+      "type": "hallway",
+      "weight": 47,
+      "accessible": true
+    },
+    {
+      "source": "H_F9_hallway_waypoint_24",
+      "target": "H_F9_hallway_waypoint_138",
+      "type": "hallway",
+      "weight": 70,
+      "accessible": true
+    },
+    {
+      "source": "H_F9_hallway_waypoint_118",
+      "target": "H_F9_hallway_waypoint_25",
+      "type": "hallway",
+      "weight": 92,
+      "accessible": true
+    },
+    {
+      "source": "H_F9_hallway_waypoint_25",
+      "target": "H_F9_hallway_waypoint_113",
+      "type": "hallway",
+      "weight": 136,
       "accessible": true
     }
   ]
