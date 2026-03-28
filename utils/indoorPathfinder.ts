@@ -153,6 +153,9 @@ export class IndoorPathfinder {
     if (!startNode) return null;
 
     const endNode = this.resolveNode(endReference);
+    // SonarQube suggests optional chaining here, but we need the explicit null check
+    // because endNode is used directly below (endNode.buildingId, endNode.floor, etc.)
+    // The explicit check ensures type safety for all subsequent property accesses.
     if (!endNode || endNode.buildingId !== startNode.buildingId) return null;
 
     const context: Omit<EdgeWeightContext, 'sourceNode' | 'targetNode'> = {
