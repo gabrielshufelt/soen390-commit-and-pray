@@ -162,57 +162,35 @@ Target sample size for full-scale testing: **12–15 participants**.
 ---
 
 **Task 1 — Campus Orientation**
-> "The app is showing a map of the SGW campus. Find the building labeled **H** on the map and tap it. In the card that pops up, look at the services and accessibility features listed, then close the card. Finally, use the **SGW / Loyola** toggle at the top of the map to switch to the Loyola campus, then switch back to SGW."
-
-*Moderator notes: The Hall building polygon is centered on the SGW map. The card shows SERVICES and ACCESSIBILITY icon rows. The toggle is a pill control at the top-center of the map.*
+> "Find the building labeled **H** on the map and tap it. Then, look at the services and accessibility features listed, then close the card. Finally, toggle the view to the Loyola campus using the top buttons, then switch back to SGW."
 
 ---
 
 **Task 2 — Searching for a Destination**
-> "Tap the search bar at the top of the screen to open it. In the **Destination** field, type **EV** and select the **EV Building** from the list. Then go back to the map and tap any building to open its info card, and tap **Get Directions From** to set it as your starting point."
-
-*Moderator notes: The search bar is collapsed by default — the participant must tap it first. After picking EV as a destination, the bar stays open. To set a start via map, they close/dismiss the search bar, tap a different building polygon, and use the "Get Directions From" button in the building card.*
+> "Tap the search bar at the top of the screen. In the **Destination** field, type **EV** and select the **EV Building** from the list. Then go back to the map and tap the H building, then tap **Get Directions From** in the popup card."
 
 ---
 
 **Task 3 — Previewing and Starting a Route**
-> "Tap the search bar. You have a start and destination set. Tap **Preview Route** in the search component to see the route on the map. After analyzing the route, tap **Exit Preview** to cancel."
-
-*Moderator notes: "Preview Route" only appears when start is a building (not current location). The "Start Directions" button replaces "Preview Route" once preview is active. The "End" button is inside the navigation step card that appears at the bottom during active navigation.*
+> "Tap the search bar. You have a start and destination set. Tap **Preview Route** in the search component to see the route on the map. After analyzing the route, go back to the search bar and tap **Exit Preview** to cancel."
 
 ---
 
 **Task 4 — Switching Transport Modes**
-> "Open the search bar and set the destination to a Loyola Campus building (for example CC), then close the indoor map if it opens. Using the transport mode row (the icons showing a car, person, bicycle, and bus), switch to **Cycling**, then switch to **Transit**. Tap **Preview Route / Start Directions**. Finally, tap the search bar and exit the directions."
-
-*Moderator notes: Transport mode buttons are labeled Driving, Walking, Cycling, Transit. The campus can be changed inside the expanded search bar via the SGW/Loyola toggle at the top of the search bar. End directions after this task before handing off Task 5.*
+> "Open the search bar and set the destination to a Loyola Campus building (for example SP). Switch the route's mode of transport to **Cycling**, then switch to **Transit** and use the Concordia shuttle. Tap **Preview Route**, and finally, tap the search bar and exit the preview."
 
 ---
 
 **Task 5 — Shuttle Schedule**
-> "Tap the bus icon button (🚌) on the map to open the Concordia shuttle schedule. Look at the departure times. Then tap **Show Route** to display the shuttle route on the map. When done, tap **End** to return to the normal map."
-
-*Moderator notes: The 🚌 button is a floating button on the bottom-right of the map. "Show Route" is a button at the bottom of the shuttle modal. After tapping it the modal closes and directions are shown — "End" is in the navigation step card.*
+> "Tap the bus icon button (🚌) on the map to open the Concordia shuttle schedule. Look at the departure times. Then tap **Show Route** to display the shuttle route on the map. Finally, tap **End** to return to the normal map."
 
 ---
 
 **Task 6 — Sign In and Next Class**
-> "Go to the **Settings** tab (the gear icon at the bottom). Tap **Sign in with Google to sync your calendar** and complete the sign-in with your Google account. Then select your class calendar from the list that appears. Go back to the **Home** tab and look at the card that appears near the bottom of the screen — it should show your next class. Note the building name and time, then tap **Get Directions**."
-
-*Moderator notes: The next class card appears above the search bar on the Home screen once a calendar is connected. It only shows if there is a class scheduled today and in the future (dev time override should be set to morning on a weekday). The "Get Directions" button is inside the card.*
+> "Go to the **Settings** tab. Tap **Sign in with Google to sync your calendar** and complete the sign-in process. Then select your University schedule from the list that appears. Go back to the **Home** tab and identify your next class. Note the building name and time, then tap **Get Directions**."
 
 ---
 
 **Task 7 — Indoor Directions**
-> "Search the **H** building on the search bar and open its indoor map. Using the map view, get indoor directions from room **H-822** to room **H-110**. Then switch to the accessible route. Finally, switch to the **Rooms** view, and filter for only **Elevators** on the 9th floor."
-
-*Moderator notes: Only include this task if the indoor map feature has been merged and is accessible from the building modal.*
-
----
-
-**Task 8 — Points of Interest** *(include only if the indoor POI feature is available)*
-> "Inside the Hall building's indoor map, find the nearest **elevator**, **washroom**, and **water fountain**. Then go back to the main map and find a nearby outdoor point of interest and get directions to it."
-
-*Moderator notes: Only include this task if the indoor POI and outdoor POI features have been merged.*
-
+> "Search the **H** building on the search bar and open its indoor map. Using the map view, get indoor directions starting from room **H-822** to and getting to room **H-110**. Then switch to the accessible route. Finally, switch to the **Rooms** view, and filter for only **Elevators** on the 9th floor."
 
