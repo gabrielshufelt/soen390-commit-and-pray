@@ -169,6 +169,6 @@ Participant IDs left: **P12, P13, P14, P15**
 ---
 
 **Task 7 — Indoor Directions**
-> "Search the **H** building on the search bar and open its indoor map. Using the map view, get indoor directions starting from room **H-822** to room **H-110**. Then switch to view the wheelchair accessible route. Finally, switch to the **Rooms** view, and filter for only **Elevators** on the 9th floor."
+> "Search the **H** building on the search bar as a destination point and open its indoor map. Using the map view, get indoor directions starting from room **H-822** to room **H-110**. Then switch to view the wheelchair accessible route. Finally, switch to the **Rooms** view, and filter for only **Elevators** on the 9th floor."
 
 Do not forget to ask the participants to complete the Google Form: https://docs.google.com/forms/d/e/1FAIpQLSdUy_8AXGgi65vBA11RUgNbP1c4q4PK_bZ8s6ZQz3K-LAqkZQ/viewform?usp=header
