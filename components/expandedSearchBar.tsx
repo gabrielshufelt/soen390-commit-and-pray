@@ -22,7 +22,6 @@ import { stripCodePrefix, displayName, makeHaystack } from "@/constants/searchBa
 import { useWatchLocation } from "../hooks/useWatchLocation";
 import { useUserBuilding } from "../hooks/useUserBuilding";
 import { searchNearbyPois } from "../utils/poiSearch";
-import PoiCard from "./PoiCard"; 
 
 type Props = {
   buildings: BuildingChoice[];
@@ -205,17 +204,17 @@ export default function ExpandedSearchBar({
   const poiResults = useMemo(() => {
     const query = destText.toLowerCase().trim();
     const keywords = ["water", "washroom", "elevator", "stairs", "food"];
-    
-    if (keywords.includes(query) && location) {
+
+    if (destFocused && keywords.includes(query) && location) {
       return searchNearbyPois(
-        query, 
-        location.coords.latitude, 
+        query,
+        location.coords.latitude,
         location.coords.longitude,
         currentBuilding?.code || null
       );
     }
     return [];
-  }, [destText, currentBuilding, location]);
+  }, [destText, destFocused, currentBuilding, location]);
 
   function addToHistory(b: BuildingChoice) {
     setHistory((prev) => {
@@ -300,31 +299,6 @@ export default function ExpandedSearchBar({
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.scrollContent}
           >
-          {/* POI RESULTS SECTION */}
-          {poiResults.length > 0 && (
-            <View style={styles.suggestedSection}>
-              <Text style={styles.listTitle}>Nearby Facilities</Text>
-              <View style={styles.suggestedListContent}>
-                {poiResults.map((poi) => (
-                  <PoiCard 
-                    key={poi.id} 
-                    poi={poi} 
-                    onPress={(p) => { 
-
-                      pickDestination({
-                        id: p.id,
-                        name: p.name,         
-                        code: p.buildingCode, 
-                        room: p.id,            
-                        coordinate: p.coordinates
-                      });
-                    }} 
-                  />
-                ))}
-              </View>
-            </View>
-          )}
-
           {/* Route card */}
           <View style={styles.routeCard}>
             <Text style={styles.sectionLabel}>START POINT</Text>
@@ -480,6 +454,39 @@ export default function ExpandedSearchBar({
                         <Text style={styles.suggestionTitle}>{displayName(item)}</Text>
                         <Text style={styles.suggestionSub}>
                           {item.campus ? `${item.campus} Campus` : ""}{item.address ? (item.campus ? ` · ${item.address}` : item.address) : ""}
+                        </Text>
+                      </TouchableOpacity>
+                    </React.Fragment>
+                  ))}
+                </ScrollView>
+              </View>
+            )}
+
+            {poiResults.length > 0 && (
+              <View testID="route.dest.poi-suggestions" style={styles.suggestionsBox}>
+                <ScrollView keyboardShouldPersistTaps="handled" nestedScrollEnabled>
+                  {poiResults.map((poi, idx) => (
+                    <React.Fragment key={poi.id}>
+                      {idx > 0 && <Separator />}
+                      <TouchableOpacity
+                        style={styles.suggestionItem}
+                        onPress={() =>
+                          pickDestination({
+                            id: poi.id,
+                            name: poi.name,
+                            code: poi.buildingCode,
+                            room: poi.id,
+                            coordinate: poi.coordinates,
+                          })
+                        }
+                        activeOpacity={0.85}
+                        accessibilityRole="button"
+                      >
+                        <Text style={styles.suggestionTitle}>
+                          {poi.name} — Floor {poi.floor}
+                        </Text>
+                        <Text style={styles.suggestionSub}>
+                          {poi.buildingCode} · {Math.round(poi.distance)}m away
                         </Text>
                       </TouchableOpacity>
                     </React.Fragment>
