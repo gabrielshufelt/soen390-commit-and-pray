@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import * as Location from 'expo-location';
+import { DEV_OVERRIDE_LOCATION } from '../utils/devConfig';
 
 export interface WatchLocationState {
   location: Location.LocationObject | null;
@@ -28,13 +29,26 @@ export function useWatchLocation(options: UseWatchLocationOptions = {}) {
   } = options;
 
   const [locationState, setLocationState] = useState<WatchLocationState>({
-    location: null,
+    location: DEV_OVERRIDE_LOCATION
+      ? ({
+          coords: {
+            latitude: DEV_OVERRIDE_LOCATION.latitude,
+            longitude: DEV_OVERRIDE_LOCATION.longitude,
+            altitude: null,
+            accuracy: null,
+            altitudeAccuracy: null,
+            heading: null,
+            speed: null,
+          },
+          timestamp: Date.now(),
+        } as unknown as Location.LocationObject)
+      : null,
     loading: false,
     error: null,
   });
 
   useEffect(() => {
-    if (!enabled) {
+    if (DEV_OVERRIDE_LOCATION || !enabled) {
       return;
     }
 

@@ -2,7 +2,7 @@ import React, { useMemo, useState, useCallback, useRef, useEffect } from "react"
 import { useFocusEffect } from "expo-router";
 import * as Location from "expo-location";
 import { useNavigationCamera } from "../../hooks/useNavigationCamera";
-import MapView, { Marker, Polygon, Region } from "react-native-maps";
+import MapView, { Circle, Marker, Polygon, Region } from "react-native-maps";
 import { Alert, StyleSheet, View, Text, TouchableOpacity } from "react-native";
 import { useTheme } from "../../context/ThemeContext";
 import { CAMPUSES, DEFAULT_CAMPUS, findCampusForCoordinate } from "../../constants/campusLocations";
@@ -51,29 +51,10 @@ export default function Index() {
   const permissionState = useLocationPermissions();
   const { location } = useWatchLocation({ enabled: permissionState.granted });
 
-  // START DEVELOPPER CONFIG
-  // When DEV_OVERRIDE_LOCATION is set in utils/devConfig.ts, the app uses those
-  // coordinates instead of real GPS everywhere (building detection, walking time,
-  // navigation start).  Set it to null in devConfig.ts to use real GPS.
-  const effectiveLocation: Location.LocationObject | null = useMemo(() => {
-    if (DEV_OVERRIDE_LOCATION) {
-      return {
-        coords: {
-          latitude: DEV_OVERRIDE_LOCATION.latitude,
-          longitude: DEV_OVERRIDE_LOCATION.longitude,
-          altitude: null,
-          accuracy: null,
-          altitudeAccuracy: null,
-          heading: null,
-          speed: null,
-        },
-        timestamp: Date.now(),
-      } as unknown as Location.LocationObject;
-    }
-
-    return location;
-  }, [location]); // DO NOT CHANGE AS IT WILL CRASH IF DEV_OVERRIDE_LOCATION IS NULL
-  // END DEVELOPPER CONFIG
+  // When DEV_OVERRIDE_LOCATION is set in utils/devConfig.ts, useWatchLocation
+  // returns the mocked coordinates directly, so `location` is already the
+  // effective location everywhere.
+  const effectiveLocation = location;
 
   const userBuilding = useUserBuilding(effectiveLocation);
 
@@ -795,11 +776,26 @@ export default function Index() {
         style={styles.map}
         initialRegion={selectedCampus.initialRegion}
         userInterfaceStyle={isDark ? "dark" : "light"}
-        showsUserLocation
+        showsUserLocation={!DEV_OVERRIDE_LOCATION}
         onRegionChangeComplete={handleRegionChange}
       >
         {buildingPolygons}
         {showLabels && buildingLabels}
+
+        {/* DEV: orange dot when location is overridden */}
+        {DEV_OVERRIDE_LOCATION && effectiveLocation && (
+          <Circle
+            center={{
+              latitude: effectiveLocation.coords.latitude,
+              longitude: effectiveLocation.coords.longitude,
+            }}
+            radius={8}
+            fillColor="orange"
+            strokeColor="white"
+            strokeWidth={2}
+            zIndex={999}
+          />
+        )}
 
         {/* Shuttle Bus Stops */}
         <Marker
@@ -929,8 +925,8 @@ export default function Index() {
         onDirectionsFrom={handleDirectionsFrom}
         onDirectionsTo={handleDirectionsTo}
         onGetDirections={(building) => {
-          if (location) {
-            startDirectionsToBuilding(location, building.geometry.coordinates[0]);
+          if (effectiveLocation) {
+            startDirectionsToBuilding(effectiveLocation, building.geometry.coordinates[0]);
           }
           handleCloseModal();
         }}
