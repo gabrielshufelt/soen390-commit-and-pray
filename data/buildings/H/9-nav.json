@@ -1653,6 +1653,16 @@
       "y": 620,
       "label": "",
       "accessible": true
+    },
+    {
+      "id": "H_F9_room_7",
+      "type": "vending_machine",
+      "buildingId": "H",
+      "floor": 9,
+      "x": 898,
+      "y": 1637,
+      "label": "",
+      "accessible": true
     }
   ],
   "edges": [
@@ -3019,6 +3029,13 @@
       "target": "H_F9_hallway_waypoint_113",
       "type": "hallway",
       "weight": 136,
+      "accessible": true
+    },
+    {
+      "source": "H_F9_hallway_waypoint_136",
+      "target": "H_F9_room_7",
+      "type": "hallway",
+      "weight": 49,
       "accessible": true
     }
   ]
