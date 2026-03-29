@@ -1,6 +1,7 @@
 {
   "meta": {
-    "buildingId": "VL"
+    "buildingId": "VL",
+    "floor": 1
   },
   "nodes": [
     {
