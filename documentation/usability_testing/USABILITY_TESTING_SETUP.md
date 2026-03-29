@@ -139,32 +139,32 @@ Participant IDs left: **P12, P13, P14, P15**
 ---
 
 **Task 1 — Campus Orientation**
-> "Find the building labeled **H** on the map and tap it. Then, look at the services and accessibility features listed, then close the card. Finally, toggle the view to the Loyola campus using the top buttons, then switch back to SGW."
+> "Find the building labeled **H** on the map and tap it. Then, look at the services and accessibility features listed, then close the card. Finally, toggle the view to the Loyola campus, then switch back to SGW."
 
 ---
 
 **Task 2 — Searching for a Destination**
-> "Tap the search bar at the top of the screen. In the **Destination** field, type **EV** and select the **EV Building** from the list. Then go back to the map and tap the H building, then tap **Get Directions From** in the popup card."
+> "Tap the search bar at the top of the screen. In the **Destination** field, type **EV** and select the **EV Building** from the list. Then go back to the map and using the map, **Get Directions Starting From** the H building."
 
 ---
 
 **Task 3 — Previewing and Starting a Route**
-> "Tap the search bar. You have a start and destination set. Tap **Preview Route** in the search component to see the route on the map. After analyzing the route, go back to the search bar and tap **Exit Preview** to cancel."
+> "Tap the search bar. You have a start and destination set. **Preview the Route** through the search component to see the route on the map. After analyzing the route, **Exit the Route's Preview**."
 
 ---
 
 **Task 4 — Switching Transport Modes**
-> "Open the search bar and set the destination to a Loyola Campus building (for example SP). Switch the route's mode of transport to **Cycling**, then switch to **Transit** and use the Concordia shuttle. Tap **Preview Route**, and finally, tap the search bar and exit the preview."
+> "Open the search bar and set the destination to a Loyola Campus building (for example SP). Switch the route's mode of transport to **Cycling**, then switch to **Transit** and use the Concordia shuttle. **Preview the Route**, and finally,  **Exit the Route's Preview**."
 
 ---
 
 **Task 5 — Shuttle Schedule**
-> "Tap the bus icon button (🚌) on the map to open the Concordia shuttle schedule. Look at the departure times. Then tap **Show Route** to display the shuttle route on the map. Finally, tap **End** to return to the normal map."
+> "Open the Concordia shuttle schedule through the map. Look at the departure times. Then **View the Shuttle Route** on the map. Finally, **End the Route**."
 
 ---
 
 **Task 6 — Sign In and Next Class**
-> "Go to the **Settings** tab. Tap **Sign in with Google to sync your calendar** and complete the sign-in process. Then select your University schedule from the list that appears. Go back to the **Home** tab and identify your next class. Note the building name and time, then tap **Get Directions**."
+> "Go to the **Settings** tab. Tap **Sign in with Google to sync your calendar** and complete the sign-in process. Then select a regular calendar, then a University Calendar from the list that appears. Go back to the **Home** tab and identify your next class. Note the building name and time, then **Get the Directions** to your next class."
 
 ---
 
