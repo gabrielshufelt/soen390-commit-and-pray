@@ -158,7 +158,7 @@ ORDER BY CAST(SUBSTR(participant_id, 2) AS INT64), CAST(task_id AS INT64);
 
 One row per participant + task with the four moderator-logged error counts and a total. All values come from `ut_task_end`.
 
-> **Note:** Each error count checks both `int_value` and `float_value`. React Native Firebase may store JavaScript numbers in either field depending on the SDK version — if only `int_value` is checked and values landed in `float_value`, every count will appear as 0.
+> **Note:** Each error count checks both `int_value` and `double_value`. React Native Firebase stores JavaScript numbers in `double_value` in BigQuery — if only `int_value` is checked, every count will appear as 0.
 
 ```sql
 WITH combined_days AS (
@@ -239,6 +239,48 @@ ORDER BY CAST(SUBSTR(participant_id, 2) AS INT64);
 
 ---
 
+## Query 3c — Error Counts Per Task (All Participants Aggregated)
+
+Rolls up all participants for each task into a single row. Useful for comparing which tasks generated the most errors overall (bar chart: task vs. total errors, optionally stacked by error type).
+
+```sql
+WITH combined_days AS (
+  SELECT * FROM `soen390-usability.analytics_527504735.events_20260326`
+  UNION ALL
+  SELECT * FROM `soen390-usability.analytics_527504735.events_20260327`
+  UNION ALL
+  SELECT * FROM `soen390-usability.analytics_527504735.events_20260328`
+  -- UNION ALL SELECT * FROM `soen390-usability.analytics_527504735.events_20260329`
+),
+real_participants AS (
+  SELECT participant_id FROM UNNEST([
+    'P1','P2','P3','P4','P5','P6','P7','P8','P10'
+    -- ,'P11','P12','P13','P14','P15'
+  ]) AS participant_id
+)
+SELECT
+  (SELECT value.string_value FROM UNNEST(event_params) WHERE key = 'task_id')         AS task_id,
+  SUM(COALESCE((SELECT COALESCE(value.int_value, CAST(value.double_value AS INT64)) FROM UNNEST(event_params) WHERE key = 'nav_error_count'),  0)) AS total_nav_errors,
+  SUM(COALESCE((SELECT COALESCE(value.int_value, CAST(value.double_value AS INT64)) FROM UNNEST(event_params) WHERE key = 'misclick_count'),    0)) AS total_misclicks,
+  SUM(COALESCE((SELECT COALESCE(value.int_value, CAST(value.double_value AS INT64)) FROM UNNEST(event_params) WHERE key = 'help_asked_count'),  0)) AS total_help_asked,
+  SUM(COALESCE((SELECT COALESCE(value.int_value, CAST(value.double_value AS INT64)) FROM UNNEST(event_params) WHERE key = 'confused_count'),    0)) AS total_confused,
+  SUM(
+    COALESCE((SELECT COALESCE(value.int_value, CAST(value.double_value AS INT64)) FROM UNNEST(event_params) WHERE key = 'nav_error_count'),  0)
+    + COALESCE((SELECT COALESCE(value.int_value, CAST(value.double_value AS INT64)) FROM UNNEST(event_params) WHERE key = 'misclick_count'), 0)
+    + COALESCE((SELECT COALESCE(value.int_value, CAST(value.double_value AS INT64)) FROM UNNEST(event_params) WHERE key = 'help_asked_count'),0)
+    + COALESCE((SELECT COALESCE(value.int_value, CAST(value.double_value AS INT64)) FROM UNNEST(event_params) WHERE key = 'confused_count'), 0)
+  ) AS grand_total_errors
+FROM combined_days
+WHERE
+  event_name = 'ut_task_end'
+  AND (SELECT value.string_value FROM UNNEST(event_params) WHERE key = 'participant_id')
+      IN (SELECT participant_id FROM real_participants)
+GROUP BY task_id
+ORDER BY CAST(task_id AS INT64);
+```
+
+---
+
 ## Query 4 — Rage Click Summary Per Participant / Task
 
 `ut_rage_click` fires automatically when a participant taps the screen 3 times in rapid succession. High counts on a task indicate frustration.
@@ -263,8 +305,7 @@ real_participants AS (
 SELECT
   TIMESTAMP_MICROS(event_timestamp)                                                    AS event_time,
   (SELECT value.string_value FROM UNNEST(event_params) WHERE key = 'participant_id')   AS participant_id,
-  (SELECT value.string_value FROM UNNEST(event_params) WHERE key = 'task_id')          AS task_id,
-  (SELECT value.string_value FROM UNNEST(event_params) WHERE key = 'screen_name')      AS screen_name
+  (SELECT value.string_value FROM UNNEST(event_params) WHERE key = 'task_id')          AS task_id
 FROM combined_days
 WHERE
   event_name = 'ut_rage_click'
@@ -303,7 +344,7 @@ GROUP BY participant_id, task_id
 ORDER BY CAST(SUBSTR(participant_id, 2) AS INT64), CAST(task_id AS INT64);
 ```
 
-### 4c — Rage Clicks by Task and Screen (chart: horizontal bar — sorted by count)
+### 4c — Rage Clicks Per Task (all participants aggregated — chart: bar, x: task, y: count)
 
 ```sql
 WITH combined_days AS (
@@ -321,16 +362,15 @@ real_participants AS (
   ]) AS participant_id
 )
 SELECT
-  (SELECT value.string_value FROM UNNEST(event_params) WHERE key = 'task_id')       AS task_id,
-  (SELECT value.string_value FROM UNNEST(event_params) WHERE key = 'screen_name')   AS screen_name,
+  (SELECT value.string_value FROM UNNEST(event_params) WHERE key = 'task_id') AS task_id,
   COUNT(*) AS rage_click_count
 FROM combined_days
 WHERE
   event_name = 'ut_rage_click'
   AND (SELECT value.string_value FROM UNNEST(event_params) WHERE key = 'participant_id')
       IN (SELECT participant_id FROM real_participants)
-GROUP BY task_id, screen_name
-ORDER BY rage_click_count DESC;
+GROUP BY task_id
+ORDER BY CAST(task_id AS INT64);
 ```
 
 ---
@@ -391,49 +431,7 @@ ORDER BY CAST(task_id AS INT64);
 
 ---
 
-## Query 6 — Total Errors by Type Per Task (chart: grouped/stacked bar — x: task, y: error count, series: error type)
-
-Shows which tasks were hardest and which type of error dominated each task.
-
-```sql
-WITH combined_days AS (
-  SELECT * FROM `soen390-usability.analytics_527504735.events_20260326`
-  UNION ALL
-  SELECT * FROM `soen390-usability.analytics_527504735.events_20260327`
-  UNION ALL
-  SELECT * FROM `soen390-usability.analytics_527504735.events_20260328`
-  -- UNION ALL SELECT * FROM `soen390-usability.analytics_527504735.events_20260329`
-),
-real_participants AS (
-  SELECT participant_id FROM UNNEST([
-    'P1','P2','P3','P4','P5','P6','P7','P8','P10'
-    -- ,'P11','P12','P13','P14','P15'
-  ]) AS participant_id
-)
-SELECT
-  (SELECT value.string_value FROM UNNEST(event_params) WHERE key = 'task_id')          AS task_id,
-  SUM(COALESCE((SELECT COALESCE(value.int_value, CAST(value.double_value AS INT64)) FROM UNNEST(event_params) WHERE key = 'nav_error_count'),  0)) AS total_nav_errors,
-  SUM(COALESCE((SELECT COALESCE(value.int_value, CAST(value.double_value AS INT64)) FROM UNNEST(event_params) WHERE key = 'misclick_count'),    0)) AS total_misclicks,
-  SUM(COALESCE((SELECT COALESCE(value.int_value, CAST(value.double_value AS INT64)) FROM UNNEST(event_params) WHERE key = 'help_asked_count'),  0)) AS total_help_asked,
-  SUM(COALESCE((SELECT COALESCE(value.int_value, CAST(value.double_value AS INT64)) FROM UNNEST(event_params) WHERE key = 'confused_count'),    0)) AS total_confused,
-  SUM(
-    COALESCE((SELECT COALESCE(value.int_value, CAST(value.double_value AS INT64)) FROM UNNEST(event_params) WHERE key = 'nav_error_count'),  0)
-    + COALESCE((SELECT COALESCE(value.int_value, CAST(value.double_value AS INT64)) FROM UNNEST(event_params) WHERE key = 'misclick_count'), 0)
-    + COALESCE((SELECT COALESCE(value.int_value, CAST(value.double_value AS INT64)) FROM UNNEST(event_params) WHERE key = 'help_asked_count'),0)
-    + COALESCE((SELECT COALESCE(value.int_value, CAST(value.double_value AS INT64)) FROM UNNEST(event_params) WHERE key = 'confused_count'), 0)
-  ) AS grand_total_errors
-FROM combined_days
-WHERE
-  event_name = 'ut_task_end'
-  AND (SELECT value.string_value FROM UNNEST(event_params) WHERE key = 'participant_id')
-      IN (SELECT participant_id FROM real_participants)
-GROUP BY task_id
-ORDER BY CAST(task_id AS INT64);
-```
-
----
-
-## Query 7 — Transport Mode Preferences (chart: pie or bar — mode vs. selections)
+## Query 6 — Transport Mode Preferences (chart: pie or bar — mode vs. selections)
 
 Counts how many times each transport mode was selected or switched to. Shows which modes participants gravitated toward.
 
@@ -470,7 +468,7 @@ ORDER BY transport_mode, event_name;
 
 ---
 
-## Query 8 — Search Behavior: Success vs. Abandoned vs. No Results (chart: grouped bar or stacked bar per task)
+## Query 7 — Search Behavior: Success vs. Abandoned vs. No Results (chart: grouped bar or stacked bar per task)
 
 Measures how well participants used the search feature. High abandonment or no-results counts on a task suggest search discoverability or labeling issues.
 
@@ -505,7 +503,7 @@ ORDER BY CAST(task_id AS INT64);
 
 ---
 
-## Query 9 — Building Interaction Frequency (chart: horizontal bar — which buildings were tapped most)
+## Query 8 — Building Interaction Frequency (chart: horizontal bar — which buildings were tapped most)
 
 Shows which buildings participants tapped on the map most often. Useful for understanding navigation patterns and map discoverability.
 
@@ -539,7 +537,7 @@ ORDER BY tap_count DESC;
 
 ---
 
-## Query 10 — Dead Taps Per Task (chart: bar — x: task, y: dead tap count)
+## Query 9 — Dead Taps Per Task (chart: bar — x: task, y: dead tap count)
 
 `ut_dead_tap` fires when a participant taps an area that does not respond. High counts point to confusing UI affordances or missing touch targets.
 
@@ -561,7 +559,6 @@ real_participants AS (
 SELECT
   (SELECT value.string_value FROM UNNEST(event_params) WHERE key = 'participant_id') AS participant_id,
   (SELECT value.string_value FROM UNNEST(event_params) WHERE key = 'task_id')        AS task_id,
-  (SELECT value.string_value FROM UNNEST(event_params) WHERE key = 'screen_name')    AS screen_name,
   (SELECT value.string_value FROM UNNEST(event_params) WHERE key = 'element')        AS element,
   COUNT(*) AS dead_tap_count
 FROM combined_days
@@ -569,47 +566,13 @@ WHERE
   event_name = 'ut_dead_tap'
   AND (SELECT value.string_value FROM UNNEST(event_params) WHERE key = 'participant_id')
       IN (SELECT participant_id FROM real_participants)
-GROUP BY participant_id, task_id, screen_name, element
+GROUP BY participant_id, task_id, element
 ORDER BY dead_tap_count DESC;
 ```
 
 ---
 
-## Query 11 — Screen Navigation Frequency (chart: horizontal bar — which screens were visited most)
-
-Counts `screen_view` events (fired automatically by Firebase) per screen. Shows where participants spent time and whether they got lost navigating.
-
-```sql
-WITH combined_days AS (
-  SELECT * FROM `soen390-usability.analytics_527504735.events_20260326`
-  UNION ALL
-  SELECT * FROM `soen390-usability.analytics_527504735.events_20260327`
-  UNION ALL
-  SELECT * FROM `soen390-usability.analytics_527504735.events_20260328`
-  -- UNION ALL SELECT * FROM `soen390-usability.analytics_527504735.events_20260329`
-),
-real_participants AS (
-  SELECT participant_id FROM UNNEST([
-    'P1','P2','P3','P4','P5','P6','P7','P8','P10'
-    -- ,'P11','P12','P13','P14','P15'
-  ]) AS participant_id
-)
-SELECT
-  (SELECT value.string_value FROM UNNEST(event_params) WHERE key = 'firebase_screen') AS screen_name,
-  (SELECT value.string_value FROM UNNEST(event_params) WHERE key = 'task_id')         AS task_id,
-  COUNT(*) AS view_count
-FROM combined_days
-WHERE
-  event_name = 'screen_view'
-  AND (SELECT value.string_value FROM UNNEST(event_params) WHERE key = 'participant_id')
-      IN (SELECT participant_id FROM real_participants)
-GROUP BY screen_name, task_id
-ORDER BY view_count DESC;
-```
-
----
-
-## Query 12 — First Interaction Per Task Per Participant
+## Query 10 — First Interaction Per Task Per Participant
 
 Returns the very first `ut_` event each participant fired after a task started. Useful for first-click analysis — did participants immediately go to the right place?
 
@@ -634,7 +597,6 @@ all_events AS (
     (SELECT value.string_value FROM UNNEST(event_params) WHERE key = 'task_id')        AS task_id,
     event_name,
     TIMESTAMP_MICROS(event_timestamp)                                                  AS event_time,
-    (SELECT value.string_value FROM UNNEST(event_params) WHERE key = 'screen_name')    AS screen_name,
     (SELECT value.string_value FROM UNNEST(event_params) WHERE key = 'building_name')  AS building_name,
     (SELECT value.string_value FROM UNNEST(event_params) WHERE key = 'feature_name')   AS feature_name
   FROM combined_days
@@ -654,7 +616,6 @@ SELECT
   task_id,
   event_name   AS first_event,
   event_time,
-  screen_name,
   building_name,
   feature_name
 FROM ranked
@@ -664,7 +625,7 @@ ORDER BY CAST(SUBSTR(participant_id, 2) AS INT64), CAST(task_id AS INT64);
 
 ---
 
-## Query 13 — Campus Toggle Usage Per Task (chart: bar — how often participants switched campus per task)
+## Query 11 — Campus Toggle Usage Per Task (chart: bar — how often participants switched campus per task)
 
 High toggle counts on a task may indicate participants were disoriented about which campus a building is on.
 
@@ -698,7 +659,7 @@ ORDER BY CAST(task_id AS INT64), campus_selected;
 
 ---
 
-## Query 14 — Feature Tap Breakdown (chart: horizontal bar — which features were most tapped)
+## Query 12 — Feature Tap Breakdown (chart: horizontal bar — which features were most tapped)
 
 Aggregates `ut_feature_tap` events to show which UI features participants used most. Helps quantify discoverability of less obvious features (e.g. shuttle button).
 
@@ -719,7 +680,6 @@ real_participants AS (
 )
 SELECT
   (SELECT value.string_value FROM UNNEST(event_params) WHERE key = 'feature_name')  AS feature_name,
-  (SELECT value.string_value FROM UNNEST(event_params) WHERE key = 'screen_name')   AS screen_name,
   (SELECT value.string_value FROM UNNEST(event_params) WHERE key = 'task_id')       AS task_id,
   COUNT(*) AS tap_count
 FROM combined_days
@@ -727,6 +687,6 @@ WHERE
   event_name = 'ut_feature_tap'
   AND (SELECT value.string_value FROM UNNEST(event_params) WHERE key = 'participant_id')
       IN (SELECT participant_id FROM real_participants)
-GROUP BY feature_name, screen_name, task_id
+GROUP BY feature_name, task_id
 ORDER BY tap_count DESC;
 ```
