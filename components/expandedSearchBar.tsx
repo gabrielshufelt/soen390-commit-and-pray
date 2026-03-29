@@ -203,7 +203,7 @@ export default function ExpandedSearchBar({
 
   const poiResults = useMemo(() => {
     const query = destText.toLowerCase().trim();
-    const keywords = ["water", "washroom", "elevator", "stairs", "food"];
+    const keywords = ["water", "washroom", "elevator", "stairs", "food", "vending"];
 
     if (destFocused && keywords.includes(query) && location) {
       return searchNearbyPois(

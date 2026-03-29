@@ -15,6 +15,7 @@ export default function PoiCard({ poi, onPress }: PoiCardProps) {
     if (type.includes('water')) return 'glass';
     if (type.includes('elevator')) return 'chevron-up';
     if (type.includes('stair')) return 'bars';
+    if (type.includes('vending')) return 'shopping-cart';
     return 'map-marker';
   };
 

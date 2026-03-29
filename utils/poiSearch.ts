@@ -7,7 +7,8 @@ const POI_TYPE_MAP: Record<string, string[]> = {
   "water": ["water_fountain", "water"],
   "elevator": ["elevator_door", "elevator"],
   "stairs": ["stair_landing", "stairwell"],
-  "food": ["dining", "cafe", "restaurant"]
+  "food": ["dining", "cafe", "restaurant"],
+  "vending": ["vending_machine"]
 };
 
 export interface PoiResult {
