@@ -431,44 +431,7 @@ ORDER BY CAST(task_id AS INT64);
 
 ---
 
-## Query 6 — Transport Mode Preferences (chart: pie or bar — mode vs. selections)
-
-Counts how many times each transport mode was selected or switched to. Shows which modes participants gravitated toward.
-
-```sql
-WITH combined_days AS (
-  SELECT * FROM `soen390-usability.analytics_527504735.events_20260326`
-  UNION ALL
-  SELECT * FROM `soen390-usability.analytics_527504735.events_20260327`
-  UNION ALL
-  SELECT * FROM `soen390-usability.analytics_527504735.events_20260328`
-  -- UNION ALL SELECT * FROM `soen390-usability.analytics_527504735.events_20260329`
-),
-real_participants AS (
-  SELECT participant_id FROM UNNEST([
-    'P1','P2','P3','P4','P5','P6','P7','P8','P10'
-    -- ,'P11','P12','P13','P14','P15'
-  ]) AS participant_id
-)
-SELECT
-  COALESCE(
-    (SELECT value.string_value FROM UNNEST(event_params) WHERE key = 'mode'),
-    (SELECT value.string_value FROM UNNEST(event_params) WHERE key = 'transport_mode')
-  ) AS transport_mode,
-  event_name,
-  COUNT(*) AS selection_count
-FROM combined_days
-WHERE
-  event_name IN ('ut_transport_mode_changed', 'ut_route_preview', 'ut_directions_started')
-  AND (SELECT value.string_value FROM UNNEST(event_params) WHERE key = 'participant_id')
-      IN (SELECT participant_id FROM real_participants)
-GROUP BY transport_mode, event_name
-ORDER BY transport_mode, event_name;
-```
-
----
-
-## Query 7 — Search Behavior: Success vs. Abandoned vs. No Results (chart: grouped bar or stacked bar per task)
+## Query 6 — Search Behavior: Success vs. Abandoned vs. No Results (chart: grouped bar or stacked bar per task)
 
 Measures how well participants used the search feature. High abandonment or no-results counts on a task suggest search discoverability or labeling issues.
 
@@ -503,78 +466,9 @@ ORDER BY CAST(task_id AS INT64);
 
 ---
 
-## Query 8 — Building Interaction Frequency (chart: horizontal bar — which buildings were tapped most)
+## Query 7 — First Interaction Per Task (aggregated by task and first event)
 
-Shows which buildings participants tapped on the map most often. Useful for understanding navigation patterns and map discoverability.
-
-```sql
-WITH combined_days AS (
-  SELECT * FROM `soen390-usability.analytics_527504735.events_20260326`
-  UNION ALL
-  SELECT * FROM `soen390-usability.analytics_527504735.events_20260327`
-  UNION ALL
-  SELECT * FROM `soen390-usability.analytics_527504735.events_20260328`
-  -- UNION ALL SELECT * FROM `soen390-usability.analytics_527504735.events_20260329`
-),
-real_participants AS (
-  SELECT participant_id FROM UNNEST([
-    'P1','P2','P3','P4','P5','P6','P7','P8','P10'
-    -- ,'P11','P12','P13','P14','P15'
-  ]) AS participant_id
-)
-SELECT
-  (SELECT value.string_value FROM UNNEST(event_params) WHERE key = 'building_name') AS building_name,
-  (SELECT value.string_value FROM UNNEST(event_params) WHERE key = 'campus')        AS campus,
-  COUNT(*) AS tap_count
-FROM combined_days
-WHERE
-  event_name = 'ut_building_selected'
-  AND (SELECT value.string_value FROM UNNEST(event_params) WHERE key = 'participant_id')
-      IN (SELECT participant_id FROM real_participants)
-GROUP BY building_name, campus
-ORDER BY tap_count DESC;
-```
-
----
-
-## Query 9 — Dead Taps Per Task (chart: bar — x: task, y: dead tap count)
-
-`ut_dead_tap` fires when a participant taps an area that does not respond. High counts point to confusing UI affordances or missing touch targets.
-
-```sql
-WITH combined_days AS (
-  SELECT * FROM `soen390-usability.analytics_527504735.events_20260326`
-  UNION ALL
-  SELECT * FROM `soen390-usability.analytics_527504735.events_20260327`
-  UNION ALL
-  SELECT * FROM `soen390-usability.analytics_527504735.events_20260328`
-  -- UNION ALL SELECT * FROM `soen390-usability.analytics_527504735.events_20260329`
-),
-real_participants AS (
-  SELECT participant_id FROM UNNEST([
-    'P1','P2','P3','P4','P5','P6','P7','P8','P10'
-    -- ,'P11','P12','P13','P14','P15'
-  ]) AS participant_id
-)
-SELECT
-  (SELECT value.string_value FROM UNNEST(event_params) WHERE key = 'participant_id') AS participant_id,
-  (SELECT value.string_value FROM UNNEST(event_params) WHERE key = 'task_id')        AS task_id,
-  (SELECT value.string_value FROM UNNEST(event_params) WHERE key = 'element')        AS element,
-  COUNT(*) AS dead_tap_count
-FROM combined_days
-WHERE
-  event_name = 'ut_dead_tap'
-  AND (SELECT value.string_value FROM UNNEST(event_params) WHERE key = 'participant_id')
-      IN (SELECT participant_id FROM real_participants)
-GROUP BY participant_id, task_id, element
-ORDER BY dead_tap_count DESC;
-```
-
----
-
-## Query 10 — First Interaction Per Task Per Participant
-
-Returns the very first `ut_` event each participant fired after a task started. Useful for first-click analysis — did participants immediately go to the right place?
+Shows how many participants fired each event as their very first action per task. Useful for identifying whether participants consistently started with the right interaction or scattered across different approaches (chart: grouped bar — x: task, series: first event, y: participant count).
 
 ```sql
 WITH combined_days AS (
@@ -596,9 +490,7 @@ all_events AS (
     (SELECT value.string_value FROM UNNEST(event_params) WHERE key = 'participant_id') AS participant_id,
     (SELECT value.string_value FROM UNNEST(event_params) WHERE key = 'task_id')        AS task_id,
     event_name,
-    TIMESTAMP_MICROS(event_timestamp)                                                  AS event_time,
-    (SELECT value.string_value FROM UNNEST(event_params) WHERE key = 'building_name')  AS building_name,
-    (SELECT value.string_value FROM UNNEST(event_params) WHERE key = 'feature_name')   AS feature_name
+    TIMESTAMP_MICROS(event_timestamp)                                                  AS event_time
   FROM combined_days
   WHERE
     event_name LIKE 'ut_%'
@@ -612,20 +504,18 @@ ranked AS (
   FROM all_events
 )
 SELECT
-  participant_id,
   task_id,
-  event_name   AS first_event,
-  event_time,
-  building_name,
-  feature_name
+  event_name  AS first_event,
+  COUNT(*)    AS participant_count
 FROM ranked
 WHERE rn = 1
-ORDER BY CAST(SUBSTR(participant_id, 2) AS INT64), CAST(task_id AS INT64);
+GROUP BY task_id, first_event
+ORDER BY CAST(task_id AS INT64), participant_count DESC;
 ```
 
 ---
 
-## Query 11 — Campus Toggle Usage Per Task (chart: bar — how often participants switched campus per task)
+## Query 8 — Campus Toggle Usage Per Task (chart: bar — how often participants switched campus per task)
 
 High toggle counts on a task may indicate participants were disoriented about which campus a building is on.
 
@@ -659,7 +549,7 @@ ORDER BY CAST(task_id AS INT64), campus_selected;
 
 ---
 
-## Query 12 — Feature Tap Breakdown (chart: horizontal bar — which features were most tapped)
+## Query 9 — Feature Tap Breakdown (chart: horizontal bar — which features were most tapped)
 
 Aggregates `ut_feature_tap` events to show which UI features participants used most. Helps quantify discoverability of less obvious features (e.g. shuttle button).
 
