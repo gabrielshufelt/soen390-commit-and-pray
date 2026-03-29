@@ -178,14 +178,14 @@ real_participants AS (
 SELECT
   (SELECT value.string_value FROM UNNEST(event_params) WHERE key = 'participant_id')   AS participant_id,
   (SELECT value.string_value FROM UNNEST(event_params) WHERE key = 'task_id')          AS task_id,
-  COALESCE((SELECT COALESCE(value.int_value, CAST(value.float_value AS INT64)) FROM UNNEST(event_params) WHERE key = 'nav_error_count'),  0) AS nav_errors,
-  COALESCE((SELECT COALESCE(value.int_value, CAST(value.float_value AS INT64)) FROM UNNEST(event_params) WHERE key = 'misclick_count'),    0) AS misclicks,
-  COALESCE((SELECT COALESCE(value.int_value, CAST(value.float_value AS INT64)) FROM UNNEST(event_params) WHERE key = 'help_asked_count'),  0) AS help_asked,
-  COALESCE((SELECT COALESCE(value.int_value, CAST(value.float_value AS INT64)) FROM UNNEST(event_params) WHERE key = 'confused_count'),    0) AS confused,
-  COALESCE((SELECT COALESCE(value.int_value, CAST(value.float_value AS INT64)) FROM UNNEST(event_params) WHERE key = 'nav_error_count'),  0)
-  + COALESCE((SELECT COALESCE(value.int_value, CAST(value.float_value AS INT64)) FROM UNNEST(event_params) WHERE key = 'misclick_count'), 0)
-  + COALESCE((SELECT COALESCE(value.int_value, CAST(value.float_value AS INT64)) FROM UNNEST(event_params) WHERE key = 'help_asked_count'),0)
-  + COALESCE((SELECT COALESCE(value.int_value, CAST(value.float_value AS INT64)) FROM UNNEST(event_params) WHERE key = 'confused_count'), 0)
+  COALESCE((SELECT COALESCE(value.int_value, CAST(value.double_value AS INT64)) FROM UNNEST(event_params) WHERE key = 'nav_error_count'),  0) AS nav_errors,
+  COALESCE((SELECT COALESCE(value.int_value, CAST(value.double_value AS INT64)) FROM UNNEST(event_params) WHERE key = 'misclick_count'),    0) AS misclicks,
+  COALESCE((SELECT COALESCE(value.int_value, CAST(value.double_value AS INT64)) FROM UNNEST(event_params) WHERE key = 'help_asked_count'),  0) AS help_asked,
+  COALESCE((SELECT COALESCE(value.int_value, CAST(value.double_value AS INT64)) FROM UNNEST(event_params) WHERE key = 'confused_count'),    0) AS confused,
+  COALESCE((SELECT COALESCE(value.int_value, CAST(value.double_value AS INT64)) FROM UNNEST(event_params) WHERE key = 'nav_error_count'),  0)
+  + COALESCE((SELECT COALESCE(value.int_value, CAST(value.double_value AS INT64)) FROM UNNEST(event_params) WHERE key = 'misclick_count'), 0)
+  + COALESCE((SELECT COALESCE(value.int_value, CAST(value.double_value AS INT64)) FROM UNNEST(event_params) WHERE key = 'help_asked_count'),0)
+  + COALESCE((SELECT COALESCE(value.int_value, CAST(value.double_value AS INT64)) FROM UNNEST(event_params) WHERE key = 'confused_count'), 0)
     AS total_errors
 FROM combined_days
 WHERE
@@ -218,15 +218,15 @@ real_participants AS (
 )
 SELECT
   (SELECT value.string_value FROM UNNEST(event_params) WHERE key = 'participant_id')    AS participant_id,
-  SUM(COALESCE((SELECT COALESCE(value.int_value, CAST(value.float_value AS INT64)) FROM UNNEST(event_params) WHERE key = 'nav_error_count'),  0)) AS total_nav_errors,
-  SUM(COALESCE((SELECT COALESCE(value.int_value, CAST(value.float_value AS INT64)) FROM UNNEST(event_params) WHERE key = 'misclick_count'),    0)) AS total_misclicks,
-  SUM(COALESCE((SELECT COALESCE(value.int_value, CAST(value.float_value AS INT64)) FROM UNNEST(event_params) WHERE key = 'help_asked_count'),  0)) AS total_help_asked,
-  SUM(COALESCE((SELECT COALESCE(value.int_value, CAST(value.float_value AS INT64)) FROM UNNEST(event_params) WHERE key = 'confused_count'),    0)) AS total_confused,
+  SUM(COALESCE((SELECT COALESCE(value.int_value, CAST(value.double_value AS INT64)) FROM UNNEST(event_params) WHERE key = 'nav_error_count'),  0)) AS total_nav_errors,
+  SUM(COALESCE((SELECT COALESCE(value.int_value, CAST(value.double_value AS INT64)) FROM UNNEST(event_params) WHERE key = 'misclick_count'),    0)) AS total_misclicks,
+  SUM(COALESCE((SELECT COALESCE(value.int_value, CAST(value.double_value AS INT64)) FROM UNNEST(event_params) WHERE key = 'help_asked_count'),  0)) AS total_help_asked,
+  SUM(COALESCE((SELECT COALESCE(value.int_value, CAST(value.double_value AS INT64)) FROM UNNEST(event_params) WHERE key = 'confused_count'),    0)) AS total_confused,
   SUM(
-    COALESCE((SELECT COALESCE(value.int_value, CAST(value.float_value AS INT64)) FROM UNNEST(event_params) WHERE key = 'nav_error_count'),  0)
-    + COALESCE((SELECT COALESCE(value.int_value, CAST(value.float_value AS INT64)) FROM UNNEST(event_params) WHERE key = 'misclick_count'), 0)
-    + COALESCE((SELECT COALESCE(value.int_value, CAST(value.float_value AS INT64)) FROM UNNEST(event_params) WHERE key = 'help_asked_count'),0)
-    + COALESCE((SELECT COALESCE(value.int_value, CAST(value.float_value AS INT64)) FROM UNNEST(event_params) WHERE key = 'confused_count'), 0)
+    COALESCE((SELECT COALESCE(value.int_value, CAST(value.double_value AS INT64)) FROM UNNEST(event_params) WHERE key = 'nav_error_count'),  0)
+    + COALESCE((SELECT COALESCE(value.int_value, CAST(value.double_value AS INT64)) FROM UNNEST(event_params) WHERE key = 'misclick_count'), 0)
+    + COALESCE((SELECT COALESCE(value.int_value, CAST(value.double_value AS INT64)) FROM UNNEST(event_params) WHERE key = 'help_asked_count'),0)
+    + COALESCE((SELECT COALESCE(value.int_value, CAST(value.double_value AS INT64)) FROM UNNEST(event_params) WHERE key = 'confused_count'), 0)
   ) AS grand_total_errors
 FROM combined_days
 WHERE
@@ -412,15 +412,15 @@ real_participants AS (
 )
 SELECT
   (SELECT value.string_value FROM UNNEST(event_params) WHERE key = 'task_id')          AS task_id,
-  SUM(COALESCE((SELECT COALESCE(value.int_value, CAST(value.float_value AS INT64)) FROM UNNEST(event_params) WHERE key = 'nav_error_count'),  0)) AS total_nav_errors,
-  SUM(COALESCE((SELECT COALESCE(value.int_value, CAST(value.float_value AS INT64)) FROM UNNEST(event_params) WHERE key = 'misclick_count'),    0)) AS total_misclicks,
-  SUM(COALESCE((SELECT COALESCE(value.int_value, CAST(value.float_value AS INT64)) FROM UNNEST(event_params) WHERE key = 'help_asked_count'),  0)) AS total_help_asked,
-  SUM(COALESCE((SELECT COALESCE(value.int_value, CAST(value.float_value AS INT64)) FROM UNNEST(event_params) WHERE key = 'confused_count'),    0)) AS total_confused,
+  SUM(COALESCE((SELECT COALESCE(value.int_value, CAST(value.double_value AS INT64)) FROM UNNEST(event_params) WHERE key = 'nav_error_count'),  0)) AS total_nav_errors,
+  SUM(COALESCE((SELECT COALESCE(value.int_value, CAST(value.double_value AS INT64)) FROM UNNEST(event_params) WHERE key = 'misclick_count'),    0)) AS total_misclicks,
+  SUM(COALESCE((SELECT COALESCE(value.int_value, CAST(value.double_value AS INT64)) FROM UNNEST(event_params) WHERE key = 'help_asked_count'),  0)) AS total_help_asked,
+  SUM(COALESCE((SELECT COALESCE(value.int_value, CAST(value.double_value AS INT64)) FROM UNNEST(event_params) WHERE key = 'confused_count'),    0)) AS total_confused,
   SUM(
-    COALESCE((SELECT COALESCE(value.int_value, CAST(value.float_value AS INT64)) FROM UNNEST(event_params) WHERE key = 'nav_error_count'),  0)
-    + COALESCE((SELECT COALESCE(value.int_value, CAST(value.float_value AS INT64)) FROM UNNEST(event_params) WHERE key = 'misclick_count'), 0)
-    + COALESCE((SELECT COALESCE(value.int_value, CAST(value.float_value AS INT64)) FROM UNNEST(event_params) WHERE key = 'help_asked_count'),0)
-    + COALESCE((SELECT COALESCE(value.int_value, CAST(value.float_value AS INT64)) FROM UNNEST(event_params) WHERE key = 'confused_count'), 0)
+    COALESCE((SELECT COALESCE(value.int_value, CAST(value.double_value AS INT64)) FROM UNNEST(event_params) WHERE key = 'nav_error_count'),  0)
+    + COALESCE((SELECT COALESCE(value.int_value, CAST(value.double_value AS INT64)) FROM UNNEST(event_params) WHERE key = 'misclick_count'), 0)
+    + COALESCE((SELECT COALESCE(value.int_value, CAST(value.double_value AS INT64)) FROM UNNEST(event_params) WHERE key = 'help_asked_count'),0)
+    + COALESCE((SELECT COALESCE(value.int_value, CAST(value.double_value AS INT64)) FROM UNNEST(event_params) WHERE key = 'confused_count'), 0)
   ) AS grand_total_errors
 FROM combined_days
 WHERE
