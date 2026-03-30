@@ -329,6 +329,16 @@ export default function ExpandedSearchBar({
                 }}
                 returnKeyType="search"
               />
+              {startText.length > 0 && !routeActive && (
+                <TouchableOpacity
+                  onPress={() => { setStartText(""); onChangeStart(null); }}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  accessibilityRole="button"
+                  accessibilityLabel="Clear start"
+                >
+                  <FontAwesome name="times-circle" size={16} color={MUTED} />
+                </TouchableOpacity>
+              )}
             </TouchableOpacity>
 
             {startSuggestions.length > 0 && (
@@ -384,6 +394,16 @@ export default function ExpandedSearchBar({
                     }}
                     returnKeyType="done"
                   />
+                  {startRoomText.length > 0 && !routeActive && (
+                    <TouchableOpacity
+                      onPress={() => { setStartRoomText(""); if (start) onChangeStart({ ...start, room: undefined }); }}
+                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                      accessibilityRole="button"
+                      accessibilityLabel="Clear start room"
+                    >
+                      <FontAwesome name="times-circle" size={16} color={MUTED} />
+                    </TouchableOpacity>
+                  )}
                 </TouchableOpacity>
 
                 {startRoomSuggestions.length > 0 && (
@@ -437,6 +457,16 @@ export default function ExpandedSearchBar({
                 }}
                 returnKeyType="search"
               />
+              {destText.length > 0 && !routeActive && (
+                <TouchableOpacity
+                  onPress={() => { setDestText(""); onChangeDestination(null); }}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  accessibilityRole="button"
+                  accessibilityLabel="Clear destination"
+                >
+                  <FontAwesome name="times-circle" size={16} color={MUTED} />
+                </TouchableOpacity>
+              )}
             </TouchableOpacity>
 
             {suggestions.length > 0 && (
@@ -525,6 +555,16 @@ export default function ExpandedSearchBar({
                     }}
                     returnKeyType="done"
                   />
+                  {destRoomText.length > 0 && !routeActive && (
+                    <TouchableOpacity
+                      onPress={() => { setDestRoomText(""); if (destination) onChangeDestination({ ...destination, room: undefined }); }}
+                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                      accessibilityRole="button"
+                      accessibilityLabel="Clear destination room"
+                    >
+                      <FontAwesome name="times-circle" size={16} color={MUTED} />
+                    </TouchableOpacity>
+                  )}
                 </TouchableOpacity>
 
                 {destRoomSuggestions.length > 0 && (
