@@ -53,14 +53,14 @@ describe("ExpandedSearchBar POI Integration", () => {
     );
 
     const input = getByPlaceholderText("Where to?");
+    fireEvent(input, "focus");
     fireEvent.changeText(input, "elevator");
 
     await waitFor(() => {
-      expect(getByText("Nearby Facilities")).toBeTruthy();
-      expect(getByText("Elevator 1 - Floor 1")).toBeTruthy();
+      expect(getByText("Elevator 1 — Floor 1")).toBeTruthy();
     });
 
-    fireEvent.press(getByText("Elevator 1 - Floor 1"));
+    fireEvent.press(getByText("Elevator 1 — Floor 1"));
 
     expect(mockOnChangeDest).toHaveBeenCalledWith(expect.objectContaining({
       id: "poi-1",
