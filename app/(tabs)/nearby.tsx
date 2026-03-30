@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, StyleSheet, RefreshControl, Modal, TextInput } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, StyleSheet, RefreshControl, Modal, TextInput, FlatList } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import Slider from '@react-native-community/slider';
 import Constants from 'expo-constants';
@@ -45,6 +45,7 @@ const FETCH_DEBOUNCE_MS = 2000;
 const FETCH_MIN_DISTANCE_METERS = 150;
 const FETCH_RADIUS_METERS = 2000;
 const MAX_POIS_PER_CATEGORY = 5;
+const SEE_ALL_PAGE_SIZE = 10;
 type CategoryKey = keyof typeof POI_CATEGORIES;
 const DEFAULT_RADIUS_KM = 2;
 const MIN_RADIUS_KM = 0.5;
@@ -176,6 +177,9 @@ export default function NearbyScreen() {
   });
   const [selectedRadiusKm, setSelectedRadiusKm] = useState(DEFAULT_RADIUS_KM);
   const [radiusInputKm, setRadiusInputKm] = useState(DEFAULT_RADIUS_KM.toFixed(1));
+  const [selectedSeeAllCategory, setSelectedSeeAllCategory] = useState<CategoryKey | null>(null);
+  const [seeAllVisibleCount, setSeeAllVisibleCount] = useState(SEE_ALL_PAGE_SIZE);
+  const canLoadMoreRef = useRef(true);
 
   const handleRefresh = () => {
     setManualRefreshTrigger((prev) => prev + 1);
@@ -209,6 +213,12 @@ export default function NearbyScreen() {
     });
     setSelectedRadiusKm(DEFAULT_RADIUS_KM);
     setRadiusInputKm(DEFAULT_RADIUS_KM.toFixed(1));
+  };
+
+  const handleSeeAll = (categoryKey: CategoryKey) => {
+    setSelectedSeeAllCategory(categoryKey);
+    setSeeAllVisibleCount(SEE_ALL_PAGE_SIZE);
+    canLoadMoreRef.current = true;
   };
 
   const handleRadiusInputBlur = () => {
@@ -299,8 +309,7 @@ export default function NearbyScreen() {
             ),
           }];
         })
-        .sort((a, b) => a.distance - b.distance)
-        .slice(0, MAX_POIS_PER_CATEGORY);
+        .sort((a, b) => a.distance - b.distance);
 
       let categoryResults: CategoryFetchResult[] = [];
 
@@ -362,8 +371,7 @@ export default function NearbyScreen() {
                   };
                 })
                 .filter((poi) => poi.latitude !== 0 && poi.longitude !== 0)
-                .sort((a, b) => a.distance - b.distance)
-                .slice(0, MAX_POIS_PER_CATEGORY);
+                .sort((a, b) => a.distance - b.distance);
 
               return {
                 categoryKey,
@@ -443,6 +451,80 @@ export default function NearbyScreen() {
       });
   }, [categories, selectedCategories, selectedRadiusKm]);
 
+  const previewCategories = useMemo(() => {
+    return filteredCategories.map(([categoryKey, category]) => (
+      [categoryKey, { ...category, pois: category.pois.slice(0, MAX_POIS_PER_CATEGORY) }] as const
+    ));
+  }, [filteredCategories]);
+
+  const selectedCategoryEntry = useMemo(() => {
+    if (!selectedSeeAllCategory) return null;
+    return filteredCategories.find(([categoryKey]) => categoryKey === selectedSeeAllCategory) ?? null;
+  }, [selectedSeeAllCategory, filteredCategories]);
+
+  if (selectedCategoryEntry) {
+    const [, category] = selectedCategoryEntry;
+    const visiblePois = category.pois.slice(0, seeAllVisibleCount);
+    const hasMoreSeeAllItems = seeAllVisibleCount < category.pois.length;
+
+    return (
+      <View style={[styles.fullPageContainer, { backgroundColor: bgColor }]}> 
+        <View style={[styles.fullPageHeader, { borderBottomColor: borderColor }]}> 
+          <TouchableOpacity
+            onPress={() => setSelectedSeeAllCategory(null)}
+            style={styles.backButton}
+            accessibilityRole="button"
+            accessibilityLabel="Back to nearby"
+          >
+            <FontAwesome name="chevron-left" size={16} color={isDark ? '#ffffff' : '#000000'} />
+          </TouchableOpacity>
+          <Text style={[styles.fullPageTitle, { color: textColor }]}>{category.title}</Text>
+          <View style={{ width: 32 }} />
+        </View>
+
+        <FlatList
+          data={visiblePois}
+          keyExtractor={(poi) => poi.id}
+          contentContainerStyle={styles.fullPageList}
+          onMomentumScrollBegin={() => {
+            canLoadMoreRef.current = true;
+          }}
+          onEndReached={() => {
+            if (!hasMoreSeeAllItems || !canLoadMoreRef.current) return;
+            canLoadMoreRef.current = false;
+            setSeeAllVisibleCount((prev) => Math.min(prev + SEE_ALL_PAGE_SIZE, category.pois.length));
+          }}
+          onEndReachedThreshold={0.4}
+          renderItem={({ item: poi }) => (
+            <POICard
+              poi={poi}
+              onGetDirections={handleGetDirections}
+              isDark={isDark}
+              secondaryBgColor={secondaryBgColor}
+              borderColor={borderColor}
+              variant="vertical"
+            />
+          )}
+          ListEmptyComponent={
+            <View style={[styles.emptyState, { backgroundColor: secondaryBgColor }]}> 
+              <FontAwesome name="search" size={24} color={isDark ? '#8e8e93' : '#6e6e73'} />
+              <Text style={{ color: isDark ? '#8e8e93' : '#6e6e73', marginTop: 8 }}>
+                No {category.title.toLowerCase()} found nearby
+              </Text>
+            </View>
+          }
+          ListFooterComponent={
+            hasMoreSeeAllItems ? (
+              <Text style={[styles.loadMoreHint, { color: isDark ? '#8e8e93' : '#6e6e73' }]}> 
+                Scroll to load more
+              </Text>
+            ) : null
+          }
+        />
+      </View>
+    );
+  }
+
   return (
     <ScrollView
       style={[styles.container, { backgroundColor: bgColor }]}
@@ -455,13 +537,6 @@ export default function NearbyScreen() {
         />
       }
     >
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={[styles.headerTitle, { color: textColor }]}>Nearby</Text>
-        <Text style={[styles.headerSubtitle, { color: isDark ? '#8e8e93' : '#6e6e73' }]}>
-          5 closest places near you
-        </Text>
-      </View>
 
       {/* Search Bar (Placeholder) */}
       <TouchableOpacity 
@@ -500,17 +575,24 @@ export default function NearbyScreen() {
       </View>
 
       {/* Categories */}
-      {filteredCategories.map(([key, category]) => (
+      {previewCategories.map(([key, category]) => {
+        const totalCategoryCount = filteredCategories.find(([categoryKey]) => categoryKey === key)?.[1].pois.length ?? 0;
+
+        return (
         <POICategory 
           key={key}
+          categoryKey={key}
           category={category}
           onGetDirections={handleGetDirections}
+          onSeeAll={handleSeeAll}
+          totalCount={totalCategoryCount}
           isDark={isDark}
           textColor={textColor}
           secondaryBgColor={secondaryBgColor}
           borderColor={borderColor}
         />
-      ))}
+      );
+      })}
 
       {filteredCategories.length === 0 && (
         <View style={[styles.emptyState, { backgroundColor: secondaryBgColor }]}> 
@@ -606,15 +688,21 @@ export default function NearbyScreen() {
 }
 
 function POICategory({ 
+  categoryKey,
   category, 
   onGetDirections,
+  onSeeAll,
+  totalCount,
   isDark, 
   textColor, 
   secondaryBgColor, 
   borderColor 
 }: Readonly<{
+  categoryKey: CategoryKey;
   category: POICategory;
   onGetDirections: (poi: POI) => void;
+  onSeeAll: (categoryKey: CategoryKey) => void;
+  totalCount: number;
   isDark: boolean;
   textColor: string;
   secondaryBgColor: string;
@@ -634,6 +722,11 @@ function POICategory({
             {category.title}
           </Text>
         </View>
+        {!category.isLoading && totalCount > MAX_POIS_PER_CATEGORY && (
+          <TouchableOpacity onPress={() => onSeeAll(categoryKey)}>
+            <Text style={styles.seeAllText}>See all</Text>
+          </TouchableOpacity>
+        )}
       </View>
 
       {/* Loading State */}
@@ -658,22 +751,23 @@ function POICategory({
 
       {/* POI List */}
       {!category.isLoading && category.pois.length > 0 && (
-        <ScrollView 
-          horizontal 
+        <FlatList
+          horizontal
           showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.poiScrollContent}
           style={styles.poiScroll}
-        >
-          {category.pois.map((poi) => (
-            <POICard 
-              key={poi.id} 
-              poi={poi} 
+          data={category.pois}
+          keyExtractor={(poi) => poi.id}
+          renderItem={({ item: poi }) => (
+            <POICard
+              poi={poi}
               onGetDirections={onGetDirections}
-              isDark={isDark} 
+              isDark={isDark}
               secondaryBgColor={secondaryBgColor}
               borderColor={borderColor}
             />
-          ))}
-        </ScrollView>
+          )}
+        />
       )}
 
       {/* Empty State */}
@@ -694,13 +788,15 @@ function POICard({
   onGetDirections,
   isDark, 
   secondaryBgColor,
-  borderColor 
+  borderColor,
+  variant = 'horizontal',
 }: Readonly<{
   poi: POI;
   onGetDirections: (poi: POI) => void;
   isDark: boolean;
   secondaryBgColor: string;
   borderColor: string;
+  variant?: 'horizontal' | 'vertical';
 }>) {
   const textColor = isDark ? '#ffffff' : '#000000';
   const mutedColor = isDark ? '#8e8e93' : '#6e6e73';
@@ -709,6 +805,7 @@ function POICard({
     <TouchableOpacity 
       style={[
         styles.poiCard, 
+        variant === 'vertical' ? styles.poiCardVertical : undefined,
         { 
           backgroundColor: secondaryBgColor,
           borderColor: borderColor,
@@ -757,6 +854,39 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 16,
   },
+  fullPageContainer: {
+    flex: 1,
+  },
+  fullPageHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+  },
+  backButton: {
+    width: 32,
+    height: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  fullPageTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+  },
+  fullPageList: {
+    padding: 16,
+    paddingBottom: 40,
+    gap: 12,
+  },
+  loadMoreHint: {
+    textAlign: 'center',
+    marginTop: 8,
+    fontSize: 12,
+    fontWeight: '500',
+  },
   header: {
     marginBottom: 24,
   },
@@ -804,6 +934,9 @@ const styles = StyleSheet.create({
   },
   categoryHeader: {
     marginBottom: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   categoryTitle: {
     flexDirection: 'row',
@@ -826,6 +959,8 @@ const styles = StyleSheet.create({
   },
   poiScroll: {
     marginHorizontal: -16,
+  },
+  poiScrollContent: {
     paddingHorizontal: 16,
   },
   poiCard: {
@@ -834,6 +969,11 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 8,
     borderWidth: 1,
+  },
+  poiCardVertical: {
+    width: '100%',
+    marginRight: 0,
+    marginBottom: 12,
   },
   cardHeader: {
     marginBottom: 12,
@@ -875,6 +1015,11 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 12,
     fontWeight: '600',
+  },
+  seeAllText: {
+    color: '#a94a5c',
+    fontSize: 13,
+    fontWeight: '700',
   },
   modalBackdrop: {
     flex: 1,
