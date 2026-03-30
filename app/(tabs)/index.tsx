@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useCallback, useRef, useEffect } from "react";
-import { useFocusEffect } from "expo-router";
+import { useFocusEffect, useLocalSearchParams } from "expo-router";
 import * as Location from "expo-location";
 import { useNavigationCamera } from "../../hooks/useNavigationCamera";
 import MapView, { Circle, Marker, Polygon, Region } from "react-native-maps";
@@ -38,6 +38,12 @@ const LABEL_ZOOM_THRESHOLD = 0.015;
 const ANCHOR_OFFSET = { x: 0.5, y: 0.5 };
 
 export default function Index() {
+  const nearbyParams = useLocalSearchParams<{
+    nearbyLat?: string;
+    nearbyLng?: string;
+    nearbyName?: string;
+    nearbyNonce?: string;
+  }>();
   const { colorScheme } = useTheme();
   const isDark = colorScheme === "dark";
 
@@ -92,6 +98,8 @@ export default function Index() {
   const [showLabels, setShowLabels] = useState(
     defaultCampus.initialRegion.latitudeDelta <= LABEL_ZOOM_THRESHOLD
   );
+  const handledNearbyNonceRef = useRef<string | null>(null);
+  const [searchBarNonce, setSearchBarNonce] = useState<string | null>(null);
 
   const [selectedBuilding, setSelectedBuilding] = useState<string | null>(null);
   const [selectedBuildingData, setSelectedBuildingData] = useState<any>(null);
@@ -452,6 +460,39 @@ export default function Index() {
       }
     }
   }, [effectiveLocation, userBuilding, startChoice, campusKey, currentCampus]);
+
+  useEffect(() => {
+    const nearbyNonce = nearbyParams.nearbyNonce;
+    if (!nearbyNonce || handledNearbyNonceRef.current === nearbyNonce) return;
+    if (!effectiveLocation) return;
+
+    const lat = Number(nearbyParams.nearbyLat);
+    const lng = Number(nearbyParams.nearbyLng);
+
+    handledNearbyNonceRef.current = nearbyNonce;
+
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+      return;
+    }
+
+    const destination = { latitude: lat, longitude: lng };
+    const nearbyCampus = findCampusForCoordinate(lat, lng)?.campus.name as "SGW" | "Loyola" | undefined;
+    const nearbyName = nearbyParams.nearbyName || "Nearby Destination";
+
+    endDirections();
+    clearRoute();
+    setCombinedRouteActive(false);
+    setCombinedStepIndex(0);
+    setUseShuttle(false);
+    setOutdoorLegMode("DRIVING");
+    setSearchBarNonce(nearbyNonce);
+    setDestChoice({
+      id: `nearby-${nearbyNonce}`,
+      name: nearbyName,
+      coordinate: destination,
+      campus: nearbyCampus,
+    });
+  }, [nearbyParams, effectiveLocation, clearRoute, endDirections]);
 
   const roomOptionsByBuilding = useMemo(() => {
     const grouped = new Map<string, Set<string>>();
@@ -832,6 +873,7 @@ export default function Index() {
 
       {!navigationActive && (
         <SearchBar
+          key={`search-${searchBarNonce ?? 'default'}`}
           buildings={buildingChoices}
           roomOptionsByBuilding={roomOptionsByBuilding}
           start={startChoice}
@@ -841,6 +883,7 @@ export default function Index() {
           transportMode={directionsState.transportMode}
           onChangeTransportMode={setTransportMode}
           routeActive={navigationActive}
+          defaultExpanded={!!searchBarNonce}
           previewActive={!directionsState.isActive && !!directionsState.origin}
           onEndRoute={handleEndDirections}
           onStartRoute={handleStartRoute}
