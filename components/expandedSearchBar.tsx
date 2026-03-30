@@ -21,7 +21,7 @@ import TransportModeSelector from "./TransportModeSelector";
 import { stripCodePrefix, displayName, makeHaystack } from "@/constants/searchBar.utils";
 import { useWatchLocation } from "../hooks/useWatchLocation";
 import { useUserBuilding } from "../hooks/useUserBuilding";
-import { searchNearbyPois } from "../utils/poiSearch";
+import { searchNearbyPois, POI_TYPE_MAP } from "../utils/poiSearch";
 
 type Props = {
   buildings: BuildingChoice[];
@@ -203,7 +203,7 @@ export default function ExpandedSearchBar({
 
   const poiResults = useMemo(() => {
     const query = destText.toLowerCase().trim();
-    const keywords = ["water", "washroom", "elevator", "stairs", "food", "vending"];
+    const keywords = Object.keys(POI_TYPE_MAP);
 
     if (destFocused && keywords.includes(query) && location) {
       return searchNearbyPois(

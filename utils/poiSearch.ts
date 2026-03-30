@@ -2,7 +2,7 @@ import { AllCampusData } from "../data/buildings";
 import { getDistanceMeters } from "./geometry";
 import { getBuildingCoordinate } from "./buildingCoordinates";
 
-const POI_TYPE_MAP: Record<string, string[]> = {
+export const POI_TYPE_MAP: Record<string, string[]> = {
   "washroom": ["washroom", "bathroom", "restroom"],
   "water": ["water_fountain", "water"],
   "elevator": ["elevator_door", "elevator"],
@@ -63,5 +63,6 @@ export function searchNearbyPois(
     });
   });
 
-  return results.sort((a, b) => a.distance - b.distance).slice(0, 5);
+  results.sort((a, b) => a.distance - b.distance);
+  return results.slice(0, 5);
 }
