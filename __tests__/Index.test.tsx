@@ -177,11 +177,14 @@ jest.mock('react-native-maps', () => {
     </View>
   );
 
+  const MockCircle = (props: any) => <View testID="circle" {...props} />;
+
   return {
     __esModule: true,
     default: MockMapView,
     Polygon: MockPolygon,
     Marker: MockMarker,
+    Circle: MockCircle,
   };
 });
 
@@ -1562,8 +1565,13 @@ describe('<Index />', () => {
 
   describe('effective location and next-class non-room flow', () => {
     it('uses DEV_OVERRIDE_LOCATION coordinates as effective origin when set', async () => {
-      const devConfig = require('../utils/devConfig');
-      devConfig.DEV_OVERRIDE_LOCATION = { latitude: 46.0, longitude: -74.0 };
+      // DEV_OVERRIDE_LOCATION now feeds into useWatchLocation's initial state,
+      // so simulate it by making the mock return the override coords.
+      const overrideLocation = {
+        coords: { latitude: 46.0, longitude: -74.0, altitude: null, accuracy: null, altitudeAccuracy: null, heading: null, speed: null },
+        timestamp: Date.now(),
+      };
+      mockWatchLocation.mockReturnValue({ location: overrideLocation, loading: false, error: null });
 
       await renderWithTheme(<Index />);
 
@@ -1585,8 +1593,6 @@ describe('<Index />', () => {
           { latitude: 45.497, longitude: -73.579 }
         );
       });
-
-      devConfig.DEV_OVERRIDE_LOCATION = null;
     });
 
     it('for next class without room, uses building coordinate and starts directions', async () => {

@@ -1,6 +1,10 @@
 import { renderHook, waitFor, act } from '@testing-library/react-native';
 import { useWatchLocation } from '../hooks/useWatchLocation';
 
+jest.mock('../utils/devConfig', () => ({
+  DEV_OVERRIDE_LOCATION: null,
+}));
+
 const mockGetCurrentPositionAsync = jest.fn();
 
 jest.mock('expo-location', () => ({
