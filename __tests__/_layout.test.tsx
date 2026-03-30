@@ -51,12 +51,20 @@ describe("TabLayout", () => {
       1,
       expect.objectContaining({
         name: "index",
-        options: expect.objectContaining({ title: "Home" }),
+        options: expect.objectContaining({ title: "Map" }),
       })
     );
 
     expect(mockScreen).toHaveBeenNthCalledWith(
       2,
+      expect.objectContaining({
+        name: "nearby",
+        options: expect.objectContaining({ title: "Nearby" }),
+      })
+    );
+
+    expect(mockScreen).toHaveBeenNthCalledWith(
+      3,
       expect.objectContaining({
         name: "settings",
         options: expect.objectContaining({ title: "Settings" }),
