@@ -861,7 +861,7 @@ export default function Index() {
             setShowIndoorMapModal(false);
             setIndoorPresetRoute(null);
           }}
-          onClearRoute={clearRoute}
+          onClearRoute={handleEndDirections}
          />
 
       {!navigationActive && (
