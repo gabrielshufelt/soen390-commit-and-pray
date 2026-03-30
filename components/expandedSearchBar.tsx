@@ -601,7 +601,10 @@ export default function ExpandedSearchBar({
             )}
 
             {(() => {
-              const isCurrentLocation = !start || start.id === "current-location";
+              const isCurrentLocation =
+                !start ||
+                start.id === "current-location" ||
+                start.id === currentBuilding?.id;
 
               if (!routeActive && destination && isCurrentLocation && onStartRoute) {
                 return (
