@@ -13,6 +13,7 @@ import {
 import { useTheme } from '../context/ThemeContext';
 import BUILDING_IMAGES from '../constants/buildingImages';
 import { COLORS } from '../constants/modalColors';
+import { getBuildingIndoorMap } from '../utils/indoorMapData';
 import { SHEET_HEIGHT, DISMISS_THRESHOLD, VELOCITY_THRESHOLD } from '../constants/modalSheet';
 import { AMENITY_ICONS, ACCESSIBILITY_ICONS, UI_ICONS, renderIcon } from '../constants/buildingIcons';
 
@@ -42,9 +43,10 @@ interface BuildingModalProps {
   onDirectionsFrom: (building: BuildingData) => void;
   onDirectionsTo: (building: BuildingData) => void;
   onGetDirections?: (building: BuildingData) => void;
+  onShowIndoorMap?: (buildingCode: string) => void;
 }
 
-export default function BuildingModal({ visible, building, onClose, onDirectionsFrom, onDirectionsTo, onGetDirections }: BuildingModalProps) {
+export default function BuildingModal({ visible, building, onClose, onDirectionsFrom, onDirectionsTo, onGetDirections, onShowIndoorMap }: BuildingModalProps) {
   const { colorScheme } = useTheme();
   const isDark = colorScheme === 'dark';
 
@@ -70,7 +72,7 @@ export default function BuildingModal({ visible, building, onClose, onDirections
     }
   }, [visible]);
 
-  const handleClose = useCallback(() => {
+  const handleClose = useCallback((onAfterClose?: () => void) => {
     Animated.timing(translateY, {
       toValue: SHEET_HEIGHT,
       duration: 250,
@@ -78,6 +80,9 @@ export default function BuildingModal({ visible, building, onClose, onDirections
     }).start(() => {
       currentPosRef.current = SHEET_HEIGHT;
       onClose();
+      if (onAfterClose) {
+        setTimeout(onAfterClose, 0);
+      }
     });
   }, [onClose, translateY]);
 
@@ -150,6 +155,7 @@ export default function BuildingModal({ visible, building, onClose, onDirections
 
   const buildingImage = code ? BUILDING_IMAGES[code] : null;
   const hasAddress = !!(number || street || city);
+  const hasIndoorMap = !!(code && getBuildingIndoorMap(code));
 
   const addressParts: string[] = [];
   if (number && street) addressParts.push(`${number} ${street}`);
@@ -266,6 +272,18 @@ export default function BuildingModal({ visible, building, onClose, onDirections
             )}
 
             <View style={styles.buttonsContainer}>
+
+              {hasIndoorMap && onShowIndoorMap && (
+                <TouchableOpacity
+                  style={[styles.directionButton, styles.indoorMapButton]}
+                  onPress={() => handleClose(() => onShowIndoorMap(code!))}
+                  activeOpacity={0.7}
+                  testID="indoor-map-button"
+                >
+                  <View style={styles.buttonIcon}>{renderIcon(UI_ICONS.mapMarker, 16, COLORS.red)}</View>
+                  <Text style={[styles.indoorMapButtonText, { color: COLORS.red }]}>Show Indoor Map</Text>
+                </TouchableOpacity>
+              )}
 
               <TouchableOpacity
                 style={[styles.directionButton, styles.directionButtonFrom, { borderColor: COLORS.red }]}
@@ -442,6 +460,15 @@ const styles = StyleSheet.create({
   directionButtonFrom: {
     borderWidth: 1.5,
     backgroundColor: 'transparent',
+  },
+  indoorMapButton: {
+    borderWidth: 1.5,
+    borderColor: COLORS.red,
+    backgroundColor: 'transparent',
+  },
+  indoorMapButtonText: {
+    fontSize: 15,
+    fontWeight: '600',
   },
   directionButtonTo: {
     borderWidth: 0,

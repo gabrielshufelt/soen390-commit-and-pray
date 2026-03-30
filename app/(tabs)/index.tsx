@@ -377,6 +377,14 @@ export default function Index() {
     setSelectedBuildingData(null);
   };
 
+  const handleShowIndoorMapFromModal = (buildingCode: string) => {
+    const normalized = buildingCode.toUpperCase();
+    if (!getBuildingIndoorMap(normalized)) return;
+    setIndoorBuildingCode(normalized);
+    setIndoorPresetRoute(null);
+    setShowIndoorMapModal(true);
+  };
+
   const buildingToChoice = (b: any): BuildingChoice => ({
     id: b.id,
     name: b.properties?.name ?? b.properties?.code ?? "Unknown building",
@@ -567,7 +575,6 @@ export default function Index() {
     }
     nextStep();
   };
-
 
   const buildingPolygons = useMemo(() => {
     return campusBuildingsData.map((building: any) => {
@@ -856,7 +863,7 @@ export default function Index() {
         <IndoorMapModal
           visible={showIndoorMapModal}
           initialBuildingCode={indoorBuildingCode}
-          presetRoute={indoorPresetRoute}
+          presetRoute={null}
           onClose={() => {
             setShowIndoorMapModal(false);
             setIndoorPresetRoute(null);
@@ -924,6 +931,7 @@ export default function Index() {
         onClose={handleCloseModal}
         onDirectionsFrom={handleDirectionsFrom}
         onDirectionsTo={handleDirectionsTo}
+        onShowIndoorMap={handleShowIndoorMapFromModal}
         onGetDirections={(building) => {
           if (effectiveLocation) {
             startDirectionsToBuilding(effectiveLocation, building.geometry.coordinates[0]);
