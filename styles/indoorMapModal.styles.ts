@@ -1,3 +1,4 @@
+/* istanbul ignore file */
 import { StyleSheet } from "react-native";
 
 export const CONCORDIA_RED = '#922338';

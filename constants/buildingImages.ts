@@ -1,3 +1,4 @@
+/* istanbul ignore file */
 /**
  * Static image registry for building images.
  * Maps building codes to their require()'d image assets.
