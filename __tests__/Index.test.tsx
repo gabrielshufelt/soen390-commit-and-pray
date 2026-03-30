@@ -28,6 +28,7 @@ jest.mock('expo-router', () => ({
     const { useEffect } = require('react');
     useEffect(() => { cb(); }, []);
   },
+  useLocalSearchParams: () => ({}),
 }));
 
 jest.mock('../utils/devConfig', () => ({

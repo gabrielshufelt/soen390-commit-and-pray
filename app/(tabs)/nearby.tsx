@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, StyleSheet, RefreshControl, Modal, TextInput, FlatList } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import Slider from '@react-native-community/slider';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import Constants from 'expo-constants';
 import { useRouter } from 'expo-router';
 import BuildingModal from '../../components/buildingModal';
@@ -54,6 +55,16 @@ const FETCH_MIN_DISTANCE_METERS = 150;
 const FETCH_RADIUS_METERS = 2000;
 const MAX_POIS_PER_CATEGORY = 5;
 const SEE_ALL_PAGE_SIZE = 10;
+const CACHE_EXPIRATION_MS = 30 * 60 * 1000; // 30 minutes
+const CACHE_KEY_PREFIX = 'nearby_pois_';
+
+interface CacheEntry {
+  pois: POI[];
+  timestamp: number;
+  latitude: number;
+  longitude: number;
+}
+
 type CategoryKey = keyof typeof POI_CATEGORIES;
 const DEFAULT_RADIUS_KM = 2;
 const MIN_RADIUS_KM = 0.5;
@@ -185,6 +196,55 @@ const formatPriceLevel = (priceLevel?: number): string => {
   return '$'.repeat(priceLevel);
 };
 
+const getCacheKey = (categoryKey: string): string => `${CACHE_KEY_PREFIX}${categoryKey}`;
+
+const getCachedPOIs = async (categoryKey: string): Promise<CacheEntry | null> => {
+  try {
+    const cached = await AsyncStorage.getItem(getCacheKey(categoryKey));
+    if (!cached) return null;
+
+    const entry: CacheEntry = JSON.parse(cached);
+    const now = Date.now();
+
+    // Check if cache is expired
+    if (now - entry.timestamp > CACHE_EXPIRATION_MS) {
+      await AsyncStorage.removeItem(getCacheKey(categoryKey));
+      return null;
+    }
+
+    return entry;
+  } catch (error) {
+    console.warn(`Failed to read cache for ${categoryKey}:`, error);
+    return null;
+  }
+};
+
+const setCachedPOIs = async (categoryKey: string, pois: POI[], latitude: number, longitude: number): Promise<void> => {
+  try {
+    const entry: CacheEntry = {
+      pois,
+      timestamp: Date.now(),
+      latitude,
+      longitude,
+    };
+    await AsyncStorage.setItem(getCacheKey(categoryKey), JSON.stringify(entry));
+  } catch (error) {
+    console.warn(`Failed to cache POIs for ${categoryKey}:`, error);
+  }
+};
+
+const clearCache = async (): Promise<void> => {
+  try {
+    const keys = await AsyncStorage.getAllKeys();
+    const cacheKeys = keys.filter((key) => key.startsWith(CACHE_KEY_PREFIX));
+    if (cacheKeys.length > 0) {
+      await AsyncStorage.multiRemove(cacheKeys);
+    }
+  } catch (error) {
+    console.warn('Failed to clear cache:', error);
+  }
+};
+
 export default function NearbyScreen() {
   const { colorScheme } = useTheme();
   const isDark = colorScheme === 'dark';
@@ -221,6 +281,8 @@ export default function NearbyScreen() {
   const canLoadMoreRef = useRef(true);
 
   const handleRefresh = () => {
+    // Clear cache on manual refresh
+    clearCache();
     setManualRefreshTrigger((prev) => prev + 1);
   };
 
@@ -438,11 +500,32 @@ export default function NearbyScreen() {
           { categoryKey: 'grocery', error: 'Missing Google Maps API key' },
         ];
       } else {
-      const entries = Object.entries(CATEGORY_TO_GOOGLE_TYPE);
+        const entries = Object.entries(CATEGORY_TO_GOOGLE_TYPE);
 
         categoryResults = await Promise.all(
           entries.map(async ([categoryKey, googleType]) => {
             try {
+              // Check cache first
+              const cachedEntry = await getCachedPOIs(categoryKey);
+              
+              // Verify cache is valid if it exists (same location or close enough)
+              if (
+                cachedEntry &&
+                getDistanceMeters(
+                  currentCoords.latitude,
+                  currentCoords.longitude,
+                  cachedEntry.latitude,
+                  cachedEntry.longitude
+                ) < FETCH_MIN_DISTANCE_METERS
+              ) {
+                // Cache is valid, use it
+                return {
+                  categoryKey,
+                  pois: cachedEntry.pois,
+                };
+              }
+
+              // Cache miss or location changed significantly, fetch from API
               const params = new URLSearchParams({
                 location: `${currentCoords.latitude},${currentCoords.longitude}`,
                 radius: `${FETCH_RADIUS_METERS}`,
@@ -492,6 +575,9 @@ export default function NearbyScreen() {
                 })
                 .filter((poi) => poi.latitude !== 0 && poi.longitude !== 0)
                 .sort((a, b) => a.distance - b.distance);
+
+              // Cache the results
+              await setCachedPOIs(categoryKey, pois, currentCoords.latitude, currentCoords.longitude);
 
               return {
                 categoryKey,
