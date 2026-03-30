@@ -19,6 +19,9 @@ import { useShuttleAvailability } from "../hooks/useShuttleAvailability";
 import { styles, MAROON, MUTED, TEXT } from "../styles/searchBar.styles";
 import TransportModeSelector from "./TransportModeSelector";
 import { stripCodePrefix, displayName, makeHaystack } from "@/constants/searchBar.utils";
+import { useWatchLocation } from "../hooks/useWatchLocation";
+import { useUserBuilding } from "../hooks/useUserBuilding";
+import { searchNearbyPois, POI_TYPE_MAP } from "../utils/poiSearch";
 
 type Props = {
   buildings: BuildingChoice[];
@@ -195,6 +198,24 @@ export default function ExpandedSearchBar({
     return options.filter((room) => room.toLowerCase().includes(query)).slice(0, 10);
   }, [destination, destRoomFocused, routeActive, roomOptionsByBuilding, destRoomText]);
 
+  const { location } = useWatchLocation();
+  const currentBuilding = useUserBuilding(location);
+
+  const poiResults = useMemo(() => {
+    const query = destText.toLowerCase().trim();
+    const keywords = Object.keys(POI_TYPE_MAP);
+
+    if (destFocused && keywords.includes(query) && location) {
+      return searchNearbyPois(
+        query,
+        location.coords.latitude,
+        location.coords.longitude,
+        currentBuilding?.code || null
+      );
+    }
+    return [];
+  }, [destText, destFocused, currentBuilding, location]);
+
   function addToHistory(b: BuildingChoice) {
     setHistory((prev) => {
       const without = prev.filter((x) => x.id !== b.id);
@@ -203,18 +224,18 @@ export default function ExpandedSearchBar({
   }
 
   function pickDestination(b: BuildingChoice) {
-    onChangeDestination({ ...b, room: undefined });
+    onChangeDestination(b);
     addToHistory(b);
     setDestText(displayName(b));
-    setDestRoomText("");
+    setDestRoomText(b.room && !b.room.includes("_") ? b.room : "");
     setDestFocused(false);
     Keyboard.dismiss();
   }
 
   function pickStart(b: BuildingChoice) {
-    onChangeStart({ ...b, room: undefined });
+    onChangeStart(b);
     setStartText(displayName(b));
-    setStartRoomText("");
+    setStartRoomText(b.room && !b.room.includes("_") ? b.room : "");
     setStartFocused(false);
     Keyboard.dismiss();
   }
@@ -278,7 +299,6 @@ export default function ExpandedSearchBar({
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.scrollContent}
           >
-
           {/* Route card */}
           <View style={styles.routeCard}>
             <Text style={styles.sectionLabel}>START POINT</Text>
@@ -434,6 +454,39 @@ export default function ExpandedSearchBar({
                         <Text style={styles.suggestionTitle}>{displayName(item)}</Text>
                         <Text style={styles.suggestionSub}>
                           {item.campus ? `${item.campus} Campus` : ""}{item.address ? (item.campus ? ` · ${item.address}` : item.address) : ""}
+                        </Text>
+                      </TouchableOpacity>
+                    </React.Fragment>
+                  ))}
+                </ScrollView>
+              </View>
+            )}
+
+            {poiResults.length > 0 && (
+              <View testID="route.dest.poi-suggestions" style={styles.suggestionsBox}>
+                <ScrollView keyboardShouldPersistTaps="handled" nestedScrollEnabled>
+                  {poiResults.map((poi, idx) => (
+                    <React.Fragment key={poi.id}>
+                      {idx > 0 && <Separator />}
+                      <TouchableOpacity
+                        style={styles.suggestionItem}
+                        onPress={() =>
+                          pickDestination({
+                            id: poi.id,
+                            name: poi.name,
+                            code: poi.buildingCode,
+                            room: poi.id,
+                            coordinate: poi.coordinates,
+                          })
+                        }
+                        activeOpacity={0.85}
+                        accessibilityRole="button"
+                      >
+                        <Text style={styles.suggestionTitle}>
+                          {poi.name} — Floor {poi.floor}
+                        </Text>
+                        <Text style={styles.suggestionSub}>
+                          {poi.buildingCode} · {Math.round(poi.distance)}m away
                         </Text>
                       </TouchableOpacity>
                     </React.Fragment>
