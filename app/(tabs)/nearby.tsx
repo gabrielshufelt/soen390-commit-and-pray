@@ -4,6 +4,8 @@ import { FontAwesome } from '@expo/vector-icons';
 import Slider from '@react-native-community/slider';
 import Constants from 'expo-constants';
 import { useRouter } from 'expo-router';
+import BuildingModal from '../../components/buildingModal';
+import type { BuildingData } from '../../components/buildingModal';
 import { useTheme } from '../../context/ThemeContext';
 import { useWatchLocation } from '../../hooks/useWatchLocation';
 import { getDistanceMeters } from '../../utils/geometry';
@@ -18,6 +20,12 @@ interface POI {
   rating?: number;
   latitude: number;
   longitude: number;
+  source: 'study' | 'google';
+  categoryLabel?: string;
+  phoneNumber?: string;
+  pricing?: string;
+  photoUrl?: string;
+  website?: string;
 }
 
 interface POICategory {
@@ -140,6 +148,21 @@ interface GooglePlacesNearbyResponse {
   error_message?: string;
 }
 
+interface GooglePlaceDetailsResponse {
+  status: string;
+  error_message?: string;
+  result?: {
+    formatted_address?: string;
+    formatted_phone_number?: string;
+    international_phone_number?: string;
+    price_level?: number;
+    website?: string;
+    photos?: Array<{
+      photo_reference?: string;
+    }>;
+  };
+}
+
 type CategoryFetchResult =
   | { categoryKey: string; pois: POI[] }
   | { categoryKey: string; error: string };
@@ -148,6 +171,18 @@ const isStudySpaceOpenNow = (studySpace: StudySpaceConfig, now: Date): boolean =
   if (!studySpace.openDays.includes(now.getDay())) return false;
   const hour = now.getHours();
   return hour >= studySpace.openHour && hour < studySpace.closeHour;
+};
+
+const formatPriceLevel = (priceLevel?: number): string => {
+  if (priceLevel === undefined || priceLevel < 0 || priceLevel > 4) {
+    return 'Not available';
+  }
+
+  if (priceLevel === 0) {
+    return 'Free';
+  }
+
+  return '$'.repeat(priceLevel);
 };
 
 export default function NearbyScreen() {
@@ -179,6 +214,10 @@ export default function NearbyScreen() {
   const [radiusInputKm, setRadiusInputKm] = useState(DEFAULT_RADIUS_KM.toFixed(1));
   const [selectedSeeAllCategory, setSelectedSeeAllCategory] = useState<CategoryKey | null>(null);
   const [seeAllVisibleCount, setSeeAllVisibleCount] = useState(SEE_ALL_PAGE_SIZE);
+  const [selectedPoi, setSelectedPoi] = useState<POI | null>(null);
+  const [selectedPoiDetails, setSelectedPoiDetails] = useState<POI | null>(null);
+  const [isPoiDetailsLoading, setIsPoiDetailsLoading] = useState(false);
+  const [poiDetailsError, setPoiDetailsError] = useState<string | null>(null);
   const canLoadMoreRef = useRef(true);
 
   const handleRefresh = () => {
@@ -195,6 +234,82 @@ export default function NearbyScreen() {
         nearbyNonce: String(Date.now()),
       },
     });
+  };
+
+  const closePoiDetailsModal = () => {
+    setSelectedPoi(null);
+    setSelectedPoiDetails(null);
+    setPoiDetailsError(null);
+    setIsPoiDetailsLoading(false);
+  };
+
+  const handleOpenPoiDetails = async (poi: POI) => {
+    setSelectedPoi(poi);
+    setSelectedPoiDetails(poi);
+    setPoiDetailsError(null);
+    setIsPoiDetailsLoading(false);
+
+    if (poi.source !== 'google') {
+      setSelectedPoiDetails({
+        ...poi,
+        pricing: poi.pricing ?? 'Free',
+      });
+      return;
+    }
+
+    if (!apiKey) {
+      setPoiDetailsError('Missing Google Maps API key');
+      return;
+    }
+
+    setIsPoiDetailsLoading(true);
+
+    try {
+      const params = new URLSearchParams({
+        place_id: poi.id,
+        fields: [
+          'formatted_address',
+          'formatted_phone_number',
+          'international_phone_number',
+          'price_level',
+          'photos',
+          'website',
+        ].join(','),
+        key: apiKey,
+      });
+
+      const response = await fetch(
+        `https://maps.googleapis.com/maps/api/place/details/json?${params.toString()}`
+      );
+
+      const data: GooglePlaceDetailsResponse = await response.json();
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      if (data.status !== 'OK') {
+        throw new Error(data.error_message ?? data.status);
+      }
+
+      const photoReference = data.result?.photos?.[0]?.photo_reference;
+      const photoUrl = photoReference
+        ? `https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=${encodeURIComponent(photoReference)}&key=${apiKey}`
+        : undefined;
+
+      setSelectedPoiDetails({
+        ...poi,
+        address: data.result?.formatted_address ?? poi.address,
+        phoneNumber: data.result?.formatted_phone_number ?? data.result?.international_phone_number,
+        pricing: formatPriceLevel(data.result?.price_level),
+        website: data.result?.website,
+        photoUrl,
+      });
+    } catch (error) {
+      setPoiDetailsError(error instanceof Error ? error.message : 'Unable to load POI details');
+    } finally {
+      setIsPoiDetailsLoading(false);
+    }
   };
 
   const toggleCategoryFilter = (categoryKey: CategoryKey) => {
@@ -301,6 +416,9 @@ export default function NearbyScreen() {
             isOpen: true,
             latitude: coordinate.latitude,
             longitude: coordinate.longitude,
+            source: 'study' as const,
+            pricing: 'Free',
+            categoryLabel: POI_CATEGORIES.study.title,
             distance: getDistanceMeters(
               currentCoords.latitude,
               currentCoords.longitude,
@@ -362,6 +480,8 @@ export default function NearbyScreen() {
                     rating: result.rating,
                     latitude: poiCoords.latitude,
                     longitude: poiCoords.longitude,
+                    source: 'google' as const,
+                    categoryLabel: POI_CATEGORIES[categoryKey as CategoryKey]?.title,
                     distance: getDistanceMeters(
                       currentCoords.latitude,
                       currentCoords.longitude,
@@ -462,6 +582,31 @@ export default function NearbyScreen() {
     return filteredCategories.find(([categoryKey]) => categoryKey === selectedSeeAllCategory) ?? null;
   }, [selectedSeeAllCategory, filteredCategories]);
 
+  const selectedPoiAsBuildingData = useMemo<BuildingData | null>(() => {
+    if (!selectedPoiDetails) return null;
+
+    return {
+      id: selectedPoiDetails.id,
+      geometry: {
+        type: 'Point',
+        coordinates: [[[selectedPoiDetails.longitude, selectedPoiDetails.latitude]]],
+      },
+      properties: {
+        name: selectedPoiDetails.name,
+        address: selectedPoiDetails.address,
+        categoryLabel: selectedPoiDetails.categoryLabel,
+        photoUrl: selectedPoiDetails.photoUrl,
+        phoneNumber: selectedPoiDetails.phoneNumber,
+        pricing: selectedPoiDetails.pricing,
+        website: selectedPoiDetails.website,
+        rating: selectedPoiDetails.rating,
+        isOpen: selectedPoiDetails.isOpen,
+        detailsLoading: isPoiDetailsLoading,
+        detailsError: poiDetailsError ?? undefined,
+      },
+    };
+  }, [selectedPoiDetails, isPoiDetailsLoading, poiDetailsError]);
+
   if (selectedCategoryEntry) {
     const [, category] = selectedCategoryEntry;
     const visiblePois = category.pois.slice(0, seeAllVisibleCount);
@@ -498,6 +643,7 @@ export default function NearbyScreen() {
           renderItem={({ item: poi }) => (
             <POICard
               poi={poi}
+              onPress={handleOpenPoiDetails}
               onGetDirections={handleGetDirections}
               isDark={isDark}
               secondaryBgColor={secondaryBgColor}
@@ -583,6 +729,7 @@ export default function NearbyScreen() {
           key={key}
           categoryKey={key}
           category={category}
+          onPressPoi={handleOpenPoiDetails}
           onGetDirections={handleGetDirections}
           onSeeAll={handleSeeAll}
           totalCount={totalCategoryCount}
@@ -604,6 +751,35 @@ export default function NearbyScreen() {
       )}
 
       <View style={{ height: 40 }} />
+
+      <BuildingModal
+        visible={selectedPoi !== null}
+        mode="poi"
+        building={selectedPoiAsBuildingData}
+        onClose={closePoiDetailsModal}
+        onGetDirections={(buildingData) => {
+          const coords = buildingData?.geometry?.coordinates?.[0]?.[0];
+          if (!coords) return;
+
+          const [longitude, latitude] = coords;
+          handleGetDirections({
+            id: buildingData.id,
+            name: buildingData.properties?.name ?? 'POI',
+            address: buildingData.properties?.address ?? 'Address unavailable',
+            distance: selectedPoiDetails?.distance ?? 0,
+            isOpen: buildingData.properties?.isOpen ?? true,
+            rating: buildingData.properties?.rating,
+            latitude,
+            longitude,
+            source: selectedPoiDetails?.source ?? 'google',
+            categoryLabel: buildingData.properties?.categoryLabel,
+            phoneNumber: buildingData.properties?.phoneNumber,
+            pricing: buildingData.properties?.pricing,
+            photoUrl: buildingData.properties?.photoUrl,
+            website: buildingData.properties?.website,
+          });
+        }}
+      />
 
       <Modal
         visible={showFilterModal}
@@ -690,6 +866,7 @@ export default function NearbyScreen() {
 function POICategory({ 
   categoryKey,
   category, 
+  onPressPoi,
   onGetDirections,
   onSeeAll,
   totalCount,
@@ -700,6 +877,7 @@ function POICategory({
 }: Readonly<{
   categoryKey: CategoryKey;
   category: POICategory;
+  onPressPoi: (poi: POI) => void;
   onGetDirections: (poi: POI) => void;
   onSeeAll: (categoryKey: CategoryKey) => void;
   totalCount: number;
@@ -761,6 +939,7 @@ function POICategory({
           renderItem={({ item: poi }) => (
             <POICard
               poi={poi}
+              onPress={onPressPoi}
               onGetDirections={onGetDirections}
               isDark={isDark}
               secondaryBgColor={secondaryBgColor}
@@ -785,6 +964,7 @@ function POICategory({
 
 function POICard({ 
   poi, 
+  onPress,
   onGetDirections,
   isDark, 
   secondaryBgColor,
@@ -792,6 +972,7 @@ function POICard({
   variant = 'horizontal',
 }: Readonly<{
   poi: POI;
+  onPress: (poi: POI) => void;
   onGetDirections: (poi: POI) => void;
   isDark: boolean;
   secondaryBgColor: string;
@@ -811,6 +992,9 @@ function POICard({
           borderColor: borderColor,
         }
       ]}
+      onPress={() => onPress(poi)}
+      accessibilityRole="button"
+      accessibilityLabel={`Open details for ${poi.name}`}
     >
       {/* Card Header */}
       <View style={styles.cardHeader}>
