@@ -330,7 +330,7 @@ export default function ExpandedSearchBar({
               />
               {startText.length > 0 && !routeActive && (
                 <TouchableOpacity
-                  onPress={() => { setStartText(""); onChangeStart(null); }}
+                  onPress={() => { setStartText(""); onChangeStart(null); setStartFocused(true); startInputRef.current?.focus(); }}
                   hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                   accessibilityRole="button"
                   accessibilityLabel="Clear start"
@@ -457,7 +457,7 @@ export default function ExpandedSearchBar({
               />
               {destText.length > 0 && !routeActive && (
                 <TouchableOpacity
-                  onPress={() => { setDestText(""); onChangeDestination(null); }}
+                  onPress={() => { setDestText(""); onChangeDestination(null); Keyboard.dismiss(); }}
                   hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                   accessibilityRole="button"
                   accessibilityLabel="Clear destination"

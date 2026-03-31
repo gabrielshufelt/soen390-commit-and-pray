@@ -885,7 +885,7 @@ export default function Index() {
           onClearRoute={handleEndDirections}
          />
 
-      {!navigationActive && (
+      {!navigationActive && !previewActive && (
         <NextClassModal
           nextClass={nextClass}
           status={nextClassStatus}
