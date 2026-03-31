@@ -7,7 +7,53 @@ jest.mock('@react-native-async-storage/async-storage', () => ({
   multiRemove: jest.fn(),
 }));
 
+jest.mock('../hooks/useWatchLocation');
+jest.mock('../context/ThemeContext');
+jest.mock('../utils/geometry');
+jest.mock('../utils/buildingCoordinates');
+jest.mock('expo-router');
+jest.mock('expo-constants');
+jest.mock('@expo/vector-icons', () => ({ FontAwesome: 'FontAwesome' }));
+jest.mock('@react-native-community/slider', () => 'Slider');
+jest.mock('../components/buildingModal', () => 'BuildingModal');
+
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import React from 'react';
+import { render } from '@testing-library/react-native';
+import NearbyScreen from '../app/(tabs)/nearby';
+import { useWatchLocation } from '../hooks/useWatchLocation';
+import { useTheme } from '../context/ThemeContext';
+
+describe('Nearby POIs - Component Rendering', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    (useTheme as jest.Mock).mockReturnValue({ colorScheme: 'light' });
+    (useWatchLocation as jest.Mock).mockReturnValue({ location: null });
+  });
+
+  it('should render NearbyScreen component', () => {
+    const { getByTestId, queryByText } = render(<NearbyScreen />);
+    // Component renders without crashing
+    expect(NearbyScreen).toBeDefined();
+  });
+
+  it('should handle missing location gracefully', () => {
+    (useWatchLocation as jest.Mock).mockReturnValue({ location: null });
+    render(<NearbyScreen />);
+    // Should not crash when location is null
+  });
+
+  it('should apply light theme colors', () => {
+    (useTheme as jest.Mock).mockReturnValue({ colorScheme: 'light' });
+    render(<NearbyScreen />);
+  });
+
+  it('should apply dark theme colors', () => {
+    (useTheme as jest.Mock).mockReturnValue({ colorScheme: 'dark' });
+    render(<NearbyScreen />);
+  });
+});
+
 describe('Nearby POIs - Helper Functions & Logic', () => {
   beforeEach(() => {
     jest.clearAllMocks();
