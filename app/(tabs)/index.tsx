@@ -877,7 +877,7 @@ export default function Index() {
         <IndoorMapModal
           visible={showIndoorMapModal}
           initialBuildingCode={indoorBuildingCode}
-          presetRoute={null}
+          presetRoute={indoorPresetRoute}
           onClose={() => {
             setShowIndoorMapModal(false);
             setIndoorPresetRoute(null);

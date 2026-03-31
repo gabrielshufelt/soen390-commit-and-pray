@@ -8,7 +8,7 @@ import {
   TextInput,
   FlatList,
 } from "react-native";
-import type { DimensionValue } from "react-native";
+import Svg, { Polyline } from "react-native-svg";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 
 import {
@@ -45,18 +45,8 @@ const ACCESSIBILITY_ICONS = {
 
 type AccessibilityFilter = keyof typeof ACCESSIBILITY_ICONS;
 
-type RouteSegment = {
-  id: string;
-  left: DimensionValue;
-  top: DimensionValue;
-  width: number;
-  angle: number;
-};
-
 type RouteTransition = {
   id: string;
-  left: DimensionValue;
-  top: DimensionValue;
   message: string;
 };
 
@@ -192,35 +182,32 @@ export default function IndoorMapModal({
 
   const currentFloor = indoorMap?.floors[floorIndex] ?? null;
 
-  const routeSegments = useMemo<RouteSegment[]>(() => {
+  // Groups of consecutive same-floor nodes to draw as SVG polylines.
+  // A floor transition breaks a group so we get separate line segments per floor.
+  const routePolylines = useMemo<{ leftPct: number; topPct: number }[][]>(() => {
     if (!currentFloor || routePath.length < 2) return [];
 
-    const segments: RouteSegment[] = [];
+    const groups: { leftPct: number; topPct: number }[][] = [];
+    let currentGroup: { leftPct: number; topPct: number }[] = [];
+
     for (let i = 0; i < routePath.length - 1; i++) {
       const start = routePath[i];
       const end = routePath[i + 1];
+
       if (start.floor !== currentFloor.floor || end.floor !== currentFloor.floor) {
+        if (currentGroup.length >= 2) groups.push(currentGroup);
+        currentGroup = [];
         continue;
       }
 
-      const startPct = getNodePositionPercent(start, currentFloor);
-      const endPct = getNodePositionPercent(end, currentFloor);
-
-      const dx = endPct.leftPct - startPct.leftPct;
-      const dy = endPct.topPct - startPct.topPct;
-      const width = Math.sqrt(dx * dx + dy * dy);
-      const angle = (Math.atan2(dy, dx) * 180) / Math.PI;
-
-      segments.push({
-        id: `${start.id}-${end.id}`,
-        left: `${startPct.leftPct}%`,
-        top: `${startPct.topPct}%`,
-        width,
-        angle,
-      });
+      if (currentGroup.length === 0) {
+        currentGroup.push(getNodePositionPercent(start, currentFloor));
+      }
+      currentGroup.push(getNodePositionPercent(end, currentFloor));
     }
 
-    return segments;
+    if (currentGroup.length >= 2) groups.push(currentGroup);
+    return groups;
   }, [currentFloor, routePath]);
 
   const crossFloorTransitions = useMemo<RouteTransition[]>(() => {
@@ -233,7 +220,6 @@ export default function IndoorMapModal({
       if (start.floor === end.floor) continue;
 
       if (start.floor === currentFloor.floor) {
-        const startPct = getNodePositionPercent(start, currentFloor);
         const isStairTransition =
           start.type.toLowerCase().includes("stair") ||
           end.type.toLowerCase().includes("stair");
@@ -250,18 +236,13 @@ export default function IndoorMapModal({
 
         transitions.push({
           id: `up-${start.id}-${end.id}`,
-          left: startPct.left,
-          top: startPct.top,
           message: transitionMessage,
         });
       }
 
       if (end.floor === currentFloor.floor) {
-        const endPct = getNodePositionPercent(end, currentFloor);
         transitions.push({
           id: `down-${start.id}-${end.id}`,
-          left: endPct.left,
-          top: endPct.top,
           message: `Arrive from Floor ${getFloorLabel(start.floor)}`,
         });
       }
@@ -623,21 +604,26 @@ export default function IndoorMapModal({
                     >
                       <Image source={currentFloor.image} style={styles.floorImage} resizeMode="stretch" />
                       <View style={styles.roomOverlay}>
-                        {routeSegments.map((segment) => (
-                          <View
-                            key={segment.id}
+                        {routePolylines.length > 0 && (
+                          <Svg
                             testID="route-segment"
-                            style={[
-                              styles.routeSegment,
-                              {
-                                left: segment.left,
-                                top: segment.top,
-                                width: `${segment.width}%`,
-                                transform: [{ rotate: `${segment.angle}deg` }],
-                              },
-                            ]}
-                          />
-                        ))}
+                            style={{ position: "absolute", width: "100%", height: "100%" }}
+                            viewBox="0 0 100 100"
+                            preserveAspectRatio="none"
+                          >
+                            {routePolylines.map((points, idx) => (
+                              <Polyline
+                                key={`poly-${idx}`}
+                                points={points.map(p => `${p.leftPct},${p.topPct}`).join(" ")}
+                                stroke="#1565C0"
+                                strokeWidth="1.5"
+                                strokeLinejoin="round"
+                                strokeLinecap="round"
+                                fill="none"
+                              />
+                            ))}
+                          </Svg>
+                        )}
 
                         {routePath.length > 1 && currentFloor && (() => {
                           const startNode = routePath[0];
