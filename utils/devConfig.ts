@@ -18,5 +18,5 @@ export const DEV_OVERRIDE_TIME: Date | null = null; // UNCOMMENT TO USE REAL TIM
 // Loyola CJ  -> { latitude: 45.4576, longitude: -73.6396 };
 
 // export const DEV_OVERRIDE_LOCATION: { latitude: number; longitude: number } | null =
-//   { latitude: 45.4971, longitude: -73.5789 }; // UNCOMMENT TO USE OVERRIDE LOCATION
+  // { latitude: 45.4971, longitude: -73.5789 }; // UNCOMMENT TO USE OVERRIDE LOCATION
 export const DEV_OVERRIDE_LOCATION: { latitude: number; longitude: number } | null = null; // UNCOMMENT TO USE REAL LOCATION
