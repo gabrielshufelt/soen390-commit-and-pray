@@ -275,7 +275,7 @@ export default function BuildingModal({ visible, building, onClose, onDirections
               {hasIndoorMap && onShowIndoorMap && (
                 <TouchableOpacity
                   style={[styles.directionButton, styles.indoorMapButton]}
-                  onPress={() => handleClose(() => onShowIndoorMap(code!))}
+                  onPress={() => handleClose(() => onShowIndoorMap(code))}
                   activeOpacity={0.7}
                   testID="indoor-map-button"
                 >
