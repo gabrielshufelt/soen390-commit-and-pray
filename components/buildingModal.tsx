@@ -201,6 +201,238 @@ type PoiDetailsSectionProps = Readonly<{
   onWebsitePress: () => void;
 }>;
 
+type IconConfig = Parameters<typeof renderIcon>[0];
+
+const getAddressString = (
+  mode: 'building' | 'poi',
+  address?: string,
+  number?: string,
+  street?: string,
+  city?: string
+): string => {
+  if (mode === 'poi') {
+    return address ?? '';
+  }
+
+  const addressParts: string[] = [];
+  if (number && street) {
+    addressParts.push(`${number} ${street}`);
+  } else if (street) {
+    addressParts.push(street);
+  } else if (number) {
+    addressParts.push(number);
+  }
+
+  if (city) {
+    addressParts.push(city);
+  }
+
+  return addressParts.join(', ');
+};
+
+type BuildingFeatureSectionProps = Readonly<{
+  title: string;
+  items?: string[];
+  icons: Record<string, IconConfig>;
+  iconTileColor: string;
+  secondaryColor: string;
+  isDark: boolean;
+}>;
+
+function BuildingFeatureSection({
+  title,
+  items,
+  icons,
+  iconTileColor,
+  secondaryColor,
+  isDark,
+}: BuildingFeatureSectionProps) {
+  if (!items || items.length === 0) return null;
+
+  return (
+    <View style={styles.section}>
+      <Text style={[styles.sectionTitle, { color: secondaryColor }]}>{title}</Text>
+      <View style={styles.iconsRow}>
+        {items.map((key) => {
+          const config = icons[key];
+          if (!config) return null;
+
+          return (
+            <View key={key} style={[styles.iconTile, { backgroundColor: iconTileColor }]}>
+              {renderIcon(config, 20, isDark ? '#e0e0e0' : '#444')}
+              <Text style={[styles.iconLabel, { color: secondaryColor }]} numberOfLines={1}>
+                {config.label}
+              </Text>
+            </View>
+          );
+        })}
+      </View>
+    </View>
+  );
+}
+
+type BuildingContentSectionProps = Readonly<{
+  mode: 'building' | 'poi';
+  amenities?: string[];
+  accessibility?: string[];
+  secondaryColor: string;
+  iconTileColor: string;
+  textColor: string;
+  isDark: boolean;
+  isOpen?: boolean;
+  rating?: number;
+  pricing?: string;
+  website?: string;
+  phoneNumber?: string;
+  detailsLoading?: boolean;
+  detailsError?: string;
+  name?: string;
+  onPhonePress: () => void;
+  onWebsitePress: () => void;
+}>;
+
+function BuildingContentSection({
+  mode,
+  amenities,
+  accessibility,
+  secondaryColor,
+  iconTileColor,
+  textColor,
+  isDark,
+  isOpen,
+  rating,
+  pricing,
+  website,
+  phoneNumber,
+  detailsLoading,
+  detailsError,
+  name,
+  onPhonePress,
+  onWebsitePress,
+}: BuildingContentSectionProps) {
+  if (mode === 'poi') {
+    return (
+      <PoiDetailsSection
+        secondaryColor={secondaryColor}
+        textColor={textColor}
+        isOpen={isOpen}
+        rating={rating}
+        pricing={pricing}
+        website={website}
+        phoneNumber={phoneNumber}
+        detailsLoading={detailsLoading}
+        detailsError={detailsError}
+        isDark={isDark}
+        name={name}
+        onPhonePress={onPhonePress}
+        onWebsitePress={onWebsitePress}
+      />
+    );
+  }
+
+  return (
+    <>
+      <BuildingFeatureSection
+        title="SERVICES"
+        items={amenities}
+        icons={AMENITY_ICONS}
+        iconTileColor={iconTileColor}
+        secondaryColor={secondaryColor}
+        isDark={isDark}
+      />
+      <BuildingFeatureSection
+        title="ACCESSIBILITY"
+        items={accessibility}
+        icons={ACCESSIBILITY_ICONS}
+        iconTileColor={iconTileColor}
+        secondaryColor={secondaryColor}
+        isDark={isDark}
+      />
+    </>
+  );
+}
+
+type BuildingActionsSectionProps = Readonly<{
+  mode: 'building' | 'poi';
+  building: BuildingData;
+  indoorMapCode?: string;
+  onDirectionsFrom?: (building: BuildingData) => void;
+  onDirectionsTo?: (building: BuildingData) => void;
+  onGetDirections?: (building: BuildingData) => void;
+  onShowIndoorMap?: (buildingCode: string) => void;
+  onClose: (onAfterClose?: () => void) => void;
+}>;
+
+function BuildingActionsSection({
+  mode,
+  building,
+  indoorMapCode,
+  onDirectionsFrom,
+  onDirectionsTo,
+  onGetDirections,
+  onShowIndoorMap,
+  onClose,
+}: BuildingActionsSectionProps) {
+  if (mode === 'poi') {
+    return (
+      <TouchableOpacity
+        style={[styles.directionButton, styles.directionButtonTo, { backgroundColor: COLORS.red }]}
+        onPress={() => {
+          onGetDirections?.(building);
+          onClose();
+        }}
+        activeOpacity={0.7}
+        testID="directions-poi-button"
+      >
+        <View style={styles.buttonIcon}>{renderIcon(UI_ICONS.route, 16, '#fff')}</View>
+        <Text style={styles.directionButtonToText}>Get Directions</Text>
+      </TouchableOpacity>
+    );
+  }
+
+  return (
+    <>
+      {indoorMapCode && onShowIndoorMap && (
+        <TouchableOpacity
+          style={[styles.directionButton, styles.indoorMapButton]}
+          onPress={() => onClose(() => onShowIndoorMap(indoorMapCode))}
+          activeOpacity={0.7}
+          testID="indoor-map-button"
+        >
+          <View style={styles.buttonIcon}>{renderIcon(UI_ICONS.mapMarker, 16, COLORS.red)}</View>
+          <Text style={[styles.indoorMapButtonText, { color: COLORS.red }]}>Show Indoor Map</Text>
+        </TouchableOpacity>
+      )}
+
+      <TouchableOpacity
+        style={[styles.directionButton, styles.directionButtonFrom, { borderColor: COLORS.red }]}
+        onPress={() => {
+          onDirectionsFrom?.(building);
+          onClose();
+        }}
+        activeOpacity={0.7}
+        testID="directions-from-button"
+      >
+        <View style={styles.buttonIcon}>{renderIcon(UI_ICONS.route, 16, COLORS.red)}</View>
+        <Text style={[styles.directionButtonFromText, { color: COLORS.red }]}>Get Directions From</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={[styles.directionButton, styles.directionButtonTo, { backgroundColor: COLORS.red }]}
+        onPress={() => {
+          onDirectionsTo?.(building);
+          onClose();
+        }}
+        activeOpacity={0.7}
+        testID="directions-to-button"
+      >
+        <View style={styles.buttonIcon}>{renderIcon(UI_ICONS.route, 16, '#fff')}</View>
+        <Text style={styles.directionButtonToText}>Get Directions To</Text>
+      </TouchableOpacity>
+    </>
+  );
+}
+
 function PoiDetailsSection({
   secondaryColor,
   textColor,
@@ -302,7 +534,7 @@ export default function BuildingModal({ visible, building, onClose, onDirections
         friction: 11,
       }).start();
     }
-  }, [visible]);
+  }, [visible, translateY]);
 
   const handleClose = useCallback((onAfterClose?: () => void) => {
     Animated.timing(translateY, {
@@ -358,13 +590,7 @@ export default function BuildingModal({ visible, building, onClose, onDirections
   const buildingImage = getBuildingImageSource(mode, photoUrl, code);
   const hasAddress = mode === 'poi' ? !!address : !!(number || street || city);
   const indoorMapCode = mode === 'building' && code && getBuildingIndoorMap(code) ? code : undefined;
-
-  const addressParts: string[] = [];
-  if (number && street) addressParts.push(`${number} ${street}`);
-  else if (street) addressParts.push(street);
-  else if (number) addressParts.push(number);
-  if (city) addressParts.push(city);
-  const addressString = mode === 'poi' ? address ?? '' : addressParts.join(', ');
+  const addressString = getAddressString(mode, address, number, street, city);
 
   return (
     <Modal visible={visible} transparent animationType="none" onRequestClose={() => handleClose()}>
@@ -427,121 +653,37 @@ export default function BuildingModal({ visible, building, onClose, onDirections
               </View>
             )}
 
-            {mode === 'poi' && (
-              <PoiDetailsSection
-                secondaryColor={secondaryColor}
-                textColor={textColor}
-                isOpen={isOpen}
-                rating={rating}
-                pricing={pricing}
-                website={website}
-                phoneNumber={phoneNumber}
-                detailsLoading={detailsLoading}
-                detailsError={detailsError}
-                isDark={isDark}
-                name={name}
-                onPhonePress={handlePhonePress}
-                onWebsitePress={handleWebsitePress}
-              />
-            )}
-
-            {mode === 'building' && amenities && amenities.length > 0 && (
-              <View style={styles.section}>
-                <Text style={[styles.sectionTitle, { color: secondaryColor }]}>SERVICES</Text>
-                <View style={styles.iconsRow}>
-                  {amenities.map((key) => {
-                    const config = AMENITY_ICONS[key];
-                    if (!config) return null;
-                    return (
-                      <View key={key} style={[styles.iconTile, { backgroundColor: iconTileColor }]}>
-                        {renderIcon(config, 20, isDark ? '#e0e0e0' : '#444')}
-                        <Text style={[styles.iconLabel, { color: secondaryColor }]} numberOfLines={1}>
-                          {config.label}
-                        </Text>
-                      </View>
-                    );
-                  })}
-                </View>
-              </View>
-            )}
-
-            {mode === 'building' && accessibility && accessibility.length > 0 && (
-              <View style={styles.section}>
-                <Text style={[styles.sectionTitle, { color: secondaryColor }]}>ACCESSIBILITY</Text>
-                <View style={styles.iconsRow}>
-                  {accessibility.map((key) => {
-                    const config = ACCESSIBILITY_ICONS[key];
-                    if (!config) return null;
-                    return (
-                      <View key={key} style={[styles.iconTile, { backgroundColor: iconTileColor }]}>
-                        {renderIcon(config, 20, isDark ? '#e0e0e0' : '#444')}
-                        <Text style={[styles.iconLabel, { color: secondaryColor }]} numberOfLines={1}>
-                          {config.label}
-                        </Text>
-                      </View>
-                    );
-                  })}
-                </View>
-              </View>
-            )}
+            <BuildingContentSection
+              mode={mode}
+              amenities={amenities}
+              accessibility={accessibility}
+              secondaryColor={secondaryColor}
+              iconTileColor={iconTileColor}
+              textColor={textColor}
+              isDark={isDark}
+              isOpen={isOpen}
+              rating={rating}
+              pricing={pricing}
+              website={website}
+              phoneNumber={phoneNumber}
+              detailsLoading={detailsLoading}
+              detailsError={detailsError}
+              name={name}
+              onPhonePress={handlePhonePress}
+              onWebsitePress={handleWebsitePress}
+            />
 
             <View style={styles.buttonsContainer}>
-              {mode === 'building' && (
-                <>
-                  {indoorMapCode && onShowIndoorMap && (
-                    <TouchableOpacity
-                      style={[styles.directionButton, styles.indoorMapButton]}
-                      onPress={() => handleClose(() => onShowIndoorMap(indoorMapCode))}
-                      activeOpacity={0.7}
-                      testID="indoor-map-button"
-                    >
-                      <View style={styles.buttonIcon}>{renderIcon(UI_ICONS.mapMarker, 16, COLORS.red)}</View>
-                      <Text style={[styles.indoorMapButtonText, { color: COLORS.red }]}>Show Indoor Map</Text>
-                    </TouchableOpacity>
-                  )}
-
-                  <TouchableOpacity
-                    style={[styles.directionButton, styles.directionButtonFrom, { borderColor: COLORS.red }]}
-                    onPress={() => {
-                      onDirectionsFrom?.(building);
-                      handleClose();
-                    }}
-                    activeOpacity={0.7}
-                    testID="directions-from-button"
-                  >
-                    <View style={styles.buttonIcon}>{renderIcon(UI_ICONS.route, 16, COLORS.red)}</View>
-                    <Text style={[styles.directionButtonFromText, { color: COLORS.red }]}>Get Directions From</Text>
-                  </TouchableOpacity>
-
-                  <TouchableOpacity
-                    style={[styles.directionButton, styles.directionButtonTo, { backgroundColor: COLORS.red }]}
-                    onPress={() => {
-                      onDirectionsTo?.(building);
-                      handleClose();
-                    }}
-                    activeOpacity={0.7}
-                    testID="directions-to-button"
-                  >
-                    <View style={styles.buttonIcon}>{renderIcon(UI_ICONS.route, 16, '#fff')}</View>
-                    <Text style={styles.directionButtonToText}>Get Directions To</Text>
-                  </TouchableOpacity>
-                </>
-              )}
-
-              {mode === 'poi' && (
-                <TouchableOpacity
-                  style={[styles.directionButton, styles.directionButtonTo, { backgroundColor: COLORS.red }]}
-                  onPress={() => {
-                    onGetDirections?.(building);
-                    handleClose();
-                  }}
-                  activeOpacity={0.7}
-                  testID="directions-poi-button"
-                >
-                  <View style={styles.buttonIcon}>{renderIcon(UI_ICONS.route, 16, '#fff')}</View>
-                  <Text style={styles.directionButtonToText}>Get Directions</Text>
-                </TouchableOpacity>
-              )}
+              <BuildingActionsSection
+                mode={mode}
+                building={building}
+                indoorMapCode={indoorMapCode}
+                onDirectionsFrom={onDirectionsFrom}
+                onDirectionsTo={onDirectionsTo}
+                onGetDirections={onGetDirections}
+                onShowIndoorMap={onShowIndoorMap}
+                onClose={handleClose}
+              />
             </View>
           </ScrollView>
         </Animated.View>
