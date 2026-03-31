@@ -611,17 +611,20 @@ export default function IndoorMapModal({
                             viewBox="0 0 100 100"
                             preserveAspectRatio="none"
                           >
-                            {routePolylines.map((points, idx) => (
+                            {routePolylines.map((points) => {
+                              const pointsStr = points.map(p => `${p.leftPct},${p.topPct}`).join(" ");
+                              return (
                               <Polyline
-                                key={`poly-${idx}`}
-                                points={points.map(p => `${p.leftPct},${p.topPct}`).join(" ")}
+                                key={pointsStr}
+                                points={pointsStr}
                                 stroke="#1565C0"
                                 strokeWidth="1.5"
                                 strokeLinejoin="round"
                                 strokeLinecap="round"
                                 fill="none"
                               />
-                            ))}
+                              );
+                            })}
                           </Svg>
                         )}
 
