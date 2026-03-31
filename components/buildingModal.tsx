@@ -132,6 +132,59 @@ const getBuildingImageSource = (
   return code ? BUILDING_IMAGES[code] : null;
 };
 
+const openWebsiteUrl = async (url?: string): Promise<void> => {
+  if (!url) return;
+  const normalizedUrl = /^https?:\/\//i.test(url) ? url : `https://${url}`;
+
+  const supported = await Linking.canOpenURL(normalizedUrl);
+  if (supported) {
+    await Linking.openURL(normalizedUrl);
+  }
+};
+
+const placePhoneCall = async (phone?: string): Promise<void> => {
+  if (!phone) return;
+  const normalizedPhone = phone.replaceAll(/[^\d+]/g, '');
+  if (!normalizedPhone) {
+    Alert.alert('Call unavailable', 'This phone number is not valid.');
+    return;
+  }
+
+  Alert.alert(
+    'Call phone number',
+    phone,
+    [
+      {
+        text: 'Cancel',
+        style: 'cancel',
+      },
+      {
+        text: 'Call',
+        style: 'default',
+        onPress: () => {
+          const callPhone = async () => {
+            const primaryScheme = Platform.OS === 'ios' ? 'telprompt' : 'tel';
+            const primaryUrl = `${primaryScheme}:${normalizedPhone}`;
+            const fallbackUrl = `tel:${normalizedPhone}`;
+
+            try {
+              await Linking.openURL(primaryUrl);
+            } catch {
+              try {
+                await Linking.openURL(fallbackUrl);
+              } catch {
+                Alert.alert('Call unavailable', 'This device cannot place phone calls.');
+              }
+            }
+          };
+          callPhone().catch(() => undefined);
+        },
+      },
+    ],
+    { cancelable: true }
+  );
+};
+
 type PoiDetailsSectionProps = Readonly<{
   secondaryColor: string;
   textColor: string;
@@ -267,71 +320,18 @@ export default function BuildingModal({ visible, building, onClose, onDirections
 
   const panResponder = useRef(buildPanResponder({ translateY, currentPosRef, onClose })).current;
 
-  const handleOpenWebsite = useCallback(async (url?: string) => {
-    if (!url) return;
-    const normalizedUrl = /^https?:\/\//i.test(url) ? url : `https://${url}`;
-
-    const supported = await Linking.canOpenURL(normalizedUrl);
-    if (supported) {
-      await Linking.openURL(normalizedUrl);
-    }
-  }, []);
-
-  const handleCallPhone = useCallback(async (phone?: string) => {
-    if (!phone) return;
-    const normalizedPhone = phone.replaceAll(/[^\d+]/g, '');
-    if (!normalizedPhone) {
-      Alert.alert('Call unavailable', 'This phone number is not valid.');
-      return;
-    }
-
-    Alert.alert(
-      'Call phone number',
-      phone,
-      [
-        {
-          text: 'Cancel',
-          style: 'cancel',
-        },
-        {
-          text: 'Call',
-          style: 'default',
-          onPress: () => {
-            const callPhone = async () => {
-              const primaryScheme = Platform.OS === 'ios' ? 'telprompt' : 'tel';
-              const primaryUrl = `${primaryScheme}:${normalizedPhone}`;
-              const fallbackUrl = `tel:${normalizedPhone}`;
-
-              try {
-                await Linking.openURL(primaryUrl);
-              } catch {
-                try {
-                  await Linking.openURL(fallbackUrl);
-                } catch {
-                  Alert.alert('Call unavailable', 'This device cannot place phone calls.');
-                }
-              }
-            };
-            callPhone().catch(() => undefined);
-          },
-        },
-      ],
-      { cancelable: true }
-    );
-  }, []);
-
   const phoneNumberForPress = building?.properties?.phoneNumber;
   const websiteForPress = building?.properties?.website;
 
   const handlePhonePress = useCallback(() => {
     if (!phoneNumberForPress) return;
-    handleCallPhone(phoneNumberForPress).catch(() => undefined);
-  }, [handleCallPhone, phoneNumberForPress]);
+    placePhoneCall(phoneNumberForPress).catch(() => undefined);
+  }, [phoneNumberForPress]);
 
   const handleWebsitePress = useCallback(() => {
     if (!websiteForPress) return;
-    handleOpenWebsite(websiteForPress).catch(() => undefined);
-  }, [handleOpenWebsite, websiteForPress]);
+    openWebsiteUrl(websiteForPress).catch(() => undefined);
+  }, [websiteForPress]);
 
   if (!building) return null;
 

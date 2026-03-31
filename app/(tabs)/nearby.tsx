@@ -513,6 +513,88 @@ const mapBuildingDataToPoi = (buildingData: BuildingData, selectedPoiDetails: PO
   };
 };
 
+const fetchGooglePlaceDetails = async (poi: POI, apiKey: string): Promise<GooglePlaceDetailsResponse> => {
+  const params = new URLSearchParams({
+    place_id: poi.id,
+    fields: [
+      'formatted_address',
+      'formatted_phone_number',
+      'international_phone_number',
+      'price_level',
+      'photos',
+      'website',
+    ].join(','),
+    key: apiKey,
+  });
+
+  const response = await fetch(
+    `https://maps.googleapis.com/maps/api/place/details/json?${params.toString()}`
+  );
+
+  const data: GooglePlaceDetailsResponse = await response.json();
+
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status}`);
+  }
+
+  if (data.status !== 'OK') {
+    throw new Error(data.error_message ?? data.status);
+  }
+
+  return data;
+};
+
+const buildDetailedPoi = (poi: POI, details: GooglePlaceDetailsResponse, apiKey: string): POI => {
+  const photoReference = details.result?.photos?.[0]?.photo_reference;
+  const photoUrl = photoReference
+    ? `https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=${encodeURIComponent(photoReference)}&key=${apiKey}`
+    : undefined;
+
+  return {
+    ...poi,
+    address: details.result?.formatted_address ?? poi.address,
+    phoneNumber: details.result?.formatted_phone_number ?? details.result?.international_phone_number,
+    pricing: formatPriceLevel(details.result?.price_level),
+    website: details.result?.website,
+    photoUrl,
+  };
+};
+
+const resolvePoiDetails = async (
+  poi: POI,
+  apiKey: string
+): Promise<{ details: POI | null; error: string | null }> => {
+  if (poi.source !== 'google') {
+    return {
+      details: {
+        ...poi,
+        pricing: poi.pricing ?? 'Free',
+      },
+      error: null,
+    };
+  }
+
+  if (!apiKey) {
+    return {
+      details: null,
+      error: 'Missing Google Maps API key',
+    };
+  }
+
+  try {
+    const details = await fetchGooglePlaceDetails(poi, apiKey);
+    return {
+      details: buildDetailedPoi(poi, details, apiKey),
+      error: null,
+    };
+  } catch (error) {
+    return {
+      details: null,
+      error: error instanceof Error ? error.message : 'Unable to load POI details',
+    };
+  }
+};
+
 export default function NearbyScreen() {
   const { colorScheme } = useTheme();
   const isDark = colorScheme === 'dark';
@@ -574,65 +656,21 @@ export default function NearbyScreen() {
     setPoiDetailsError(null);
     setIsPoiDetailsLoading(false);
 
-    if (poi.source !== 'google') {
-      setSelectedPoiDetails({
-        ...poi,
-        pricing: poi.pricing ?? 'Free',
-      });
-      return;
+    const needsGoogleDetails = poi.source === 'google';
+    if (needsGoogleDetails) {
+      setIsPoiDetailsLoading(true);
     }
 
-    if (!apiKey) {
-      setPoiDetailsError('Missing Google Maps API key');
-      return;
+    const { details, error } = await resolvePoiDetails(poi, apiKey);
+
+    if (details) {
+      setSelectedPoiDetails(details);
+    }
+    if (error) {
+      setPoiDetailsError(error);
     }
 
-    setIsPoiDetailsLoading(true);
-
-    try {
-      const params = new URLSearchParams({
-        place_id: poi.id,
-        fields: [
-          'formatted_address',
-          'formatted_phone_number',
-          'international_phone_number',
-          'price_level',
-          'photos',
-          'website',
-        ].join(','),
-        key: apiKey,
-      });
-
-      const response = await fetch(
-        `https://maps.googleapis.com/maps/api/place/details/json?${params.toString()}`
-      );
-
-      const data: GooglePlaceDetailsResponse = await response.json();
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
-      }
-
-      if (data.status !== 'OK') {
-        throw new Error(data.error_message ?? data.status);
-      }
-
-      const photoReference = data.result?.photos?.[0]?.photo_reference;
-      const photoUrl = photoReference
-        ? `https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=${encodeURIComponent(photoReference)}&key=${apiKey}`
-        : undefined;
-
-      setSelectedPoiDetails({
-        ...poi,
-        address: data.result?.formatted_address ?? poi.address,
-        phoneNumber: data.result?.formatted_phone_number ?? data.result?.international_phone_number,
-        pricing: formatPriceLevel(data.result?.price_level),
-        website: data.result?.website,
-        photoUrl,
-      });
-    } catch (error) {
-      setPoiDetailsError(error instanceof Error ? error.message : 'Unable to load POI details');
-    } finally {
+    if (needsGoogleDetails) {
       setIsPoiDetailsLoading(false);
     }
   };
