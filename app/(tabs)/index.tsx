@@ -946,12 +946,6 @@ export default function Index() {
         onDirectionsFrom={handleDirectionsFrom}
         onDirectionsTo={handleDirectionsTo}
         onShowIndoorMap={handleShowIndoorMapFromModal}
-        onGetDirections={(building) => {
-          if (effectiveLocation) {
-            startDirectionsToBuilding(effectiveLocation, building.geometry.coordinates[0]);
-          }
-          handleCloseModal();
-        }}
       />
 
       <ShuttleScheduleModal

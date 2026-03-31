@@ -42,11 +42,10 @@ interface BuildingModalProps {
   onClose: () => void;
   onDirectionsFrom: (building: BuildingData) => void;
   onDirectionsTo: (building: BuildingData) => void;
-  onGetDirections?: (building: BuildingData) => void;
   onShowIndoorMap?: (buildingCode: string) => void;
 }
 
-export default function BuildingModal({ visible, building, onClose, onDirectionsFrom, onDirectionsTo, onGetDirections, onShowIndoorMap }: BuildingModalProps) {
+export default function BuildingModal({ visible, building, onClose, onDirectionsFrom, onDirectionsTo, onShowIndoorMap }: Readonly<BuildingModalProps>) {
   const { colorScheme } = useTheme();
   const isDark = colorScheme === 'dark';
 

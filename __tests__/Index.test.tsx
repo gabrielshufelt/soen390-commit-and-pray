@@ -993,48 +993,6 @@ describe('<Index />', () => {
     });
   });
 
-  // --- onGetDirections via BuildingModal ---
-  describe('onGetDirections via BuildingModal', () => {
-    it('calls startDirectionsToBuilding when location is available', async () => {
-      const { getAllByTestId } = await renderWithTheme(<Index />);
-      const polygons = await waitFor(() => getAllByTestId('polygon'));
-
-      // Open modal to populate building data
-      fireEvent.press(polygons[0]);
-
-      await waitFor(() => expect(mockBuildingModalProperties.onGetDirections).toBeDefined());
-
-      const mockBuilding = { geometry: { coordinates: [[[-73.579, 45.497], [-73.578, 45.497]]] } };
-      act(() => {
-        mockBuildingModalProperties.onGetDirections(mockBuilding);
-      });
-
-      expect(mockStartDirectionsToBuilding).toHaveBeenCalledWith(
-        sgwLocation,
-        mockBuilding.geometry.coordinates[0]
-      );
-    });
-
-    it('does not call startDirectionsToBuilding when location is null', async () => {
-      mockWatchLocation.mockReturnValue(noLocationWatch);
-      mockPermissionState.mockReturnValue(deniedPermission);
-
-      const { getAllByTestId } = await renderWithTheme(<Index />);
-      const polygons = await waitFor(() => getAllByTestId('polygon'));
-
-      fireEvent.press(polygons[0]);
-
-      await waitFor(() => expect(mockBuildingModalProperties.onGetDirections).toBeDefined());
-
-      const mockBuilding = { geometry: { coordinates: [[[-73.579, 45.497], [-73.578, 45.497]]] } };
-      act(() => {
-        mockBuildingModalProperties.onGetDirections(mockBuilding);
-      });
-
-      expect(mockStartDirectionsToBuilding).not.toHaveBeenCalled();
-    });
-  });
-
   // --- MapViewDirections onError callbacks ---
   describe('MapViewDirections onError', () => {
     it('logs error for active non-shuttle route', async () => {
