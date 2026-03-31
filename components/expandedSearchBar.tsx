@@ -325,6 +325,7 @@ export default function ExpandedSearchBar({
                 onBlur={() => setStartFocused(false)}
                 onChangeText={(t) => {
                   setStartText(t);
+                  onChangeStart(null);
                 }}
                 returnKeyType="search"
               />
@@ -452,6 +453,7 @@ export default function ExpandedSearchBar({
                 onBlur={() => setDestFocused(false)}
                 onChangeText={(t) => {
                   setDestText(t);
+                  onChangeDestination(null);
                 }}
                 returnKeyType="search"
               />
