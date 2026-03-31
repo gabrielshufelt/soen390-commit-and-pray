@@ -243,6 +243,42 @@ describe('<ExpandedSearchBar />', () => {
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
+  it('shows clear start button when start input has text and clears on press', async () => {
+    const onChangeStart = jest.fn();
+    const { getByTestId, getByLabelText } = render(
+      <ExpandedSearchBar {...baseProps} onChangeStart={onChangeStart} />
+    );
+
+    const startInput = getByTestId('route.start.input');
+    fireEvent(startInput, 'focus');
+    fireEvent.changeText(startInput, 'Hall');
+
+    await waitFor(() => {
+      expect(getByLabelText('Clear start')).toBeTruthy();
+    });
+
+    fireEvent.press(getByLabelText('Clear start'));
+    expect(onChangeStart).toHaveBeenCalledWith(null);
+  });
+
+  it('shows clear destination button when dest input has text and clears on press', async () => {
+    const onChangeDestination = jest.fn();
+    const { getByTestId, getByLabelText } = render(
+      <ExpandedSearchBar {...baseProps} onChangeDestination={onChangeDestination} />
+    );
+
+    const destInput = getByTestId('route.dest.input');
+    fireEvent(destInput, 'focus');
+    fireEvent.changeText(destInput, 'Hall');
+
+    await waitFor(() => {
+      expect(getByLabelText('Clear destination')).toBeTruthy();
+    });
+
+    fireEvent.press(getByLabelText('Clear destination'));
+    expect(onChangeDestination).toHaveBeenCalledWith(null);
+  });
+
   it('shows End Directions button when route is active', () => {
     const onEndRoute = jest.fn();
     const { getByTestId } = render(

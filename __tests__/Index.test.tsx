@@ -588,6 +588,35 @@ describe('<Index />', () => {
     });
   });
 
+  describe('exit preview button', () => {
+    it('renders exit-preview.button when previewActive is true and calls endDirections on press', async () => {
+      const previewDirectionsState = {
+        ...defaultDirections,
+        state: {
+          ...defaultDirections.state,
+          origin: { latitude: 45.497, longitude: -73.579 },
+          isActive: false,
+        },
+      };
+      mockDirectionsHook.mockReturnValue(previewDirectionsState);
+
+      const { getByTestId } = await renderWithTheme(<Index />);
+
+      await waitFor(() => {
+        expect(getByTestId('exit-preview.button')).toBeTruthy();
+      });
+
+      fireEvent.press(getByTestId('exit-preview.button'));
+      expect(mockEndDirections).toHaveBeenCalled();
+    });
+
+    it('does not render exit-preview.button when not in preview state', async () => {
+      const { queryByTestId } = await renderWithTheme(<Index />);
+      await waitFor(() => expect(mockSearchBarProperties.onPreviewRoute).toBeDefined());
+      expect(queryByTestId('exit-preview.button')).toBeNull();
+    });
+  });
+
   describe('handleEndDirections', () => {
     it('calls endDirections and clears start and destination choices', async () => {
       await renderWithTheme(<Index />);
