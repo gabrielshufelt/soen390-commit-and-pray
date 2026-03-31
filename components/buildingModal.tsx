@@ -48,7 +48,7 @@ export interface BuildingData {
   };
 }
 
-interface BuildingModalProps {
+type BuildingModalProps = Readonly<{
   visible: boolean;
   building: BuildingData | null;
   onClose: () => void;
@@ -56,7 +56,79 @@ interface BuildingModalProps {
   onDirectionsTo?: (building: BuildingData) => void;
   onGetDirections?: (building: BuildingData) => void;
   mode?: 'building' | 'poi';
-}
+}>;
+
+type PanReleaseParams = Readonly<{
+  translateY: Animated.Value;
+  currentPosRef: React.MutableRefObject<number>;
+  onClose: () => void;
+}>;
+
+const buildPanResponder = ({ translateY, currentPosRef, onClose }: PanReleaseParams) =>
+  PanResponder.create({
+    onStartShouldSetPanResponder: () => true,
+    onMoveShouldSetPanResponder: (_, gs) => Math.abs(gs.dy) > 5,
+    onPanResponderMove: (_, gs) => {
+      const newPos = currentPosRef.current + gs.dy;
+      if (newPos >= 0) {
+        translateY.setValue(newPos);
+      }
+    },
+    onPanResponderRelease: (_, gs) => {
+      const finalPos = Math.max(0, currentPosRef.current + gs.dy);
+
+      if (gs.vy > VELOCITY_THRESHOLD) {
+        currentPosRef.current = SHEET_HEIGHT;
+        Animated.timing(translateY, {
+          toValue: SHEET_HEIGHT,
+          duration: 250,
+          useNativeDriver: true,
+        }).start(() => onClose());
+        return;
+      }
+
+      if (gs.vy < -VELOCITY_THRESHOLD) {
+        currentPosRef.current = 0;
+        Animated.spring(translateY, {
+          toValue: 0,
+          useNativeDriver: true,
+          tension: 65,
+          friction: 11,
+        }).start();
+        return;
+      }
+
+      if (finalPos > DISMISS_THRESHOLD) {
+        currentPosRef.current = SHEET_HEIGHT;
+        Animated.timing(translateY, {
+          toValue: SHEET_HEIGHT,
+          duration: 250,
+          useNativeDriver: true,
+        }).start(() => onClose());
+        return;
+      }
+
+      currentPosRef.current = 0;
+      Animated.spring(translateY, {
+        toValue: 0,
+        useNativeDriver: true,
+        tension: 65,
+        friction: 11,
+      }).start();
+    },
+  });
+
+const getBuildingImageSource = (
+  mode: 'building' | 'poi',
+  photoUrl?: string,
+  code?: string
+) => {
+  if (mode === 'poi') {
+    return photoUrl ? { uri: photoUrl } : null;
+  }
+
+  return code ? BUILDING_IMAGES[code] : null;
+};
 
 export default function BuildingModal({ visible, building, onClose, onDirectionsFrom, onDirectionsTo, onGetDirections, mode = 'building' }: BuildingModalProps) {
   const { colorScheme } = useTheme();
@@ -95,60 +167,7 @@ export default function BuildingModal({ visible, building, onClose, onDirections
     });
   }, [onClose, translateY]);
 
-  const panResponder = useRef(
-    PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
-      onMoveShouldSetPanResponder: (_, gs) => Math.abs(gs.dy) > 5,
-      onPanResponderMove: (_, gs) => {
-        const newPos = currentPosRef.current + gs.dy;
-        if (newPos >= 0) {
-          translateY.setValue(newPos);
-        }
-      },
-      onPanResponderRelease: (_, gs) => {
-        const finalPos = Math.max(0, currentPosRef.current + gs.dy);
-
-        if (gs.vy > VELOCITY_THRESHOLD) {
-          currentPosRef.current = SHEET_HEIGHT;
-          Animated.timing(translateY, {
-            toValue: SHEET_HEIGHT,
-            duration: 250,
-            useNativeDriver: true,
-          }).start(() => onClose());
-          return;
-        }
-
-        if (gs.vy < -VELOCITY_THRESHOLD) {
-          currentPosRef.current = 0;
-          Animated.spring(translateY, {
-            toValue: 0,
-            useNativeDriver: true,
-            tension: 65,
-            friction: 11,
-          }).start();
-          return;
-        }
-
-        if (finalPos > DISMISS_THRESHOLD) {
-          currentPosRef.current = SHEET_HEIGHT;
-          Animated.timing(translateY, {
-            toValue: SHEET_HEIGHT,
-            duration: 250,
-            useNativeDriver: true,
-          }).start(() => onClose());
-          return;
-        }
-
-        currentPosRef.current = 0;
-        Animated.spring(translateY, {
-          toValue: 0,
-          useNativeDriver: true,
-          tension: 65,
-          friction: 11,
-        }).start();
-      },
-    })
-  ).current;
+  const panResponder = useRef(buildPanResponder({ translateY, currentPosRef, onClose })).current;
 
   const handleOpenWebsite = useCallback(async (url?: string) => {
     if (!url) return;
@@ -162,7 +181,7 @@ export default function BuildingModal({ visible, building, onClose, onDirections
 
   const handleCallPhone = useCallback(async (phone?: string) => {
     if (!phone) return;
-    const normalizedPhone = phone.replace(/[^\d+]/g, '');
+    const normalizedPhone = phone.replaceAll(/[^\d+]/g, '');
     if (!normalizedPhone) {
       Alert.alert('Call unavailable', 'This phone number is not valid.');
       return;
@@ -180,11 +199,11 @@ export default function BuildingModal({ visible, building, onClose, onDirections
           text: 'Call',
           style: 'default',
           onPress: () => {
-            const primaryScheme = Platform.OS === 'ios' ? 'telprompt' : 'tel';
-            const primaryUrl = `${primaryScheme}:${normalizedPhone}`;
-            const fallbackUrl = `tel:${normalizedPhone}`;
+            const callPhone = async () => {
+              const primaryScheme = Platform.OS === 'ios' ? 'telprompt' : 'tel';
+              const primaryUrl = `${primaryScheme}:${normalizedPhone}`;
+              const fallbackUrl = `tel:${normalizedPhone}`;
 
-            void (async () => {
               try {
                 await Linking.openURL(primaryUrl);
               } catch {
@@ -194,7 +213,8 @@ export default function BuildingModal({ visible, building, onClose, onDirections
                   Alert.alert('Call unavailable', 'This device cannot place phone calls.');
                 }
               }
-            })();
+            };
+            callPhone().catch(() => undefined);
           },
         },
       ],
@@ -224,7 +244,7 @@ export default function BuildingModal({ visible, building, onClose, onDirections
     detailsError,
   } = building.properties;
 
-  const buildingImage = mode === 'poi' ? (photoUrl ? { uri: photoUrl } : null) : (code ? BUILDING_IMAGES[code] : null);
+  const buildingImage = getBuildingImageSource(mode, photoUrl, code);
   const hasAddress = mode === 'poi' ? !!address : !!(number || street || city);
 
   const addressParts: string[] = [];
@@ -233,6 +253,16 @@ export default function BuildingModal({ visible, building, onClose, onDirections
   else if (number) addressParts.push(number);
   if (city) addressParts.push(city);
   const addressString = mode === 'poi' ? address ?? '' : addressParts.join(', ');
+
+  const handlePhonePress = useCallback(() => {
+    if (!phoneNumber) return;
+    handleCallPhone(phoneNumber).catch(() => undefined);
+  }, [handleCallPhone, phoneNumber]);
+
+  const handleWebsitePress = useCallback(() => {
+    if (!website) return;
+    handleOpenWebsite(website).catch(() => undefined);
+  }, [handleOpenWebsite, website]);
 
   return (
     <Modal visible={visible} transparent animationType="none" onRequestClose={handleClose}>
@@ -303,9 +333,7 @@ export default function BuildingModal({ visible, building, onClose, onDirections
                   <Text style={[styles.poiMetaLabel, { color: secondaryColor }]}>Phone</Text>
                   {phoneNumber ? (
                     <TouchableOpacity
-                      onPress={() => {
-                        void handleCallPhone(phoneNumber);
-                      }}
+                      onPress={handlePhonePress}
                       accessibilityRole="button"
                       accessibilityLabel={`Call ${name ?? 'poi'}`}
                     >
@@ -339,9 +367,7 @@ export default function BuildingModal({ visible, building, onClose, onDirections
                   <View style={styles.poiMetaContainer}>
                     <Text style={[styles.poiMetaLabel, { color: secondaryColor }]}>Website</Text>
                     <TouchableOpacity
-                      onPress={() => {
-                        void handleOpenWebsite(website);
-                      }}
+                      onPress={handleWebsitePress}
                       accessibilityRole="link"
                       accessibilityLabel={`Open website for ${name ?? 'poi'}`}
                     >
