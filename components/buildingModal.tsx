@@ -132,6 +132,99 @@ const getBuildingImageSource = (
   return code ? BUILDING_IMAGES[code] : null;
 };
 
+type PoiDetailsSectionProps = Readonly<{
+  secondaryColor: string;
+  textColor: string;
+  isOpen?: boolean;
+  rating?: number;
+  pricing?: string;
+  website?: string;
+  phoneNumber?: string;
+  detailsLoading?: boolean;
+  detailsError?: string;
+  isDark: boolean;
+  name?: string;
+  onPhonePress: () => void;
+  onWebsitePress: () => void;
+}>;
+
+function PoiDetailsSection({
+  secondaryColor,
+  textColor,
+  isOpen,
+  rating,
+  pricing,
+  website,
+  phoneNumber,
+  detailsLoading,
+  detailsError,
+  isDark,
+  name,
+  onPhonePress,
+  onWebsitePress,
+}: PoiDetailsSectionProps) {
+  return (
+    <View style={styles.section}>
+      <Text style={[styles.sectionTitle, { color: secondaryColor }]}>DETAILS</Text>
+
+      <View style={styles.poiMetaContainer}>
+        <Text style={[styles.poiMetaLabel, { color: secondaryColor }]}>Phone</Text>
+        {phoneNumber ? (
+          <TouchableOpacity
+            onPress={onPhonePress}
+            accessibilityRole="button"
+            accessibilityLabel={`Call ${name ?? 'poi'}`}
+          >
+            <Text style={[styles.poiMetaValue, styles.poiClickableValue, { color: COLORS.red }]}>{phoneNumber}</Text>
+          </TouchableOpacity>
+        ) : (
+          <Text style={[styles.poiMetaValue, { color: textColor }]}>Phone unavailable</Text>
+        )}
+      </View>
+
+      <View style={styles.poiMetaContainer}>
+        <Text style={[styles.poiMetaLabel, { color: secondaryColor }]}>Pricing</Text>
+        <Text style={[styles.poiMetaValue, { color: textColor }]}>{pricing ?? 'Not available'}</Text>
+      </View>
+
+      <View style={styles.poiMetaContainer}>
+        <Text style={[styles.poiMetaLabel, { color: secondaryColor }]}>Status</Text>
+        <Text style={[styles.poiMetaValue, { color: isOpen ? '#34C759' : '#FF3B30' }]}>
+          {isOpen ? 'Open now' : 'Closed'}
+        </Text>
+      </View>
+
+      {rating !== undefined && (
+        <View style={styles.poiMetaContainer}>
+          <Text style={[styles.poiMetaLabel, { color: secondaryColor }]}>Rating</Text>
+          <Text style={[styles.poiMetaValue, { color: textColor }]}>{rating.toFixed(1)}/5</Text>
+        </View>
+      )}
+
+      {website && (
+        <View style={styles.poiMetaContainer}>
+          <Text style={[styles.poiMetaLabel, { color: secondaryColor }]}>Website</Text>
+          <TouchableOpacity
+            onPress={onWebsitePress}
+            accessibilityRole="link"
+            accessibilityLabel={`Open website for ${name ?? 'poi'}`}
+          >
+            <Text style={[styles.poiMetaValue, styles.poiClickableValue, { color: COLORS.red }]} numberOfLines={2}>{website}</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {detailsLoading && (
+        <Text style={[styles.poiFetchStatus, { color: secondaryColor }]}>Fetching details...</Text>
+      )}
+
+      {!!detailsError && (
+        <Text style={[styles.poiFetchStatusError, { color: isDark ? '#ff9f9f' : '#b42318' }]}>Could not load full details: {detailsError}</Text>
+      )}
+    </View>
+  );
+}
+
 export default function BuildingModal({ visible, building, onClose, onDirectionsFrom, onDirectionsTo, onGetDirections, onShowIndoorMap, mode = 'building' }: BuildingModalProps) {
   const { colorScheme } = useTheme();
   const isDark = colorScheme === 'dark';
@@ -227,6 +320,19 @@ export default function BuildingModal({ visible, building, onClose, onDirections
     );
   }, []);
 
+  const phoneNumberForPress = building?.properties?.phoneNumber;
+  const websiteForPress = building?.properties?.website;
+
+  const handlePhonePress = useCallback(() => {
+    if (!phoneNumberForPress) return;
+    handleCallPhone(phoneNumberForPress).catch(() => undefined);
+  }, [handleCallPhone, phoneNumberForPress]);
+
+  const handleWebsitePress = useCallback(() => {
+    if (!websiteForPress) return;
+    handleOpenWebsite(websiteForPress).catch(() => undefined);
+  }, [handleOpenWebsite, websiteForPress]);
+
   if (!building) return null;
 
   const {
@@ -251,7 +357,7 @@ export default function BuildingModal({ visible, building, onClose, onDirections
 
   const buildingImage = getBuildingImageSource(mode, photoUrl, code);
   const hasAddress = mode === 'poi' ? !!address : !!(number || street || city);
-  const hasIndoorMap = mode === 'building' && !!(code && getBuildingIndoorMap(code));
+  const indoorMapCode = mode === 'building' && code && getBuildingIndoorMap(code) ? code : undefined;
 
   const addressParts: string[] = [];
   if (number && street) addressParts.push(`${number} ${street}`);
@@ -260,22 +366,12 @@ export default function BuildingModal({ visible, building, onClose, onDirections
   if (city) addressParts.push(city);
   const addressString = mode === 'poi' ? address ?? '' : addressParts.join(', ');
 
-  const handlePhonePress = useCallback(() => {
-    if (!phoneNumber) return;
-    handleCallPhone(phoneNumber).catch(() => undefined);
-  }, [handleCallPhone, phoneNumber]);
-
-  const handleWebsitePress = useCallback(() => {
-    if (!website) return;
-    handleOpenWebsite(website).catch(() => undefined);
-  }, [handleOpenWebsite, website]);
-
   return (
-    <Modal visible={visible} transparent animationType="none" onRequestClose={handleClose}>
+    <Modal visible={visible} transparent animationType="none" onRequestClose={() => handleClose()}>
       <View style={styles.overlay}>
         <TouchableOpacity
           style={styles.backdrop}
-          onPress={handleClose}
+          onPress={() => handleClose()}
           activeOpacity={1}
           testID="modal-backdrop"
         />
@@ -294,7 +390,7 @@ export default function BuildingModal({ visible, building, onClose, onDirections
             <View style={[styles.handleBar, { backgroundColor: isDark ? '#555' : '#ccc' }]} />
           </View>
 
-          <TouchableOpacity style={styles.closeButton} onPress={handleClose} testID="close-button">
+          <TouchableOpacity style={styles.closeButton} onPress={() => handleClose()} testID="close-button">
             {renderIcon(UI_ICONS.close, 18, secondaryColor)}
           </TouchableOpacity>
 
@@ -332,64 +428,21 @@ export default function BuildingModal({ visible, building, onClose, onDirections
             )}
 
             {mode === 'poi' && (
-              <View style={styles.section}>
-                <Text style={[styles.sectionTitle, { color: secondaryColor }]}>DETAILS</Text>
-
-                <View style={styles.poiMetaContainer}>
-                  <Text style={[styles.poiMetaLabel, { color: secondaryColor }]}>Phone</Text>
-                  {phoneNumber ? (
-                    <TouchableOpacity
-                      onPress={handlePhonePress}
-                      accessibilityRole="button"
-                      accessibilityLabel={`Call ${name ?? 'poi'}`}
-                    >
-                      <Text style={[styles.poiMetaValue, styles.poiClickableValue, { color: COLORS.red }]}>{phoneNumber}</Text>
-                    </TouchableOpacity>
-                  ) : (
-                    <Text style={[styles.poiMetaValue, { color: textColor }]}>Phone unavailable</Text>
-                  )}
-                </View>
-
-                <View style={styles.poiMetaContainer}>
-                  <Text style={[styles.poiMetaLabel, { color: secondaryColor }]}>Pricing</Text>
-                  <Text style={[styles.poiMetaValue, { color: textColor }]}>{pricing ?? 'Not available'}</Text>
-                </View>
-
-                <View style={styles.poiMetaContainer}>
-                  <Text style={[styles.poiMetaLabel, { color: secondaryColor }]}>Status</Text>
-                  <Text style={[styles.poiMetaValue, { color: isOpen ? '#34C759' : '#FF3B30' }]}>
-                    {isOpen ? 'Open now' : 'Closed'}
-                  </Text>
-                </View>
-
-                {rating !== undefined && (
-                  <View style={styles.poiMetaContainer}>
-                    <Text style={[styles.poiMetaLabel, { color: secondaryColor }]}>Rating</Text>
-                    <Text style={[styles.poiMetaValue, { color: textColor }]}>{rating.toFixed(1)}/5</Text>
-                  </View>
-                )}
-
-                {website && (
-                  <View style={styles.poiMetaContainer}>
-                    <Text style={[styles.poiMetaLabel, { color: secondaryColor }]}>Website</Text>
-                    <TouchableOpacity
-                      onPress={handleWebsitePress}
-                      accessibilityRole="link"
-                      accessibilityLabel={`Open website for ${name ?? 'poi'}`}
-                    >
-                      <Text style={[styles.poiMetaValue, styles.poiClickableValue, { color: COLORS.red }]} numberOfLines={2}>{website}</Text>
-                    </TouchableOpacity>
-                  </View>
-                )}
-
-                {detailsLoading && (
-                  <Text style={[styles.poiFetchStatus, { color: secondaryColor }]}>Fetching details...</Text>
-                )}
-
-                {!!detailsError && (
-                  <Text style={[styles.poiFetchStatusError, { color: isDark ? '#ff9f9f' : '#b42318' }]}>Could not load full details: {detailsError}</Text>
-                )}
-              </View>
+              <PoiDetailsSection
+                secondaryColor={secondaryColor}
+                textColor={textColor}
+                isOpen={isOpen}
+                rating={rating}
+                pricing={pricing}
+                website={website}
+                phoneNumber={phoneNumber}
+                detailsLoading={detailsLoading}
+                detailsError={detailsError}
+                isDark={isDark}
+                name={name}
+                onPhonePress={handlePhonePress}
+                onWebsitePress={handleWebsitePress}
+              />
             )}
 
             {mode === 'building' && amenities && amenities.length > 0 && (
@@ -402,10 +455,7 @@ export default function BuildingModal({ visible, building, onClose, onDirections
                     return (
                       <View key={key} style={[styles.iconTile, { backgroundColor: iconTileColor }]}>
                         {renderIcon(config, 20, isDark ? '#e0e0e0' : '#444')}
-                        <Text
-                          style={[styles.iconLabel, { color: secondaryColor }]}
-                          numberOfLines={1}
-                        >
+                        <Text style={[styles.iconLabel, { color: secondaryColor }]} numberOfLines={1}>
                           {config.label}
                         </Text>
                       </View>
@@ -425,10 +475,7 @@ export default function BuildingModal({ visible, building, onClose, onDirections
                     return (
                       <View key={key} style={[styles.iconTile, { backgroundColor: iconTileColor }]}>
                         {renderIcon(config, 20, isDark ? '#e0e0e0' : '#444')}
-                        <Text
-                          style={[styles.iconLabel, { color: secondaryColor }]}
-                          numberOfLines={1}
-                        >
+                        <Text style={[styles.iconLabel, { color: secondaryColor }]} numberOfLines={1}>
                           {config.label}
                         </Text>
                       </View>
@@ -441,10 +488,10 @@ export default function BuildingModal({ visible, building, onClose, onDirections
             <View style={styles.buttonsContainer}>
               {mode === 'building' && (
                 <>
-                  {hasIndoorMap && onShowIndoorMap && (
+                  {indoorMapCode && onShowIndoorMap && (
                     <TouchableOpacity
                       style={[styles.directionButton, styles.indoorMapButton]}
-                    onPress={() => handleClose(() => onShowIndoorMap(code as string))}
+                      onPress={() => handleClose(() => onShowIndoorMap(indoorMapCode))}
                       activeOpacity={0.7}
                       testID="indoor-map-button"
                     >
@@ -456,7 +503,7 @@ export default function BuildingModal({ visible, building, onClose, onDirections
                   <TouchableOpacity
                     style={[styles.directionButton, styles.directionButtonFrom, { borderColor: COLORS.red }]}
                     onPress={() => {
-                    onDirectionsFrom?.(building);
+                      onDirectionsFrom?.(building);
                       handleClose();
                     }}
                     activeOpacity={0.7}
@@ -466,32 +513,24 @@ export default function BuildingModal({ visible, building, onClose, onDirections
                     <Text style={[styles.directionButtonFromText, { color: COLORS.red }]}>Get Directions From</Text>
                   </TouchableOpacity>
 
-                <TouchableOpacity
-                  style={[
-                    styles.directionButton,
-                    styles.directionButtonTo,
-                    { backgroundColor: COLORS.red },
-                  ]}
-                  onPress={() => {
-                    onDirectionsTo?.(building);
-                    handleClose();
-                  }}
-                  activeOpacity={0.7}
-                  testID="directions-to-button"
-                >
-                  <View style={styles.buttonIcon}>{renderIcon(UI_ICONS.route, 16, '#fff')}</View>
-                  <Text style={styles.directionButtonToText}>Get Directions To</Text>
-                </TouchableOpacity>
-              </>
-            )}
+                  <TouchableOpacity
+                    style={[styles.directionButton, styles.directionButtonTo, { backgroundColor: COLORS.red }]}
+                    onPress={() => {
+                      onDirectionsTo?.(building);
+                      handleClose();
+                    }}
+                    activeOpacity={0.7}
+                    testID="directions-to-button"
+                  >
+                    <View style={styles.buttonIcon}>{renderIcon(UI_ICONS.route, 16, '#fff')}</View>
+                    <Text style={styles.directionButtonToText}>Get Directions To</Text>
+                  </TouchableOpacity>
+                </>
+              )}
 
               {mode === 'poi' && (
                 <TouchableOpacity
-                  style={[
-                    styles.directionButton,
-                    styles.directionButtonTo,
-                    { backgroundColor: COLORS.red },
-                  ]}
+                  style={[styles.directionButton, styles.directionButtonTo, { backgroundColor: COLORS.red }]}
                   onPress={() => {
                     onGetDirections?.(building);
                     handleClose();

@@ -3,6 +3,23 @@ import React from 'react';
 import { FontAwesome } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
 
+type TabIconProps = Readonly<{
+  color: string;
+  size: number;
+}>;
+
+function MapTabIcon({ color, size }: TabIconProps) {
+  return <FontAwesome name="map" size={size} color={color} />;
+}
+
+function NearbyTabIcon({ color, size }: TabIconProps) {
+  return <FontAwesome name="star" size={size} color={color} />;
+}
+
+function SettingsTabIcon({ color, size }: TabIconProps) {
+  return <FontAwesome name="cog" size={size} color={color} />;
+}
+
 export default function TabLayout() {
   const { colorScheme } = useTheme();
   const isDark = colorScheme === 'dark';
@@ -25,27 +42,21 @@ export default function TabLayout() {
         name="index"
         options={{
           title: 'Map',
-          tabBarIcon: ({ color, size }) => (
-            <FontAwesome name="map" size={size} color={color} />
-          ),
+          tabBarIcon: MapTabIcon,
         }}
       />
       <Tabs.Screen
         name="nearby"
         options={{
           title: 'Nearby',
-          tabBarIcon: ({ color, size }) => (
-            <FontAwesome name="star" size={size} color={color} />
-          ),
+          tabBarIcon: NearbyTabIcon,
         }}
       />
       <Tabs.Screen
         name="settings"
         options={{
           title: 'Settings',
-          tabBarIcon: ({ color, size }) => (
-            <FontAwesome name="cog" size={size} color={color} />
-          ),
+          tabBarIcon: SettingsTabIcon,
         }}
       />
     </Tabs>

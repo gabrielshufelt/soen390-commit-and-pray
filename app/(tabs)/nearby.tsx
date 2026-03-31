@@ -65,7 +65,13 @@ interface CacheEntry {
   longitude: number;
 }
 
+interface Coordinates {
+  latitude: number;
+  longitude: number;
+}
+
 type CategoryKey = keyof typeof POI_CATEGORIES;
+const CATEGORY_KEYS = Object.keys(POI_CATEGORIES) as CategoryKey[];
 const DEFAULT_RADIUS_KM = 2;
 const MIN_RADIUS_KM = 0.5;
 const MAX_RADIUS_KM = 10;
@@ -245,6 +251,268 @@ const clearCache = async (): Promise<void> => {
   }
 };
 
+const createInitialCategories = (): Record<string, POICategory> => ({
+  study: { title: POI_CATEGORIES.study.title, icon: POI_CATEGORIES.study.icon, pois: [], isLoading: true },
+  coffee: { title: POI_CATEGORIES.coffee.title, icon: POI_CATEGORIES.coffee.icon, pois: [], isLoading: true },
+  restaurant: { title: POI_CATEGORIES.restaurant.title, icon: POI_CATEGORIES.restaurant.icon, pois: [], isLoading: true },
+  grocery: { title: POI_CATEGORIES.grocery.title, icon: POI_CATEGORIES.grocery.icon, pois: [], isLoading: true },
+});
+
+const markLocationPermissionError = (prev: Record<string, POICategory>): Record<string, POICategory> => {
+  const next = { ...prev };
+  CATEGORY_KEYS.forEach((key) => {
+    next[key] = {
+      ...next[key],
+      isLoading: false,
+      error: 'Location permission required',
+    };
+  });
+  return next;
+};
+
+const markAllCategoriesLoading = (prev: Record<string, POICategory>): Record<string, POICategory> => {
+  const next = { ...prev };
+  CATEGORY_KEYS.forEach((key) => {
+    next[key] = {
+      ...next[key],
+      isLoading: true,
+      error: undefined,
+    };
+  });
+  return next;
+};
+
+const isWithinDistance = (currentCoords: Coordinates, targetCoords: Coordinates, thresholdMeters: number): boolean => {
+  return getDistanceMeters(
+    currentCoords.latitude,
+    currentCoords.longitude,
+    targetCoords.latitude,
+    targetCoords.longitude
+  ) < thresholdMeters;
+};
+
+const shouldSkipAutoFetch = (
+  isManualRefresh: boolean,
+  now: number,
+  lastFetchTime: number,
+  lastFetchCoords: Coordinates | null,
+  currentCoords: Coordinates
+): boolean => {
+  if (isManualRefresh) return false;
+  if (now - lastFetchTime < FETCH_DEBOUNCE_MS) return true;
+  if (!lastFetchCoords) return false;
+  return isWithinDistance(currentCoords, lastFetchCoords, FETCH_MIN_DISTANCE_METERS);
+};
+
+const buildStudySpacePois = (currentCoords: Coordinates): POI[] => {
+  return STUDY_SPACE_CONFIG
+    .filter((space) => isStudySpaceOpenNow(space, new Date()))
+    .flatMap((space) => {
+      const coordinate = getBuildingCoordinate(space.code);
+      if (!coordinate) return [];
+
+      return [{
+        id: space.id,
+        name: space.name,
+        address: space.address,
+        isOpen: true,
+        latitude: coordinate.latitude,
+        longitude: coordinate.longitude,
+        source: 'study' as const,
+        pricing: 'Free',
+        categoryLabel: POI_CATEGORIES.study.title,
+        distance: getDistanceMeters(
+          currentCoords.latitude,
+          currentCoords.longitude,
+          coordinate.latitude,
+          coordinate.longitude
+        ),
+      }];
+    })
+    .sort((a, b) => a.distance - b.distance);
+};
+
+const buildPoiFromNearbyResult = (
+  result: GooglePlacesNearbyResult,
+  categoryKey: string,
+  currentCoords: Coordinates
+): POI | null => {
+  const latitude = result.geometry?.location?.lat ?? 0;
+  const longitude = result.geometry?.location?.lng ?? 0;
+  if (latitude === 0 || longitude === 0) return null;
+
+  return {
+    id: result.place_id,
+    name: result.name,
+    address: result.vicinity ?? 'Address unavailable',
+    isOpen: result.opening_hours?.open_now === true,
+    rating: result.rating,
+    latitude,
+    longitude,
+    source: 'google' as const,
+    categoryLabel: POI_CATEGORIES[categoryKey as CategoryKey]?.title,
+    distance: getDistanceMeters(
+      currentCoords.latitude,
+      currentCoords.longitude,
+      latitude,
+      longitude
+    ),
+  };
+};
+
+const fetchCategoryResult = async (
+  categoryKey: string,
+  googleType: string,
+  currentCoords: Coordinates,
+  apiKey: string
+): Promise<CategoryFetchResult> => {
+  try {
+    const cachedEntry = await getCachedPOIs(categoryKey);
+    if (
+      cachedEntry &&
+      isWithinDistance(currentCoords, {
+        latitude: cachedEntry.latitude,
+        longitude: cachedEntry.longitude,
+      }, FETCH_MIN_DISTANCE_METERS)
+    ) {
+      return {
+        categoryKey,
+        pois: cachedEntry.pois,
+      };
+    }
+
+    const params = new URLSearchParams({
+      location: `${currentCoords.latitude},${currentCoords.longitude}`,
+      radius: `${FETCH_RADIUS_METERS}`,
+      type: googleType,
+      opennow: 'true',
+      key: apiKey,
+    });
+
+    const response = await fetch(
+      `https://maps.googleapis.com/maps/api/place/nearbysearch/json?${params.toString()}`
+    );
+    const data: GooglePlacesNearbyResponse = await response.json();
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+
+    if (data.status !== 'OK' && data.status !== 'ZERO_RESULTS') {
+      throw new Error(data.error_message ?? data.status);
+    }
+
+    const pois: POI[] = (data.results ?? [])
+      .filter((result) => result.opening_hours?.open_now === true)
+      .map((result) => buildPoiFromNearbyResult(result, categoryKey, currentCoords))
+      .filter((poi): poi is POI => poi !== null)
+      .sort((a, b) => a.distance - b.distance);
+
+    await setCachedPOIs(categoryKey, pois, currentCoords.latitude, currentCoords.longitude);
+
+    return {
+      categoryKey,
+      pois,
+    };
+  } catch (error) {
+    return {
+      categoryKey,
+      error: error instanceof Error ? error.message : 'Failed to fetch nearby places',
+    };
+  }
+};
+
+const getMissingApiKeyResults = (): CategoryFetchResult[] => ([
+  { categoryKey: 'coffee', error: 'Missing Google Maps API key' },
+  { categoryKey: 'restaurant', error: 'Missing Google Maps API key' },
+  { categoryKey: 'grocery', error: 'Missing Google Maps API key' },
+]);
+
+const fetchGoogleCategoryResults = async (
+  apiKey: string,
+  currentCoords: Coordinates
+): Promise<CategoryFetchResult[]> => {
+  if (apiKey) {
+    const entries = Object.entries(CATEGORY_TO_GOOGLE_TYPE);
+    return Promise.all(
+      entries.map(([categoryKey, googleType]) => {
+        return fetchCategoryResult(categoryKey, googleType, currentCoords, apiKey);
+      })
+    );
+  }
+
+  return getMissingApiKeyResults();
+};
+
+const applyFetchedResults = (
+  prev: Record<string, POICategory>,
+  studySpaces: POI[],
+  categoryResults: CategoryFetchResult[]
+): Record<string, POICategory> => {
+  const next = { ...prev };
+
+  next.study = {
+    ...next.study,
+    isLoading: false,
+    error: undefined,
+    pois: studySpaces,
+  };
+
+  categoryResults.forEach((result) => {
+    if ('error' in result) {
+      next[result.categoryKey] = {
+        ...next[result.categoryKey],
+        isLoading: false,
+        error: result.error,
+        pois: [],
+      };
+      return;
+    }
+
+    next[result.categoryKey] = {
+      ...next[result.categoryKey],
+      isLoading: false,
+      error: undefined,
+      pois: result.pois,
+    };
+  });
+
+  return next;
+};
+
+const getFilterActionBackgroundColor = (hasActiveFilters: boolean, isDark: boolean): string => {
+  if (!hasActiveFilters) return 'transparent';
+  return isDark ? '#3a2a2f' : '#fdecef';
+};
+
+const formatDistance = (distance: number): string => {
+  if (distance < 1000) return `${Math.round(distance)}m`;
+  return `${(distance / 1000).toFixed(1)}km`;
+};
+
+const mapBuildingDataToPoi = (buildingData: BuildingData, selectedPoiDetails: POI | null): POI | null => {
+  const coords = buildingData?.geometry?.coordinates?.[0]?.[0];
+  if (!coords) return null;
+
+  const [longitude, latitude] = coords;
+  return {
+    id: buildingData.id,
+    name: buildingData.properties?.name ?? 'POI',
+    address: buildingData.properties?.address ?? 'Address unavailable',
+    distance: selectedPoiDetails?.distance ?? 0,
+    isOpen: buildingData.properties?.isOpen ?? true,
+    rating: buildingData.properties?.rating,
+    latitude,
+    longitude,
+    source: selectedPoiDetails?.source ?? 'google',
+    categoryLabel: buildingData.properties?.categoryLabel,
+    phoneNumber: buildingData.properties?.phoneNumber,
+    pricing: buildingData.properties?.pricing,
+    photoUrl: buildingData.properties?.photoUrl,
+    website: buildingData.properties?.website,
+  };
+};
+
 export default function NearbyScreen() {
   const { colorScheme } = useTheme();
   const isDark = colorScheme === 'dark';
@@ -252,12 +520,7 @@ export default function NearbyScreen() {
   const apiKey = Constants.expoConfig?.extra?.googleMapsApiKey ?? '';
   const router = useRouter();
 
-  const [categories, setCategories] = useState<Record<string, POICategory>>({
-    study: { title: POI_CATEGORIES.study.title, icon: POI_CATEGORIES.study.icon, pois: [], isLoading: true },
-    coffee: { title: POI_CATEGORIES.coffee.title, icon: POI_CATEGORIES.coffee.icon, pois: [], isLoading: true },
-    restaurant: { title: POI_CATEGORIES.restaurant.title, icon: POI_CATEGORIES.restaurant.icon, pois: [], isLoading: true },
-    grocery: { title: POI_CATEGORIES.grocery.title, icon: POI_CATEGORIES.grocery.icon, pois: [], isLoading: true },
-  });
+  const [categories, setCategories] = useState<Record<string, POICategory>>(createInitialCategories);
 
   const lastFetchTimeRef = useRef<number>(0);
   const lastFetchCoordsRef = useRef<{ latitude: number; longitude: number } | null>(null);
@@ -422,34 +685,24 @@ export default function NearbyScreen() {
     const isManualRefresh = manualRefreshTrigger !== lastHandledManualRefreshRef.current;
 
     if (!location) {
-      setCategories((prev) => ({
-        ...prev,
-        study: { ...prev.study, isLoading: false, error: 'Location permission required' },
-        coffee: { ...prev.coffee, isLoading: false, error: 'Location permission required' },
-        restaurant: { ...prev.restaurant, isLoading: false, error: 'Location permission required' },
-        grocery: { ...prev.grocery, isLoading: false, error: 'Location permission required' },
-      }));
+      setCategories(markLocationPermissionError);
       return;
     }
 
-    const currentCoords = {
+    const currentCoords: Coordinates = {
       latitude: location.coords.latitude,
       longitude: location.coords.longitude,
     };
 
     const now = Date.now();
-    if (!isManualRefresh && now - lastFetchTimeRef.current < FETCH_DEBOUNCE_MS) return;
-
-    // Only fetch again when the user moved enough from the last successful fetch point.
     if (
-      !isManualRefresh &&
-      lastFetchCoordsRef.current &&
-      getDistanceMeters(
-        currentCoords.latitude,
-        currentCoords.longitude,
-        lastFetchCoordsRef.current.latitude,
-        lastFetchCoordsRef.current.longitude
-      ) < FETCH_MIN_DISTANCE_METERS
+      shouldSkipAutoFetch(
+        isManualRefresh,
+        now,
+        lastFetchTimeRef.current,
+        lastFetchCoordsRef.current,
+        currentCoords
+      )
     ) {
       return;
     }
@@ -457,175 +710,13 @@ export default function NearbyScreen() {
     let cancelled = false;
 
     const fetchNearbyPlaces = async () => {
-      setCategories((prev) => ({
-        ...prev,
-        study: { ...prev.study, isLoading: true, error: undefined },
-        coffee: { ...prev.coffee, isLoading: true, error: undefined },
-        restaurant: { ...prev.restaurant, isLoading: true, error: undefined },
-        grocery: { ...prev.grocery, isLoading: true, error: undefined },
-      }));
+      setCategories(markAllCategoriesLoading);
 
-      const studySpaces: POI[] = STUDY_SPACE_CONFIG
-        .filter((space) => isStudySpaceOpenNow(space, new Date()))
-        .flatMap((space) => {
-          const coordinate = getBuildingCoordinate(space.code);
-          if (!coordinate) return [];
-
-          return [{
-            id: space.id,
-            name: space.name,
-            address: space.address,
-            isOpen: true,
-            latitude: coordinate.latitude,
-            longitude: coordinate.longitude,
-            source: 'study' as const,
-            pricing: 'Free',
-            categoryLabel: POI_CATEGORIES.study.title,
-            distance: getDistanceMeters(
-              currentCoords.latitude,
-              currentCoords.longitude,
-              coordinate.latitude,
-              coordinate.longitude
-            ),
-          }];
-        })
-        .sort((a, b) => a.distance - b.distance);
-
-      let categoryResults: CategoryFetchResult[] = [];
-
-      if (!apiKey) {
-        categoryResults = [
-          { categoryKey: 'coffee', error: 'Missing Google Maps API key' },
-          { categoryKey: 'restaurant', error: 'Missing Google Maps API key' },
-          { categoryKey: 'grocery', error: 'Missing Google Maps API key' },
-        ];
-      } else {
-        const entries = Object.entries(CATEGORY_TO_GOOGLE_TYPE);
-
-        categoryResults = await Promise.all(
-          entries.map(async ([categoryKey, googleType]) => {
-            try {
-              // Check cache first
-              const cachedEntry = await getCachedPOIs(categoryKey);
-              
-              // Verify cache is valid if it exists (same location or close enough)
-              if (
-                cachedEntry &&
-                getDistanceMeters(
-                  currentCoords.latitude,
-                  currentCoords.longitude,
-                  cachedEntry.latitude,
-                  cachedEntry.longitude
-                ) < FETCH_MIN_DISTANCE_METERS
-              ) {
-                // Cache is valid, use it
-                return {
-                  categoryKey,
-                  pois: cachedEntry.pois,
-                };
-              }
-
-              // Cache miss or location changed significantly, fetch from API
-              const params = new URLSearchParams({
-                location: `${currentCoords.latitude},${currentCoords.longitude}`,
-                radius: `${FETCH_RADIUS_METERS}`,
-                type: googleType,
-                opennow: 'true',
-                key: apiKey,
-              });
-
-              const response = await fetch(
-                `https://maps.googleapis.com/maps/api/place/nearbysearch/json?${params.toString()}`
-              );
-              const data: GooglePlacesNearbyResponse = await response.json();
-
-              if (!response.ok) {
-                throw new Error(`HTTP ${response.status}`);
-              }
-
-              if (data.status !== 'OK' && data.status !== 'ZERO_RESULTS') {
-                throw new Error(data.error_message ?? data.status);
-              }
-
-              const pois: POI[] = (data.results ?? [])
-                .filter((result) => result.opening_hours?.open_now === true)
-                .map((result) => {
-                  const poiCoords = {
-                    latitude: result.geometry?.location?.lat ?? 0,
-                    longitude: result.geometry?.location?.lng ?? 0,
-                  };
-
-                  return {
-                    id: result.place_id,
-                    name: result.name,
-                    address: result.vicinity ?? 'Address unavailable',
-                    isOpen: result.opening_hours?.open_now === true,
-                    rating: result.rating,
-                    latitude: poiCoords.latitude,
-                    longitude: poiCoords.longitude,
-                    source: 'google' as const,
-                    categoryLabel: POI_CATEGORIES[categoryKey as CategoryKey]?.title,
-                    distance: getDistanceMeters(
-                      currentCoords.latitude,
-                      currentCoords.longitude,
-                      poiCoords.latitude,
-                      poiCoords.longitude
-                    ),
-                  };
-                })
-                .filter((poi) => poi.latitude !== 0 && poi.longitude !== 0)
-                .sort((a, b) => a.distance - b.distance);
-
-              // Cache the results
-              await setCachedPOIs(categoryKey, pois, currentCoords.latitude, currentCoords.longitude);
-
-              return {
-                categoryKey,
-                pois,
-              };
-            } catch (error) {
-              return {
-                categoryKey,
-                error: error instanceof Error ? error.message : 'Failed to fetch nearby places',
-              };
-            }
-          })
-        );
-      }
-
+      const studySpaces = buildStudySpacePois(currentCoords);
+      const categoryResults = await fetchGoogleCategoryResults(apiKey, currentCoords);
       if (cancelled) return;
 
-      setCategories((prev) => {
-        const next = { ...prev };
-
-        next.study = {
-          ...next.study,
-          isLoading: false,
-          error: undefined,
-          pois: studySpaces,
-        };
-
-        categoryResults.forEach((result) => {
-          if ('error' in result) {
-            next[result.categoryKey] = {
-              ...next[result.categoryKey],
-              isLoading: false,
-              error: result.error,
-              pois: [],
-            };
-            return;
-          }
-
-          next[result.categoryKey] = {
-            ...next[result.categoryKey],
-            isLoading: false,
-            error: undefined,
-            pois: result.pois,
-          };
-        });
-
-        return next;
-      });
+      setCategories((prev) => applyFetchedResults(prev, studySpaces, categoryResults));
 
       lastFetchTimeRef.current = now;
       lastFetchCoordsRef.current = currentCoords;
@@ -645,6 +736,13 @@ export default function NearbyScreen() {
   const borderColor = isDark ? '#38383a' : '#e5e5ea';
   const selectedCategoryCount = Object.values(selectedCategories).filter(Boolean).length;
   const hasActiveFilters = selectedCategoryCount < Object.keys(POI_CATEGORIES).length || selectedRadiusKm !== DEFAULT_RADIUS_KM;
+  const filterActionBackgroundColor = getFilterActionBackgroundColor(hasActiveFilters, isDark);
+
+  const handlePoiModalDirections = (buildingData: BuildingData) => {
+    const poi = mapBuildingDataToPoi(buildingData, selectedPoiDetails);
+    if (!poi) return;
+    handleGetDirections(poi);
+  };
 
   const filteredCategories = useMemo(() => {
     return (Object.entries(categories) as [CategoryKey, POICategory][])
@@ -797,7 +895,7 @@ export default function NearbyScreen() {
           style={[
             styles.actionButton,
             styles.filterActionButton,
-            { borderColor, backgroundColor: hasActiveFilters ? (isDark ? '#3a2a2f' : '#fdecef') : 'transparent' },
+              { borderColor, backgroundColor: filterActionBackgroundColor },
           ]}
           onPress={() => setShowFilterModal(true)}
         >
@@ -843,28 +941,7 @@ export default function NearbyScreen() {
         mode="poi"
         building={selectedPoiAsBuildingData}
         onClose={closePoiDetailsModal}
-        onGetDirections={(buildingData) => {
-          const coords = buildingData?.geometry?.coordinates?.[0]?.[0];
-          if (!coords) return;
-
-          const [longitude, latitude] = coords;
-          handleGetDirections({
-            id: buildingData.id,
-            name: buildingData.properties?.name ?? 'POI',
-            address: buildingData.properties?.address ?? 'Address unavailable',
-            distance: selectedPoiDetails?.distance ?? 0,
-            isOpen: buildingData.properties?.isOpen ?? true,
-            rating: buildingData.properties?.rating,
-            latitude,
-            longitude,
-            source: selectedPoiDetails?.source ?? 'google',
-            categoryLabel: buildingData.properties?.categoryLabel,
-            phoneNumber: buildingData.properties?.phoneNumber,
-            pricing: buildingData.properties?.pricing,
-            photoUrl: buildingData.properties?.photoUrl,
-            website: buildingData.properties?.website,
-          });
-        }}
+        onGetDirections={handlePoiModalDirections}
       />
 
       <Modal
@@ -1098,7 +1175,7 @@ function POICard({
       <View style={styles.cardFooter}>
         <View>
           <Text style={[styles.distance, { color: '#a94a5c' }]}>
-            {poi.distance < 1000 ? `${Math.round(poi.distance)}m` : `${(poi.distance / 1000).toFixed(1)}km`}
+            {formatDistance(poi.distance)}
           </Text>
           <Text style={[styles.status, { color: poi.isOpen ? '#34C759' : '#FF3B30' }]}>
             {poi.isOpen ? 'Open' : 'Closed'}
