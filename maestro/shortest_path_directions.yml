@@ -1,0 +1,66 @@
+appId: com.commitandpray.soen390project
+---
+# need to mock the location to concordia building ex ( H building in DevConfig)
+- tapOn: Indoor
+- tapOn: Rooms
+
+# User enters a start room (e.g. "H-820") and a destination room (e.g. "H-110") in the directions input
+- tapOn: "8"
+- tapOn: Search rooms, facilities...
+- inputText: 820
+- tapOn: 820, Accessible
+- tapOn: Map
+- tapOn: Get Directions From
+- tapOn: Rooms
+- tapOn: "820"
+- eraseText: 3
+- tapOn: "1"
+- tapOn: 110, Accessible
+- tapOn: Map
+- tapOn: Get Directions To
+
+# Step-by-step instructions are shown below the map
+- tapOn: ◀
+- tapOn: ◀
+- assertVisible: "Route: 820 to 110"
+- assertVisible: Take stairs to Floor 2
+
+# The path is rendered as a highlighted route overlaid on the floor plan
+- assertVisible:
+    id: route-segment
+    index: 13
+- assertVisible:
+    id: route-segment
+    index: 8
+- assertVisible:
+    id: route-segment
+    index: 1
+- assertVisible:
+    id: route-segment
+    index: 7
+
+# Step-by-step instructions are shown below the map
+- tapOn: ◀
+- assertVisible: "Route: 820 to 110"
+- assertVisible: Arrive from Floor 8
+- assertVisible: Take stairs to Floor 1
+
+# The path is rendered as a highlighted route overlaid on the floor plan
+- assertVisible:
+    id: route-segment
+- assertVisible:
+    id: route-segment
+    index: 2
+- assertVisible:
+    id: route-segment
+    index: 4
+
+# Step-by-step instructions are shown below the map    
+- tapOn: ◀
+- assertVisible: "Route: 820 to 110"
+- assertVisible: Arrive from Floor 2
+
+# The path is rendered as a highlighted route overlaid on the floor plan
+- assertVisible:
+    id: route-segment
+    index: 2
