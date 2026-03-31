@@ -595,6 +595,313 @@ const resolvePoiDetails = async (
   }
 };
 
+function SeeAllCategoryView({
+  category,
+  visiblePois,
+  hasMoreSeeAllItems,
+  isDark,
+  textColor,
+  bgColor,
+  secondaryBgColor,
+  borderColor,
+  onBack,
+  onOpenPoiDetails,
+  onGetDirections,
+  onLoadMore,
+  onScrollBegin,
+}: Readonly<{
+  category: POICategory;
+  visiblePois: POI[];
+  hasMoreSeeAllItems: boolean;
+  isDark: boolean;
+  textColor: string;
+  bgColor: string;
+  secondaryBgColor: string;
+  borderColor: string;
+  onBack: () => void;
+  onOpenPoiDetails: (poi: POI) => void;
+  onGetDirections: (poi: POI) => void;
+  onLoadMore: () => void;
+  onScrollBegin: () => void;
+}>) {
+  return (
+    <View style={[styles.fullPageContainer, { backgroundColor: bgColor }]}> 
+      <View style={[styles.fullPageHeader, { borderBottomColor: borderColor }]}> 
+        <TouchableOpacity
+          onPress={onBack}
+          style={styles.backButton}
+          accessibilityRole="button"
+          accessibilityLabel="Back to nearby"
+        >
+          <FontAwesome name="chevron-left" size={16} color={isDark ? '#ffffff' : '#000000'} />
+        </TouchableOpacity>
+        <Text style={[styles.fullPageTitle, { color: textColor }]}>{category.title}</Text>
+        <View style={{ width: 32 }} />
+      </View>
+
+      <FlatList
+        data={visiblePois}
+        keyExtractor={(poi) => poi.id}
+        contentContainerStyle={styles.fullPageList}
+        onMomentumScrollBegin={onScrollBegin}
+        onEndReached={onLoadMore}
+        onEndReachedThreshold={0.4}
+        renderItem={({ item: poi }) => (
+          <POICard
+            poi={poi}
+            onPress={onOpenPoiDetails}
+            onGetDirections={onGetDirections}
+            isDark={isDark}
+            secondaryBgColor={secondaryBgColor}
+            borderColor={borderColor}
+            variant="vertical"
+          />
+        )}
+        ListEmptyComponent={
+          <View style={[styles.emptyState, { backgroundColor: secondaryBgColor }]}> 
+            <FontAwesome name="search" size={24} color={isDark ? '#8e8e93' : '#6e6e73'} />
+            <Text style={{ color: isDark ? '#8e8e93' : '#6e6e73', marginTop: 8 }}>
+              No {category.title.toLowerCase()} found nearby
+            </Text>
+          </View>
+        }
+        ListFooterComponent={
+          hasMoreSeeAllItems ? (
+            <Text style={[styles.loadMoreHint, { color: isDark ? '#8e8e93' : '#6e6e73' }]}> 
+              Scroll to load more
+            </Text>
+          ) : null
+        }
+      />
+    </View>
+  );
+}
+
+function NearbyMainContent({
+  categories,
+  previewCategories,
+  filteredCategories,
+  selectedCategories,
+  selectedRadiusKm,
+  radiusInputKm,
+  showFilterModal,
+  filterActionBackgroundColor,
+  selectedPoi,
+  selectedPoiAsBuildingData,
+  isDark,
+  textColor,
+  bgColor,
+  secondaryBgColor,
+  borderColor,
+  onRefresh,
+  onOpenPoiDetails,
+  onGetDirections,
+  onSeeAll,
+  onOpenFilterModal,
+  onCloseFilterModal,
+  onToggleCategoryFilter,
+  onClearAllFilters,
+  onRadiusInputChange,
+  onRadiusInputBlur,
+  onRadiusSliderChange,
+  onClosePoiDetailsModal,
+  onPoiModalDirections,
+}: Readonly<{
+  categories: Record<string, POICategory>;
+  previewCategories: readonly (readonly [CategoryKey, POICategory])[];
+  filteredCategories: readonly (readonly [CategoryKey, POICategory])[];
+  selectedCategories: Record<CategoryKey, boolean>;
+  selectedRadiusKm: number;
+  radiusInputKm: string;
+  showFilterModal: boolean;
+  filterActionBackgroundColor: string;
+  selectedPoi: POI | null;
+  selectedPoiAsBuildingData: BuildingData | null;
+  isDark: boolean;
+  textColor: string;
+  bgColor: string;
+  secondaryBgColor: string;
+  borderColor: string;
+  onRefresh: () => void;
+  onOpenPoiDetails: (poi: POI) => void;
+  onGetDirections: (poi: POI) => void;
+  onSeeAll: (categoryKey: CategoryKey) => void;
+  onOpenFilterModal: () => void;
+  onCloseFilterModal: () => void;
+  onToggleCategoryFilter: (categoryKey: CategoryKey) => void;
+  onClearAllFilters: () => void;
+  onRadiusInputChange: (value: string) => void;
+  onRadiusInputBlur: () => void;
+  onRadiusSliderChange: (value: number) => void;
+  onClosePoiDetailsModal: () => void;
+  onPoiModalDirections: (buildingData: BuildingData) => void;
+}>) {
+  return (
+    <ScrollView
+      style={[styles.container, { backgroundColor: bgColor }]}
+      showsVerticalScrollIndicator={false}
+      refreshControl={
+        <RefreshControl
+          refreshing={Object.values(categories).some((category) => category.isLoading)}
+          onRefresh={onRefresh}
+          tintColor={isDark ? '#0a84ff' : '#007aff'}
+        />
+      }
+    >
+
+      <TouchableOpacity
+        style={[
+          styles.searchBar,
+          {
+            backgroundColor: secondaryBgColor,
+            borderColor: borderColor,
+          }
+        ]}
+        disabled
+      >
+        <FontAwesome name="search" size={16} color={isDark ? '#8e8e93' : '#6e6e73'} />
+        <Text style={{ color: isDark ? '#8e8e93' : '#6e6e73', marginLeft: 8 }}>
+          Search POIs
+        </Text>
+      </TouchableOpacity>
+
+      <View style={styles.actionRow}>
+        <TouchableOpacity style={[styles.actionButton, { borderColor }]} onPress={onRefresh}>
+          <FontAwesome name="refresh" size={14} color="#a94a5c" />
+          <Text style={styles.actionButtonText}>Refresh</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[
+            styles.actionButton,
+            styles.filterActionButton,
+            { borderColor, backgroundColor: filterActionBackgroundColor },
+          ]}
+          onPress={onOpenFilterModal}
+        >
+          <FontAwesome name="sliders" size={14} color="#a94a5c" />
+          <Text style={styles.actionButtonText}>Filter</Text>
+        </TouchableOpacity>
+      </View>
+
+      {previewCategories.map(([key, category]) => {
+        const totalCategoryCount = filteredCategories.find(([categoryKey]) => categoryKey === key)?.[1].pois.length ?? 0;
+
+        return (
+          <POICategory
+            key={key}
+            categoryKey={key}
+            category={category}
+            onPressPoi={onOpenPoiDetails}
+            onGetDirections={onGetDirections}
+            onSeeAll={onSeeAll}
+            totalCount={totalCategoryCount}
+            isDark={isDark}
+            textColor={textColor}
+            secondaryBgColor={secondaryBgColor}
+            borderColor={borderColor}
+          />
+        );
+      })}
+
+      {filteredCategories.length === 0 && (
+        <View style={[styles.emptyState, { backgroundColor: secondaryBgColor }]}> 
+          <FontAwesome name="filter" size={24} color={isDark ? '#8e8e93' : '#6e6e73'} />
+          <Text style={{ color: isDark ? '#8e8e93' : '#6e6e73', marginTop: 8 }}>
+            No categories selected in filter
+          </Text>
+        </View>
+      )}
+
+      <View style={{ height: 40 }} />
+
+      <BuildingModal
+        visible={selectedPoi !== null}
+        mode="poi"
+        building={selectedPoiAsBuildingData}
+        onClose={onClosePoiDetailsModal}
+        onGetDirections={onPoiModalDirections}
+      />
+
+      <Modal
+        visible={showFilterModal}
+        transparent
+        animationType="slide"
+        onRequestClose={onCloseFilterModal}
+      >
+        <View style={styles.modalBackdrop}>
+          <View style={[styles.filterModal, { backgroundColor: bgColor, borderColor }]}> 
+            <View style={styles.filterHeader}>
+              <Text style={[styles.filterTitle, { color: textColor }]}>Filter POIs</Text>
+              <TouchableOpacity onPress={onCloseFilterModal}>
+                <FontAwesome name="times" size={20} color={isDark ? '#8e8e93' : '#6e6e73'} />
+              </TouchableOpacity>
+            </View>
+
+            <Text style={[styles.filterSectionLabel, { color: textColor }]}>Category</Text>
+            <View style={styles.filterChipWrap}>
+              {(Object.keys(POI_CATEGORIES) as CategoryKey[]).map((categoryKey) => {
+                const isSelected = selectedCategories[categoryKey];
+                return (
+                  <TouchableOpacity
+                    key={categoryKey}
+                    style={[
+                      styles.filterChip,
+                      {
+                        borderColor,
+                        backgroundColor: isSelected ? '#a94a5c' : secondaryBgColor,
+                      },
+                    ]}
+                    onPress={() => onToggleCategoryFilter(categoryKey)}
+                  >
+                    <Text style={{ color: isSelected ? '#ffffff' : textColor, fontWeight: '600' }}>
+                      {POI_CATEGORIES[categoryKey].title}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+
+            <Text style={[styles.filterSectionLabel, { color: textColor }]}>Destination Radius</Text>
+            <View style={styles.radiusInlineRow}>
+              <View style={styles.radiusSliderWrap}>
+                <Slider
+                  minimumValue={MIN_RADIUS_KM}
+                  maximumValue={MAX_RADIUS_KM}
+                  step={0.5}
+                  value={selectedRadiusKm}
+                  onValueChange={onRadiusSliderChange}
+                  minimumTrackTintColor="#a94a5c"
+                  maximumTrackTintColor={isDark ? '#3f3f44' : '#d7d7db'}
+                  thumbTintColor="#a94a5c"
+                />
+              </View>
+              <TextInput
+                value={radiusInputKm}
+                onChangeText={onRadiusInputChange}
+                onBlur={onRadiusInputBlur}
+                onSubmitEditing={onRadiusInputBlur}
+                keyboardType="decimal-pad"
+                style={[styles.radiusInlineInput, { color: textColor }]}
+              />
+              <Text style={[styles.radiusInlineUnit, { color: textColor }]}>km</Text>
+            </View>
+
+            <View style={styles.filterFooter}>
+              <TouchableOpacity style={[styles.clearButton, { borderColor }]} onPress={onClearAllFilters}>
+                <Text style={{ color: '#a94a5c', fontWeight: '600' }}>Clear All</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.applyButton} onPress={onCloseFilterModal}>
+                <Text style={styles.applyButtonText}>Apply</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+    </ScrollView>
+  );
+}
+
 export default function NearbyScreen() {
   const { colorScheme } = useTheme();
   const isDark = colorScheme === 'dark';
@@ -829,238 +1136,75 @@ export default function NearbyScreen() {
     };
   }, [selectedPoiDetails, isPoiDetailsLoading, poiDetailsError]);
 
+  const handleSeeAllLoadMore = (categoryPoisLength: number) => {
+    if (!canLoadMoreRef.current) return;
+    canLoadMoreRef.current = false;
+    setSeeAllVisibleCount((prev) => Math.min(prev + SEE_ALL_PAGE_SIZE, categoryPoisLength));
+  };
+
   if (selectedCategoryEntry) {
     const [, category] = selectedCategoryEntry;
     const visiblePois = category.pois.slice(0, seeAllVisibleCount);
     const hasMoreSeeAllItems = seeAllVisibleCount < category.pois.length;
 
     return (
-      <View style={[styles.fullPageContainer, { backgroundColor: bgColor }]}> 
-        <View style={[styles.fullPageHeader, { borderBottomColor: borderColor }]}> 
-          <TouchableOpacity
-            onPress={() => setSelectedSeeAllCategory(null)}
-            style={styles.backButton}
-            accessibilityRole="button"
-            accessibilityLabel="Back to nearby"
-          >
-            <FontAwesome name="chevron-left" size={16} color={isDark ? '#ffffff' : '#000000'} />
-          </TouchableOpacity>
-          <Text style={[styles.fullPageTitle, { color: textColor }]}>{category.title}</Text>
-          <View style={{ width: 32 }} />
-        </View>
-
-        <FlatList
-          data={visiblePois}
-          keyExtractor={(poi) => poi.id}
-          contentContainerStyle={styles.fullPageList}
-          onMomentumScrollBegin={() => {
-            canLoadMoreRef.current = true;
-          }}
-          onEndReached={() => {
-            if (!hasMoreSeeAllItems || !canLoadMoreRef.current) return;
-            canLoadMoreRef.current = false;
-            setSeeAllVisibleCount((prev) => Math.min(prev + SEE_ALL_PAGE_SIZE, category.pois.length));
-          }}
-          onEndReachedThreshold={0.4}
-          renderItem={({ item: poi }) => (
-            <POICard
-              poi={poi}
-              onPress={handleOpenPoiDetails}
-              onGetDirections={handleGetDirections}
-              isDark={isDark}
-              secondaryBgColor={secondaryBgColor}
-              borderColor={borderColor}
-              variant="vertical"
-            />
-          )}
-          ListEmptyComponent={
-            <View style={[styles.emptyState, { backgroundColor: secondaryBgColor }]}> 
-              <FontAwesome name="search" size={24} color={isDark ? '#8e8e93' : '#6e6e73'} />
-              <Text style={{ color: isDark ? '#8e8e93' : '#6e6e73', marginTop: 8 }}>
-                No {category.title.toLowerCase()} found nearby
-              </Text>
-            </View>
-          }
-          ListFooterComponent={
-            hasMoreSeeAllItems ? (
-              <Text style={[styles.loadMoreHint, { color: isDark ? '#8e8e93' : '#6e6e73' }]}> 
-                Scroll to load more
-              </Text>
-            ) : null
-          }
-        />
-      </View>
+      <SeeAllCategoryView
+        category={category}
+        visiblePois={visiblePois}
+        hasMoreSeeAllItems={hasMoreSeeAllItems}
+        isDark={isDark}
+        textColor={textColor}
+        bgColor={bgColor}
+        secondaryBgColor={secondaryBgColor}
+        borderColor={borderColor}
+        onBack={() => setSelectedSeeAllCategory(null)}
+        onOpenPoiDetails={handleOpenPoiDetails}
+        onGetDirections={handleGetDirections}
+        onLoadMore={() => {
+          if (!hasMoreSeeAllItems) return;
+          handleSeeAllLoadMore(category.pois.length);
+        }}
+        onScrollBegin={() => {
+          canLoadMoreRef.current = true;
+        }}
+      />
     );
   }
 
   return (
-    <ScrollView
-      style={[styles.container, { backgroundColor: bgColor }]}
-      showsVerticalScrollIndicator={false}
-      refreshControl={
-        <RefreshControl
-          refreshing={Object.values(categories).some((category) => category.isLoading)}
-          onRefresh={handleRefresh}
-          tintColor={isDark ? '#0a84ff' : '#007aff'}
-        />
-      }
-    >
-
-      {/* Search Bar (Placeholder) */}
-      <TouchableOpacity 
-        style={[
-          styles.searchBar, 
-          { 
-            backgroundColor: secondaryBgColor,
-            borderColor: borderColor,
-          }
-        ]}
-        disabled
-      >
-        <FontAwesome name="search" size={16} color={isDark ? '#8e8e93' : '#6e6e73'} />
-        <Text style={{ color: isDark ? '#8e8e93' : '#6e6e73', marginLeft: 8 }}>
-          Search POIs
-        </Text>
-      </TouchableOpacity>
-
-      <View style={styles.actionRow}>
-        <TouchableOpacity style={[styles.actionButton, { borderColor }]} onPress={handleRefresh}>
-          <FontAwesome name="refresh" size={14} color="#a94a5c" />
-          <Text style={styles.actionButtonText}>Refresh</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[
-            styles.actionButton,
-            styles.filterActionButton,
-              { borderColor, backgroundColor: filterActionBackgroundColor },
-          ]}
-          onPress={() => setShowFilterModal(true)}
-        >
-          <FontAwesome name="sliders" size={14} color="#a94a5c" />
-          <Text style={styles.actionButtonText}>Filter</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Categories */}
-      {previewCategories.map(([key, category]) => {
-        const totalCategoryCount = filteredCategories.find(([categoryKey]) => categoryKey === key)?.[1].pois.length ?? 0;
-
-        return (
-        <POICategory 
-          key={key}
-          categoryKey={key}
-          category={category}
-          onPressPoi={handleOpenPoiDetails}
-          onGetDirections={handleGetDirections}
-          onSeeAll={handleSeeAll}
-          totalCount={totalCategoryCount}
-          isDark={isDark}
-          textColor={textColor}
-          secondaryBgColor={secondaryBgColor}
-          borderColor={borderColor}
-        />
-      );
-      })}
-
-      {filteredCategories.length === 0 && (
-        <View style={[styles.emptyState, { backgroundColor: secondaryBgColor }]}> 
-          <FontAwesome name="filter" size={24} color={isDark ? '#8e8e93' : '#6e6e73'} />
-          <Text style={{ color: isDark ? '#8e8e93' : '#6e6e73', marginTop: 8 }}>
-            No categories selected in filter
-          </Text>
-        </View>
-      )}
-
-      <View style={{ height: 40 }} />
-
-      <BuildingModal
-        visible={selectedPoi !== null}
-        mode="poi"
-        building={selectedPoiAsBuildingData}
-        onClose={closePoiDetailsModal}
-        onGetDirections={handlePoiModalDirections}
-      />
-
-      <Modal
-        visible={showFilterModal}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setShowFilterModal(false)}
-      >
-        <View style={styles.modalBackdrop}>
-          <View style={[styles.filterModal, { backgroundColor: bgColor, borderColor }]}> 
-            <View style={styles.filterHeader}>
-              <Text style={[styles.filterTitle, { color: textColor }]}>Filter POIs</Text>
-              <TouchableOpacity onPress={() => setShowFilterModal(false)}>
-                <FontAwesome name="times" size={20} color={isDark ? '#8e8e93' : '#6e6e73'} />
-              </TouchableOpacity>
-            </View>
-
-            <Text style={[styles.filterSectionLabel, { color: textColor }]}>Category</Text>
-            <View style={styles.filterChipWrap}>
-              {(Object.keys(POI_CATEGORIES) as CategoryKey[]).map((categoryKey) => {
-                const isSelected = selectedCategories[categoryKey];
-                return (
-                  <TouchableOpacity
-                    key={categoryKey}
-                    style={[
-                      styles.filterChip,
-                      {
-                        borderColor,
-                        backgroundColor: isSelected ? '#a94a5c' : secondaryBgColor,
-                      },
-                    ]}
-                    onPress={() => toggleCategoryFilter(categoryKey)}
-                  >
-                    <Text style={{ color: isSelected ? '#ffffff' : textColor, fontWeight: '600' }}>
-                      {POI_CATEGORIES[categoryKey].title}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-
-            <Text style={[styles.filterSectionLabel, { color: textColor }]}>Destination Radius</Text>
-            <View style={styles.radiusInlineRow}>
-              <View style={styles.radiusSliderWrap}>
-                <Slider
-                  minimumValue={MIN_RADIUS_KM}
-                  maximumValue={MAX_RADIUS_KM}
-                  step={0.5}
-                  value={selectedRadiusKm}
-                  onValueChange={(value) => {
-                    setSelectedRadiusKm(value);
-                    setRadiusInputKm(value.toFixed(1));
-                  }}
-                  minimumTrackTintColor="#a94a5c"
-                  maximumTrackTintColor={isDark ? '#3f3f44' : '#d7d7db'}
-                  thumbTintColor="#a94a5c"
-                />
-              </View>
-              <TextInput
-                value={radiusInputKm}
-                onChangeText={handleRadiusInputChange}
-                onBlur={handleRadiusInputBlur}
-                onSubmitEditing={handleRadiusInputBlur}
-                keyboardType="decimal-pad"
-                style={[styles.radiusInlineInput, { color: textColor }]}
-              />
-              <Text style={[styles.radiusInlineUnit, { color: textColor }]}>km</Text>
-            </View>
-
-            <View style={styles.filterFooter}>
-              <TouchableOpacity style={[styles.clearButton, { borderColor }]} onPress={clearAllFilters}>
-                <Text style={{ color: '#a94a5c', fontWeight: '600' }}>Clear All</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.applyButton} onPress={() => setShowFilterModal(false)}>
-                <Text style={styles.applyButtonText}>Apply</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
-    </ScrollView>
+    <NearbyMainContent
+      categories={categories}
+      previewCategories={previewCategories}
+      filteredCategories={filteredCategories}
+      selectedCategories={selectedCategories}
+      selectedRadiusKm={selectedRadiusKm}
+      radiusInputKm={radiusInputKm}
+      showFilterModal={showFilterModal}
+      filterActionBackgroundColor={filterActionBackgroundColor}
+      selectedPoi={selectedPoi}
+      selectedPoiAsBuildingData={selectedPoiAsBuildingData}
+      isDark={isDark}
+      textColor={textColor}
+      bgColor={bgColor}
+      secondaryBgColor={secondaryBgColor}
+      borderColor={borderColor}
+      onRefresh={handleRefresh}
+      onOpenPoiDetails={handleOpenPoiDetails}
+      onGetDirections={handleGetDirections}
+      onSeeAll={handleSeeAll}
+      onOpenFilterModal={() => setShowFilterModal(true)}
+      onCloseFilterModal={() => setShowFilterModal(false)}
+      onToggleCategoryFilter={toggleCategoryFilter}
+      onClearAllFilters={clearAllFilters}
+      onRadiusInputChange={handleRadiusInputChange}
+      onRadiusInputBlur={handleRadiusInputBlur}
+      onRadiusSliderChange={(value) => {
+        setSelectedRadiusKm(value);
+        setRadiusInputKm(value.toFixed(1));
+      }}
+      onClosePoiDetailsModal={closePoiDetailsModal}
+      onPoiModalDirections={handlePoiModalDirections}
+    />
   );
 }
 
