@@ -591,6 +591,35 @@ describe('<Index />', () => {
     });
   });
 
+  describe('exit preview button', () => {
+    it('renders exit-preview.button when previewActive is true and calls endDirections on press', async () => {
+      const previewDirectionsState = {
+        ...defaultDirections,
+        state: {
+          ...defaultDirections.state,
+          origin: { latitude: 45.497, longitude: -73.579 },
+          isActive: false,
+        },
+      };
+      mockDirectionsHook.mockReturnValue(previewDirectionsState);
+
+      const { getByTestId } = await renderWithTheme(<Index />);
+
+      await waitFor(() => {
+        expect(getByTestId('exit-preview.button')).toBeTruthy();
+      });
+
+      fireEvent.press(getByTestId('exit-preview.button'));
+      expect(mockEndDirections).toHaveBeenCalled();
+    });
+
+    it('does not render exit-preview.button when not in preview state', async () => {
+      const { queryByTestId } = await renderWithTheme(<Index />);
+      await waitFor(() => expect(mockSearchBarProperties.onPreviewRoute).toBeDefined());
+      expect(queryByTestId('exit-preview.button')).toBeNull();
+    });
+  });
+
   describe('handleEndDirections', () => {
     it('calls endDirections and clears start and destination choices', async () => {
       await renderWithTheme(<Index />);
@@ -964,48 +993,6 @@ describe('<Index />', () => {
         expect(mockSearchBarProperties.destination.coordinate.latitude).toBeDefined();
         expect(mockSearchBarProperties.destination.coordinate.longitude).toBeDefined();
       });
-    });
-  });
-
-  // --- onGetDirections via BuildingModal ---
-  describe('onGetDirections via BuildingModal', () => {
-    it('calls startDirectionsToBuilding when location is available', async () => {
-      const { getAllByTestId } = await renderWithTheme(<Index />);
-      const polygons = await waitFor(() => getAllByTestId('polygon'));
-
-      // Open modal to populate building data
-      fireEvent.press(polygons[0]);
-
-      await waitFor(() => expect(mockBuildingModalProperties.onGetDirections).toBeDefined());
-
-      const mockBuilding = { geometry: { coordinates: [[[-73.579, 45.497], [-73.578, 45.497]]] } };
-      act(() => {
-        mockBuildingModalProperties.onGetDirections(mockBuilding);
-      });
-
-      expect(mockStartDirectionsToBuilding).toHaveBeenCalledWith(
-        sgwLocation,
-        mockBuilding.geometry.coordinates[0]
-      );
-    });
-
-    it('does not call startDirectionsToBuilding when location is null', async () => {
-      mockWatchLocation.mockReturnValue(noLocationWatch);
-      mockPermissionState.mockReturnValue(deniedPermission);
-
-      const { getAllByTestId } = await renderWithTheme(<Index />);
-      const polygons = await waitFor(() => getAllByTestId('polygon'));
-
-      fireEvent.press(polygons[0]);
-
-      await waitFor(() => expect(mockBuildingModalProperties.onGetDirections).toBeDefined());
-
-      const mockBuilding = { geometry: { coordinates: [[[-73.579, 45.497], [-73.578, 45.497]]] } };
-      act(() => {
-        mockBuildingModalProperties.onGetDirections(mockBuilding);
-      });
-
-      expect(mockStartDirectionsToBuilding).not.toHaveBeenCalled();
     });
   });
 

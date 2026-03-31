@@ -16,6 +16,7 @@ import {
 import { useTheme } from '../context/ThemeContext';
 import BUILDING_IMAGES from '../constants/buildingImages';
 import { COLORS } from '../constants/modalColors';
+import { getBuildingIndoorMap } from '../utils/indoorMapData';
 import { SHEET_HEIGHT, DISMISS_THRESHOLD, VELOCITY_THRESHOLD } from '../constants/modalSheet';
 import { AMENITY_ICONS, ACCESSIBILITY_ICONS, UI_ICONS, renderIcon } from '../constants/buildingIcons';
 
@@ -55,6 +56,7 @@ type BuildingModalProps = Readonly<{
   onDirectionsFrom?: (building: BuildingData) => void;
   onDirectionsTo?: (building: BuildingData) => void;
   onGetDirections?: (building: BuildingData) => void;
+  onShowIndoorMap?: (buildingCode: string) => void;
   mode?: 'building' | 'poi';
 }>;
 
@@ -130,7 +132,7 @@ const getBuildingImageSource = (
   return code ? BUILDING_IMAGES[code] : null;
 };
 
-export default function BuildingModal({ visible, building, onClose, onDirectionsFrom, onDirectionsTo, onGetDirections, mode = 'building' }: BuildingModalProps) {
+export default function BuildingModal({ visible, building, onClose, onDirectionsFrom, onDirectionsTo, onGetDirections, onShowIndoorMap, mode = 'building' }: BuildingModalProps) {
   const { colorScheme } = useTheme();
   const isDark = colorScheme === 'dark';
 
@@ -156,7 +158,7 @@ export default function BuildingModal({ visible, building, onClose, onDirections
     }
   }, [visible]);
 
-  const handleClose = useCallback(() => {
+  const handleClose = useCallback((onAfterClose?: () => void) => {
     Animated.timing(translateY, {
       toValue: SHEET_HEIGHT,
       duration: 250,
@@ -164,6 +166,9 @@ export default function BuildingModal({ visible, building, onClose, onDirections
     }).start(() => {
       currentPosRef.current = SHEET_HEIGHT;
       onClose();
+      if (onAfterClose) {
+        setTimeout(onAfterClose, 0);
+      }
     });
   }, [onClose, translateY]);
 
@@ -246,6 +251,7 @@ export default function BuildingModal({ visible, building, onClose, onDirections
 
   const buildingImage = getBuildingImageSource(mode, photoUrl, code);
   const hasAddress = mode === 'poi' ? !!address : !!(number || street || city);
+  const hasIndoorMap = mode === 'building' && !!(code && getBuildingIndoorMap(code));
 
   const addressParts: string[] = [];
   if (number && street) addressParts.push(`${number} ${street}`);
@@ -435,10 +441,22 @@ export default function BuildingModal({ visible, building, onClose, onDirections
             <View style={styles.buttonsContainer}>
               {mode === 'building' && (
                 <>
+                  {hasIndoorMap && onShowIndoorMap && (
+                    <TouchableOpacity
+                      style={[styles.directionButton, styles.indoorMapButton]}
+                    onPress={() => handleClose(() => onShowIndoorMap(code as string))}
+                      activeOpacity={0.7}
+                      testID="indoor-map-button"
+                    >
+                      <View style={styles.buttonIcon}>{renderIcon(UI_ICONS.mapMarker, 16, COLORS.red)}</View>
+                      <Text style={[styles.indoorMapButtonText, { color: COLORS.red }]}>Show Indoor Map</Text>
+                    </TouchableOpacity>
+                  )}
+
                   <TouchableOpacity
                     style={[styles.directionButton, styles.directionButtonFrom, { borderColor: COLORS.red }]}
                     onPress={() => {
-                      onDirectionsFrom?.(building);
+                    onDirectionsFrom?.(building);
                       handleClose();
                     }}
                     activeOpacity={0.7}
@@ -448,24 +466,24 @@ export default function BuildingModal({ visible, building, onClose, onDirections
                     <Text style={[styles.directionButtonFromText, { color: COLORS.red }]}>Get Directions From</Text>
                   </TouchableOpacity>
 
-                  <TouchableOpacity
-                    style={[
-                      styles.directionButton,
-                      styles.directionButtonTo,
-                      { backgroundColor: COLORS.red },
-                    ]}
-                    onPress={() => {
-                      onDirectionsTo?.(building);
-                      handleClose();
-                    }}
-                    activeOpacity={0.7}
-                    testID="directions-to-button"
-                  >
-                    <View style={styles.buttonIcon}>{renderIcon(UI_ICONS.route, 16, '#fff')}</View>
-                    <Text style={styles.directionButtonToText}>Get Directions To</Text>
-                  </TouchableOpacity>
-                </>
-              )}
+                <TouchableOpacity
+                  style={[
+                    styles.directionButton,
+                    styles.directionButtonTo,
+                    { backgroundColor: COLORS.red },
+                  ]}
+                  onPress={() => {
+                    onDirectionsTo?.(building);
+                    handleClose();
+                  }}
+                  activeOpacity={0.7}
+                  testID="directions-to-button"
+                >
+                  <View style={styles.buttonIcon}>{renderIcon(UI_ICONS.route, 16, '#fff')}</View>
+                  <Text style={styles.directionButtonToText}>Get Directions To</Text>
+                </TouchableOpacity>
+              </>
+            )}
 
               {mode === 'poi' && (
                 <TouchableOpacity
@@ -657,6 +675,15 @@ const styles = StyleSheet.create({
   directionButtonFrom: {
     borderWidth: 1.5,
     backgroundColor: 'transparent',
+  },
+  indoorMapButton: {
+    borderWidth: 1.5,
+    borderColor: COLORS.red,
+    backgroundColor: 'transparent',
+  },
+  indoorMapButtonText: {
+    fontSize: 15,
+    fontWeight: '600',
   },
   directionButtonTo: {
     borderWidth: 0,
