@@ -1,0 +1,34 @@
+appId: com.commitandpray.soen390project
+---
+- tapOn: Search buildings, rooms...
+- tapOn: Room in H (e.g. 920)
+- tapOn: 101, H room
+- tapOn: Where to?
+- inputText: "mb"
+- tapOn: John Molson School of Business (MB)
+- tapOn: Room in MB (e.g. 3.255)
+- tapOn: 1.115, MB room
+- tapOn: Walking
+- tapOn: Start Directions
+
+#Indoor ui shows up to get out of H building
+- assertVisible: H Indoor Map
+- assertVisible: "Route: 101 to H building entry"
+- tapOn: Close
+
+#Outdoor directions
+- assertVisible: Step 1 of 4
+- repeat:
+    while:
+      notVisible: "Step 3 of 4"
+    commands:
+      - tapOn: ›
+- tapOn: Enter building
+
+#Enter MB building 
+- assertVisible: MB Indoor Map
+- assertVisible: "Route: MB building entry to 1.115"
+
+#End directions
+- tapOn: Close
+- tapOn: End
