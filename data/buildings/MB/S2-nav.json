@@ -1231,7 +1231,7 @@
       "floor": -2,
       "x": 335,
       "y": 889,
-      "label": "",
+      "label": "MB building entry",
       "accessible": true
     },
     {
@@ -1241,7 +1241,7 @@
       "floor": -2,
       "x": 335,
       "y": 889,
-      "label": "",
+      "label": "MB building exit",
       "accessible": true
     }
   ],

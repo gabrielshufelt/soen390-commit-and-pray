@@ -633,7 +633,7 @@
       "y": 1808,
       "latitude": 45.4955008664397, 
       "longitude": -73.57915690500853,
-      "label": "",
+      "label": "MB building entry",
       "accessible": true
     },
     {
@@ -643,7 +643,7 @@
       "floor": 1,
       "x": 692,
       "y": 1808,
-      "label": "",
+      "label": "MB building exit",
       "accessible": true
     },
     {
@@ -895,7 +895,7 @@
       "y": 209,
       "latitude": 45.495217933169, 
       "longitude": -73.57857958459395,
-      "label": "",
+      "label": "MB building entry",
       "accessible": true
     },
     {
@@ -907,7 +907,7 @@
       "y": 209,
       "latitude": 45.495217933169, 
       "longitude": -73.57857958459395,
-      "label": "",
+      "label": "MB building exit",
       "accessible": true
     },
     {
