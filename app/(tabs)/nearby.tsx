@@ -393,11 +393,13 @@ const fetchCategoryResult = async (
     const response = await fetch(
       `https://maps.googleapis.com/maps/api/place/nearbysearch/json?${params.toString()}`
     );
-    const data: GooglePlacesNearbyResponse = await response.json();
 
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}`);
-    }
+    } 
+
+    const data: GooglePlacesNearbyResponse = await response.json();
+
 
     if (data.status !== 'OK' && data.status !== 'ZERO_RESULTS') {
       throw new Error(data.error_message ?? data.status);
