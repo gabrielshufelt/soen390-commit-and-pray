@@ -15,10 +15,10 @@ import { styles } from '../styles/nextClassModal.styles';
 const TIMEOUT_MS = 30_000; // 30 seconds, how often the "in X mins" counter updates
 
 interface NextClassModalProps {
-  nextClass: ParsedNextClass | null;
-  status: NextClassStatus;
-  isLoading: boolean;
-  onGetDirections: (nextClass: ParsedNextClass) => void;
+  readonly nextClass: ParsedNextClass | null;
+  readonly status: NextClassStatus;
+  readonly isLoading: boolean;
+  readonly onGetDirections: (nextClass: ParsedNextClass) => void;
 }
 
 // Helpers
@@ -139,9 +139,9 @@ export default function NextClassModal({ nextClass, status, isLoading, onGetDire
   const countdownLabel = minutesUntil <= 0 ? 'Starting now' : `In ${formattedTimeUntil(minutesUntil)}`;
   const walkLabel = isAlreadyThere 
     ? " You are here" 
-    : nextClass.walkingMinutes != null
-      ? ` ${formattedTimeUntil(nextClass.walkingMinutes)} walk`
-      : ' Walk time unavailable';
+    : nextClass.walkingMinutes === null
+      ? ' Walk time unavailable'
+      : ` ${formattedTimeUntil(nextClass.walkingMinutes)} walk`;
 
   return (
     <View style={cardStyle}>

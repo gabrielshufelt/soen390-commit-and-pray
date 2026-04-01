@@ -16,7 +16,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { FontAwesome } from "@expo/vector-icons";
 import { BuildingChoice } from "@/constants/searchBar.types";
 import { useShuttleAvailability } from "../hooks/useShuttleAvailability";
-import { styles, MAROON, MUTED, TEXT } from "../styles/searchBar.styles";
+import { styles, MAROON, MUTED } from "../styles/searchBar.styles";
 import TransportModeSelector from "./TransportModeSelector";
 import { stripCodePrefix, displayName, makeHaystack } from "@/constants/searchBar.utils";
 import { useWatchLocation } from "../hooks/useWatchLocation";
@@ -24,46 +24,46 @@ import { useUserBuilding } from "../hooks/useUserBuilding";
 import { searchNearbyPois, POI_TYPE_MAP } from "../utils/poiSearch";
 
 type Props = {
-  buildings: BuildingChoice[];
-  roomOptionsByBuilding: Record<string, string[]>;
+  readonly buildings: BuildingChoice[];
+  readonly roomOptionsByBuilding: Record<string, string[]>;
 
-  start: BuildingChoice | null; // null => current location
-  destination: BuildingChoice | null;
+  readonly start: BuildingChoice | null; // null => current location
+  readonly destination: BuildingChoice | null;
 
-  onChangeStart: (b: BuildingChoice | null) => void;
-  onChangeDestination: (b: BuildingChoice | null) => void;
+  readonly onChangeStart: (b: BuildingChoice | null) => void;
+  readonly onChangeDestination: (b: BuildingChoice | null) => void;
 
-  transportMode: MapViewDirectionsMode;
-  onChangeTransportMode: (mode: MapViewDirectionsMode) => void;
+  readonly transportMode: MapViewDirectionsMode;
+  readonly onChangeTransportMode: (mode: MapViewDirectionsMode) => void;
 
-  routeActive: boolean;
+  readonly routeActive: boolean;
 
-  onOpenBuilding?: (b: BuildingChoice) => void;
-  onStartRoute?: () => void;
-  onEndRoute?: () => void;
-  onPreviewRoute?: () => void;
-  onExitPreview?: () => void;
-  previewActive?: boolean;
+  readonly onOpenBuilding?: (b: BuildingChoice) => void;
+  readonly onStartRoute?: () => void;
+  readonly onEndRoute?: () => void;
+  readonly onPreviewRoute?: () => void;
+  readonly onExitPreview?: () => void;
+  readonly previewActive?: boolean;
 
-  previewRouteInfo?: {
+  readonly previewRouteInfo?: {
     distanceText: string | null;
     durationText: string | null;
   };
 
-  useShuttle?: boolean;
-  onUseShuttleChange?: (active: boolean) => void;
+  readonly useShuttle?: boolean;
+  readonly onUseShuttleChange?: (active: boolean) => void;
 
-  campus: "SGW" | "Loyola";
-  onCampusSelect: (campus: "SGW" | "Loyola") => void;
+  readonly campus: "SGW" | "Loyola";
+  readonly onCampusSelect: (campus: "SGW" | "Loyola") => void;
 
-  onClose: () => void;
+  readonly onClose: () => void;
 };
 
 type ShuttleCheckboxProps = {
-  checked: boolean;
-  available: boolean;
-  nextDeparture: string | null;
-  onToggle: () => void;
+  readonly checked: boolean;
+  readonly available: boolean;
+  readonly nextDeparture: string | null;
+  readonly onToggle: () => void;
 };
 
 function ShuttleCheckbox({ checked, available, nextDeparture, onToggle }: ShuttleCheckboxProps) {

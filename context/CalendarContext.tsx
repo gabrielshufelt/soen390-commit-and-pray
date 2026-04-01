@@ -63,7 +63,7 @@ const CalendarContext = createContext<CalendarContextType | undefined>(undefined
 const SELECTED_CALENDAR_KEY = 'selected_calendar_id';
 const CACHED_CALENDARS_KEY = 'cached_calendars';
 
-export function CalendarProvider({ children }: { children: React.ReactNode }) {
+export function CalendarProvider({ children }: { readonly children: React.ReactNode }) {
   const [calendars, setCalendars] = useState<GoogleCalendar[]>([]);
   const [selectedCalendarId, setSelectedCalendarId] = useState<string | null>(null);
   const [isLoadingCalendars, setIsLoadingCalendars] = useState(false);

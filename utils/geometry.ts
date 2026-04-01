@@ -43,14 +43,14 @@ function pointToSegmentDistance(
     const dy = y2 - y1;
     
     if (dx === 0 && dy === 0) {
-        return Math.sqrt((px - x1) ** 2 + (py - y1) ** 2);
+        return Math.hypot(px - x1, py - y1);
     }
     
     const t = Math.max(0, Math.min(1, ((px - x1) * dx + (py - y1) * dy) / (dx * dx + dy * dy)));
     const closestX = x1 + t * dx;
     const closestY = y1 + t * dy;
     
-    return Math.sqrt((px - closestX) ** 2 + (py - closestY) ** 2);
+    return Math.hypot(px - closestX, py - closestY);
 }
 
 /**
