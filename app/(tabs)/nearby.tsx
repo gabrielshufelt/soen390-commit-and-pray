@@ -56,12 +56,13 @@ const formatPriceLevel = (priceLevel?: number): string => {
   return '$'.repeat(priceLevel);
 };
 
-const createInitialCategories = (): Record<string, POICategory> => ({
-  study: { title: POI_CATEGORIES.study.title, icon: POI_CATEGORIES.study.icon, pois: [], isLoading: true },
-  coffee: { title: POI_CATEGORIES.coffee.title, icon: POI_CATEGORIES.coffee.icon, pois: [], isLoading: true },
-  restaurant: { title: POI_CATEGORIES.restaurant.title, icon: POI_CATEGORIES.restaurant.icon, pois: [], isLoading: true },
-  grocery: { title: POI_CATEGORIES.grocery.title, icon: POI_CATEGORIES.grocery.icon, pois: [], isLoading: true },
-});
+const createInitialCategories = (): Record<string, POICategory> =>
+  Object.fromEntries(
+    CATEGORY_KEYS.map((key) => [
+      key,
+      { title: POI_CATEGORIES[key].title, icon: POI_CATEGORIES[key].icon, pois: [], isLoading: true },
+    ])
+  );
 
 const markLocationPermissionError = (prev: Record<string, POICategory>): Record<string, POICategory> => {
   const next = { ...prev };
@@ -142,9 +143,9 @@ const buildPoiFromNearbyResult = (
   categoryKey: string,
   currentCoords: Coordinates
 ): POI | null => {
-  const latitude = result.geometry?.location?.lat ?? 0;
-  const longitude = result.geometry?.location?.lng ?? 0;
-  if (latitude === 0 || longitude === 0) return null;
+  const latitude = result.geometry?.location?.lat;
+  const longitude = result.geometry?.location?.lng;
+  if (latitude == null || longitude == null) return null;
 
   return {
     id: result.place_id,
@@ -210,10 +211,9 @@ const fetchCategoryResult = async (
     }
 
     const pois: POI[] = (data.results ?? [])
-      .filter((result) => result.opening_hours?.open_now === true)
-      .map((result) => buildPoiFromNearbyResult(result, categoryKey, currentCoords))
-      .filter((poi): poi is POI => poi !== null)
-      .sort((a, b) => a.distance - b.distance);
+    .map((result) => buildPoiFromNearbyResult(result, categoryKey, currentCoords))
+    .filter((poi): poi is POI => poi !== null)
+   .sort((a, b) => a.distance - b.distance);
 
     await setCachedPOIs(categoryKey, pois, currentCoords.latitude, currentCoords.longitude);
 
