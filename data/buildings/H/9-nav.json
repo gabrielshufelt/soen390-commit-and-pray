@@ -421,7 +421,7 @@
       "floor": 9,
       "x": 1306,
       "y": 1299,
-      "label": "",
+      "label": "Elevator",
       "accessible": true
     },
     {
@@ -431,7 +431,7 @@
       "floor": 9,
       "x": 1381,
       "y": 1298,
-      "label": "",
+      "label": "Elevator",
       "accessible": true
     },
     {
@@ -441,7 +441,7 @@
       "floor": 9,
       "x": 1258,
       "y": 617,
-      "label": "",
+      "label": "Elevator",
       "accessible": true
     },
     {
@@ -451,7 +451,7 @@
       "floor": 9,
       "x": 1258,
       "y": 669,
-      "label": "",
+      "label": "Elevator",
       "accessible": true
     },
     {
@@ -1631,7 +1631,7 @@
       "floor": 9,
       "x": 700,
       "y": 1541,
-      "label": "",
+      "label": "water",
       "accessible": true
     },
     {
@@ -1651,7 +1651,7 @@
       "floor": 9,
       "x": 818,
       "y": 620,
-      "label": "",
+      "label": "vending machine",
       "accessible": true
     },
     {
@@ -1661,7 +1661,7 @@
       "floor": 9,
       "x": 898,
       "y": 1637,
-      "label": "",
+      "label": "vending machine",
       "accessible": true
     }
   ],
