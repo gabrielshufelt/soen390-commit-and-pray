@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import * as SecureStore from 'expo-secure-store';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 
@@ -95,8 +95,13 @@ export function AuthProvider({ children }: { readonly children: React.ReactNode 
     }
   };
 
+  const contextValue = useMemo(
+    () => ({ user, isLoading, signIn, signOut, getAccessToken }),
+    [user, isLoading, signIn, signOut, getAccessToken]
+  );
+
   return (
-    <AuthContext.Provider value={{ user, isLoading, signIn, signOut, getAccessToken }}>
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   );

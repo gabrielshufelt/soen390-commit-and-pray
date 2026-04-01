@@ -73,7 +73,6 @@ export default function Index() {
     apiKey,
     startDirections,
     previewDirections,
-    startDirectionsToBuilding,
     onRouteReady,
     endDirections,
     nextStep,

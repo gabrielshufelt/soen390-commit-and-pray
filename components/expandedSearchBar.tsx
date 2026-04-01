@@ -95,6 +95,19 @@ function ShuttleCheckbox({ checked, available, nextDeparture, onToggle }: Shuttl
   );
 }
 
+function Separator() {
+  return <View style={styles.sep} />;
+}
+
+function buildSubLabel(campus: string | undefined, address: string | undefined): string {
+  const campusPart = campus ? `${campus} Campus` : "";
+  let addressPart = "";
+  if (address) {
+    addressPart = campus ? ` · ${address}` : address;
+  }
+  return campusPart + addressPart;
+}
+
 export default function ExpandedSearchBar({
   buildings,
   roomOptionsByBuilding,
@@ -268,8 +281,6 @@ export default function ExpandedSearchBar({
     );
   }, [buildings]);
 
-  const Separator = () => <View style={styles.sep} />;
-
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
       <View style={styles.fullscreenOverlay} pointerEvents="auto">
@@ -355,7 +366,7 @@ export default function ExpandedSearchBar({
                       >
                         <Text style={styles.suggestionTitle}>{displayName(item)}</Text>
                         <Text style={styles.suggestionSub}>
-                          {item.campus ? `${item.campus} Campus` : ""}{item.address ? (item.campus ? ` · ${item.address}` : item.address) : ""}
+                          {buildSubLabel(item.campus, item.address)}
                         </Text>
                       </TouchableOpacity>
                     </React.Fragment>
@@ -483,7 +494,7 @@ export default function ExpandedSearchBar({
                       >
                         <Text style={styles.suggestionTitle}>{displayName(item)}</Text>
                         <Text style={styles.suggestionSub}>
-                          {item.campus ? `${item.campus} Campus` : ""}{item.address ? (item.campus ? ` · ${item.address}` : item.address) : ""}
+                          {buildSubLabel(item.campus, item.address)}
                         </Text>
                       </TouchableOpacity>
                     </React.Fragment>
@@ -703,6 +714,7 @@ export default function ExpandedSearchBar({
           <View style={styles.filterRow}>
             {(["Home", "Library", "Favorites"] as const).map((k) => {
               const active = quickFilter === k;
+              const iconName = k === "Home" ? "home" : k === "Library" ? "book" : "star";
               return (
                 <TouchableOpacity
                   key={k}
@@ -713,7 +725,7 @@ export default function ExpandedSearchBar({
                   accessibilityState={{ selected: active }}
                 >
                   <FontAwesome
-                    name={k === "Home" ? "home" : k === "Library" ? "book" : "star"}
+                    name={iconName}
                     size={16}
                     color={active ? MAROON : MUTED}
                   />
@@ -763,7 +775,7 @@ export default function ExpandedSearchBar({
                       <View style={{ flex: 1 }}>
                         <Text style={styles.buildingName}>{displayName(item)}</Text>
                         <Text style={styles.buildingSub}>
-                          {item.campus ? `${item.campus} Campus` : ""}{item.address ? (item.campus ? ` · ${item.address}` : item.address) : ""}
+                          {buildSubLabel(item.campus, item.address)}
                         </Text>
                       </View>
 
@@ -833,7 +845,7 @@ export default function ExpandedSearchBar({
                       <View style={{ flex: 1 }}>
                         <Text style={styles.buildingName}>{displayName(item)}</Text>
                         <Text style={styles.buildingSub}>
-                          {item.campus ? `${item.campus} Campus` : ""}{item.address ? (item.campus ? ` · ${item.address}` : item.address) : ""}
+                          {buildSubLabel(item.campus, item.address)}
                         </Text>
                       </View>
 
