@@ -151,7 +151,7 @@
       "floor": 2,
       "x": 1306,
       "y": 1503,
-      "label": "",
+      "label": "Elevator",
       "accessible": true
     },
     {
@@ -161,7 +161,7 @@
       "floor": 2,
       "x": 1382,
       "y": 1500,
-      "label": "",
+      "label": "Elevator",
       "accessible": true
     },
     {
@@ -621,7 +621,7 @@
       "floor": 2,
       "x": 1663,
       "y": 1499,
-      "label": "",
+      "label": "vending machine",
       "accessible": true
     },
     {
@@ -631,7 +631,7 @@
       "floor": 2,
       "x": 908,
       "y": 709,
-      "label": "",
+      "label": "water",
       "accessible": true
     },
     {

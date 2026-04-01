@@ -81,7 +81,7 @@
       "floor": 2,
       "x": 973,
       "y": 578,
-      "label": "",
+      "label": "elevator",
       "accessible": true
     },
     {
@@ -511,7 +511,7 @@
       "floor": 2,
       "x": 1496,
       "y": 1589,
-      "label": "",
+      "label": "water",
       "accessible": true
     },
     {
