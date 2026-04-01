@@ -221,7 +221,7 @@
       "floor": 2,
       "x": 240,
       "y": 895,
-      "label": "",
+      "label": "H building entry",
       "accessible": true
     },
     {
@@ -231,7 +231,7 @@
       "floor": 2,
       "x": 240,
       "y": 895,
-      "label": "",
+      "label": "H building exit",
       "accessible": true
     },
     {
@@ -461,7 +461,7 @@
       "floor": 2,
       "x": 574,
       "y": 400,
-      "label": "",
+      "label": "H building entry",
       "accessible": true
     },
     {
@@ -471,7 +471,7 @@
       "floor": 2,
       "x": 574,
       "y": 400,
-      "label": "",
+      "label": "H building exit",
       "accessible": true
     },
     {

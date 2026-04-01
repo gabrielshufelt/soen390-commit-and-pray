@@ -376,14 +376,6 @@ export const styles = StyleSheet.create({
   roomOverlay: {
     ...StyleSheet.absoluteFillObject,
   },
-  routeSegment: {
-    position: "absolute",
-    height: 5,
-    backgroundColor: "#1E64D8",
-    borderRadius: 999,
-    opacity: 0.9,
-    transformOrigin: "0 50%",
-  },
   routeEndpoint: {
     position: "absolute",
     width: 14,
