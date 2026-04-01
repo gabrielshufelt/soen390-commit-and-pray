@@ -1,0 +1,12 @@
+appId: com.commitandpray.soen390project
+---
+
+- tapOn: "Indoor"
+- tapOn: ▶
+- tapOn: ▶
+- tapOn: "Rooms"
+- tapOn: "Search rooms, facilities..."
+- inputText: "820"
+- doubleTapOn: 820, Accessible
+- tapOn: "Map"
+- assertVisible: "820"
