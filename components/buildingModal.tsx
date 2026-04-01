@@ -9,6 +9,9 @@ import {
   Animated,
   PanResponder,
   Image,
+  Linking,
+  Alert,
+  Platform,
 } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
 import BUILDING_IMAGES from '../constants/buildingImages';
@@ -18,7 +21,7 @@ import { SHEET_HEIGHT, DISMISS_THRESHOLD, VELOCITY_THRESHOLD } from '../constant
 import { AMENITY_ICONS, ACCESSIBILITY_ICONS, UI_ICONS, renderIcon } from '../constants/buildingIcons';
 
 
-interface BuildingData {
+export interface BuildingData {
   id: string;
   geometry: {
     type: string;
@@ -27,25 +30,487 @@ interface BuildingData {
   properties: {
     code?: string;
     name?: string;
+    address?: string;
     'addr:housenumber'?: string;
     'addr:street'?: string;
     'addr:city'?: string;
     'addr:province'?: string;
     accessibility?: string[];
     amenities?: string[];
+    phoneNumber?: string;
+    pricing?: string;
+    website?: string;
+    rating?: number;
+    isOpen?: boolean;
+    categoryLabel?: string;
+    photoUrl?: string;
+    detailsLoading?: boolean;
+    detailsError?: string;
   };
 }
 
-interface BuildingModalProps {
+type BuildingModalProps = Readonly<{
   visible: boolean;
   building: BuildingData | null;
   onClose: () => void;
-  onDirectionsFrom: (building: BuildingData) => void;
-  onDirectionsTo: (building: BuildingData) => void;
+  onDirectionsFrom?: (building: BuildingData) => void;
+  onDirectionsTo?: (building: BuildingData) => void;
+  onGetDirections?: (building: BuildingData) => void;
   onShowIndoorMap?: (buildingCode: string) => void;
+  mode?: 'building' | 'poi';
+}>;
+
+type PanReleaseParams = Readonly<{
+  translateY: Animated.Value;
+  currentPosRef: React.MutableRefObject<number>;
+  onClose: () => void;
+}>;
+
+const buildPanResponder = ({ translateY, currentPosRef, onClose }: PanReleaseParams) =>
+  PanResponder.create({
+    onStartShouldSetPanResponder: () => true,
+    onMoveShouldSetPanResponder: (_, gs) => Math.abs(gs.dy) > 5,
+    onPanResponderMove: (_, gs) => {
+      const newPos = currentPosRef.current + gs.dy;
+      if (newPos >= 0) {
+        translateY.setValue(newPos);
+      }
+    },
+    onPanResponderRelease: (_, gs) => {
+      const finalPos = Math.max(0, currentPosRef.current + gs.dy);
+
+      if (gs.vy > VELOCITY_THRESHOLD) {
+        currentPosRef.current = SHEET_HEIGHT;
+        Animated.timing(translateY, {
+          toValue: SHEET_HEIGHT,
+          duration: 250,
+          useNativeDriver: true,
+        }).start(() => onClose());
+        return;
+      }
+
+      if (gs.vy < -VELOCITY_THRESHOLD) {
+        currentPosRef.current = 0;
+        Animated.spring(translateY, {
+          toValue: 0,
+          useNativeDriver: true,
+          tension: 65,
+          friction: 11,
+        }).start();
+        return;
+      }
+
+      if (finalPos > DISMISS_THRESHOLD) {
+        currentPosRef.current = SHEET_HEIGHT;
+        Animated.timing(translateY, {
+          toValue: SHEET_HEIGHT,
+          duration: 250,
+          useNativeDriver: true,
+        }).start(() => onClose());
+        return;
+      }
+
+      currentPosRef.current = 0;
+      Animated.spring(translateY, {
+        toValue: 0,
+        useNativeDriver: true,
+        tension: 65,
+        friction: 11,
+      }).start();
+    },
+  });
+
+const getBuildingImageSource = (
+  mode: 'building' | 'poi',
+  photoUrl?: string,
+  code?: string
+) => {
+  if (mode === 'poi') {
+    return photoUrl ? { uri: photoUrl } : null;
+  }
+
+  return code ? BUILDING_IMAGES[code] : null;
+};
+
+const openWebsiteUrl = async (url?: string): Promise<void> => {
+  if (!url) return;
+  const normalizedUrl = /^https?:\/\//i.test(url) ? url : `https://${url}`;
+
+  const supported = await Linking.canOpenURL(normalizedUrl);
+  if (supported) {
+    await Linking.openURL(normalizedUrl);
+  }
+};
+
+const placePhoneCall = async (phone?: string): Promise<void> => {
+  if (!phone) return;
+  const normalizedPhone = phone.replaceAll(/[^\d+]/g, '');
+  if (!normalizedPhone) {
+    Alert.alert('Call unavailable', 'This phone number is not valid.');
+    return;
+  }
+
+  Alert.alert(
+    'Call phone number',
+    phone,
+    [
+      {
+        text: 'Cancel',
+        style: 'cancel',
+      },
+      {
+        text: 'Call',
+        style: 'default',
+        onPress: () => {
+          const callPhone = async () => {
+            const primaryScheme = Platform.OS === 'ios' ? 'telprompt' : 'tel';
+            const primaryUrl = `${primaryScheme}:${normalizedPhone}`;
+            const fallbackUrl = `tel:${normalizedPhone}`;
+
+            try {
+              await Linking.openURL(primaryUrl);
+            } catch {
+              try {
+                await Linking.openURL(fallbackUrl);
+              } catch {
+                Alert.alert('Call unavailable', 'This device cannot place phone calls.');
+              }
+            }
+          };
+          callPhone().catch(() => undefined);
+        },
+      },
+    ],
+    { cancelable: true }
+  );
+};
+
+type PoiDetailsSectionProps = Readonly<{
+  secondaryColor: string;
+  textColor: string;
+  isOpen?: boolean;
+  rating?: number;
+  pricing?: string;
+  website?: string;
+  phoneNumber?: string;
+  detailsLoading?: boolean;
+  detailsError?: string;
+  isDark: boolean;
+  name?: string;
+  onPhonePress: () => void;
+  onWebsitePress: () => void;
+}>;
+
+type IconConfig = Parameters<typeof renderIcon>[0];
+
+const getAddressString = (
+  mode: 'building' | 'poi',
+  address?: string,
+  number?: string,
+  street?: string,
+  city?: string
+): string => {
+  if (mode === 'poi') {
+    return address ?? '';
+  }
+
+  const addressParts: string[] = [];
+  if (number && street) {
+    addressParts.push(`${number} ${street}`);
+  } else if (street) {
+    addressParts.push(street);
+  } else if (number) {
+    addressParts.push(number);
+  }
+
+  if (city) {
+    addressParts.push(city);
+  }
+
+  return addressParts.join(', ');
+};
+
+type BuildingFeatureSectionProps = Readonly<{
+  title: string;
+  items?: string[];
+  icons: Record<string, IconConfig>;
+  iconTileColor: string;
+  secondaryColor: string;
+  isDark: boolean;
+}>;
+
+function BuildingFeatureSection({
+  title,
+  items,
+  icons,
+  iconTileColor,
+  secondaryColor,
+  isDark,
+}: BuildingFeatureSectionProps) {
+  if (!items || items.length === 0) return null;
+
+  return (
+    <View style={styles.section}>
+      <Text style={[styles.sectionTitle, { color: secondaryColor }]}>{title}</Text>
+      <View style={styles.iconsRow}>
+        {items.map((key) => {
+          const config = icons[key];
+          if (!config) return null;
+
+          return (
+            <View key={key} style={[styles.iconTile, { backgroundColor: iconTileColor }]}>
+              {renderIcon(config, 20, isDark ? '#e0e0e0' : '#444')}
+              <Text style={[styles.iconLabel, { color: secondaryColor }]} numberOfLines={1}>
+                {config.label}
+              </Text>
+            </View>
+          );
+        })}
+      </View>
+    </View>
+  );
 }
 
-export default function BuildingModal({ visible, building, onClose, onDirectionsFrom, onDirectionsTo, onShowIndoorMap }: Readonly<BuildingModalProps>) {
+type BuildingContentSectionProps = Readonly<{
+  mode: 'building' | 'poi';
+  amenities?: string[];
+  accessibility?: string[];
+  secondaryColor: string;
+  iconTileColor: string;
+  textColor: string;
+  isDark: boolean;
+  isOpen?: boolean;
+  rating?: number;
+  pricing?: string;
+  website?: string;
+  phoneNumber?: string;
+  detailsLoading?: boolean;
+  detailsError?: string;
+  name?: string;
+  onPhonePress: () => void;
+  onWebsitePress: () => void;
+}>;
+
+function BuildingContentSection({
+  mode,
+  amenities,
+  accessibility,
+  secondaryColor,
+  iconTileColor,
+  textColor,
+  isDark,
+  isOpen,
+  rating,
+  pricing,
+  website,
+  phoneNumber,
+  detailsLoading,
+  detailsError,
+  name,
+  onPhonePress,
+  onWebsitePress,
+}: BuildingContentSectionProps) {
+  if (mode === 'poi') {
+    return (
+      <PoiDetailsSection
+        secondaryColor={secondaryColor}
+        textColor={textColor}
+        isOpen={isOpen}
+        rating={rating}
+        pricing={pricing}
+        website={website}
+        phoneNumber={phoneNumber}
+        detailsLoading={detailsLoading}
+        detailsError={detailsError}
+        isDark={isDark}
+        name={name}
+        onPhonePress={onPhonePress}
+        onWebsitePress={onWebsitePress}
+      />
+    );
+  }
+
+  return (
+    <>
+      <BuildingFeatureSection
+        title="SERVICES"
+        items={amenities}
+        icons={AMENITY_ICONS}
+        iconTileColor={iconTileColor}
+        secondaryColor={secondaryColor}
+        isDark={isDark}
+      />
+      <BuildingFeatureSection
+        title="ACCESSIBILITY"
+        items={accessibility}
+        icons={ACCESSIBILITY_ICONS}
+        iconTileColor={iconTileColor}
+        secondaryColor={secondaryColor}
+        isDark={isDark}
+      />
+    </>
+  );
+}
+
+type BuildingActionsSectionProps = Readonly<{
+  mode: 'building' | 'poi';
+  building: BuildingData;
+  indoorMapCode?: string;
+  onDirectionsFrom?: (building: BuildingData) => void;
+  onDirectionsTo?: (building: BuildingData) => void;
+  onGetDirections?: (building: BuildingData) => void;
+  onShowIndoorMap?: (buildingCode: string) => void;
+  onClose: (onAfterClose?: () => void) => void;
+}>;
+
+function BuildingActionsSection({
+  mode,
+  building,
+  indoorMapCode,
+  onDirectionsFrom,
+  onDirectionsTo,
+  onGetDirections,
+  onShowIndoorMap,
+  onClose,
+}: BuildingActionsSectionProps) {
+  if (mode === 'poi') {
+    return (
+      <TouchableOpacity
+        style={[styles.directionButton, styles.directionButtonTo, { backgroundColor: COLORS.red }]}
+        onPress={() => {
+          onGetDirections?.(building);
+          onClose();
+        }}
+        activeOpacity={0.7}
+        testID="directions-poi-button"
+      >
+        <View style={styles.buttonIcon}>{renderIcon(UI_ICONS.route, 16, '#fff')}</View>
+        <Text style={styles.directionButtonToText}>Get Directions</Text>
+      </TouchableOpacity>
+    );
+  }
+
+  return (
+    <>
+      {indoorMapCode && onShowIndoorMap && (
+        <TouchableOpacity
+          style={[styles.directionButton, styles.indoorMapButton]}
+          onPress={() => onClose(() => onShowIndoorMap(indoorMapCode))}
+          activeOpacity={0.7}
+          testID="indoor-map-button"
+        >
+          <View style={styles.buttonIcon}>{renderIcon(UI_ICONS.mapMarker, 16, COLORS.red)}</View>
+          <Text style={[styles.indoorMapButtonText, { color: COLORS.red }]}>Show Indoor Map</Text>
+        </TouchableOpacity>
+      )}
+
+      <TouchableOpacity
+        style={[styles.directionButton, styles.directionButtonFrom, { borderColor: COLORS.red }]}
+        onPress={() => {
+          onDirectionsFrom?.(building);
+          onClose();
+        }}
+        activeOpacity={0.7}
+        testID="directions-from-button"
+      >
+        <View style={styles.buttonIcon}>{renderIcon(UI_ICONS.route, 16, COLORS.red)}</View>
+        <Text style={[styles.directionButtonFromText, { color: COLORS.red }]}>Get Directions From</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={[styles.directionButton, styles.directionButtonTo, { backgroundColor: COLORS.red }]}
+        onPress={() => {
+          onDirectionsTo?.(building);
+          onClose();
+        }}
+        activeOpacity={0.7}
+        testID="directions-to-button"
+      >
+        <View style={styles.buttonIcon}>{renderIcon(UI_ICONS.route, 16, '#fff')}</View>
+        <Text style={styles.directionButtonToText}>Get Directions To</Text>
+      </TouchableOpacity>
+    </>
+  );
+}
+
+function PoiDetailsSection({
+  secondaryColor,
+  textColor,
+  isOpen,
+  rating,
+  pricing,
+  website,
+  phoneNumber,
+  detailsLoading,
+  detailsError,
+  isDark,
+  name,
+  onPhonePress,
+  onWebsitePress,
+}: PoiDetailsSectionProps) {
+  return (
+    <View style={styles.section}>
+      <Text style={[styles.sectionTitle, { color: secondaryColor }]}>DETAILS</Text>
+
+      <View style={styles.poiMetaContainer}>
+        <Text style={[styles.poiMetaLabel, { color: secondaryColor }]}>Phone</Text>
+        {phoneNumber ? (
+          <TouchableOpacity
+            onPress={onPhonePress}
+            accessibilityRole="button"
+            accessibilityLabel={`Call ${name ?? 'poi'}`}
+          >
+            <Text style={[styles.poiMetaValue, styles.poiClickableValue, { color: COLORS.red }]}>{phoneNumber}</Text>
+          </TouchableOpacity>
+        ) : (
+          <Text style={[styles.poiMetaValue, { color: textColor }]}>Phone unavailable</Text>
+        )}
+      </View>
+
+      <View style={styles.poiMetaContainer}>
+        <Text style={[styles.poiMetaLabel, { color: secondaryColor }]}>Pricing</Text>
+        <Text style={[styles.poiMetaValue, { color: textColor }]}>{pricing ?? 'Not available'}</Text>
+      </View>
+
+      <View style={styles.poiMetaContainer}>
+        <Text style={[styles.poiMetaLabel, { color: secondaryColor }]}>Status</Text>
+        <Text style={[styles.poiMetaValue, { color: isOpen ? '#34C759' : '#FF3B30' }]}>
+          {isOpen ? 'Open now' : 'Closed'}
+        </Text>
+      </View>
+
+      {rating !== undefined && (
+        <View style={styles.poiMetaContainer}>
+          <Text style={[styles.poiMetaLabel, { color: secondaryColor }]}>Rating</Text>
+          <Text style={[styles.poiMetaValue, { color: textColor }]}>{rating.toFixed(1)}/5</Text>
+        </View>
+      )}
+
+      {website && (
+        <View style={styles.poiMetaContainer}>
+          <Text style={[styles.poiMetaLabel, { color: secondaryColor }]}>Website</Text>
+          <TouchableOpacity
+            onPress={onWebsitePress}
+            accessibilityRole="link"
+            accessibilityLabel={`Open website for ${name ?? 'poi'}`}
+          >
+            <Text style={[styles.poiMetaValue, styles.poiClickableValue, { color: COLORS.red }]} numberOfLines={2}>{website}</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {detailsLoading && (
+        <Text style={[styles.poiFetchStatus, { color: secondaryColor }]}>Fetching details...</Text>
+      )}
+
+      {!!detailsError && (
+        <Text style={[styles.poiFetchStatusError, { color: isDark ? '#ff9f9f' : '#b42318' }]}>Could not load full details: {detailsError}</Text>
+      )}
+    </View>
+  );
+}
+
+export default function BuildingModal({ visible, building, onClose, onDirectionsFrom, onDirectionsTo, onGetDirections, onShowIndoorMap, mode = 'building' }: BuildingModalProps) {
   const { colorScheme } = useTheme();
   const isDark = colorScheme === 'dark';
 
@@ -69,7 +534,7 @@ export default function BuildingModal({ visible, building, onClose, onDirections
         friction: 11,
       }).start();
     }
-  }, [visible]);
+  }, [visible, translateY]);
 
   const handleClose = useCallback((onAfterClose?: () => void) => {
     Animated.timing(translateY, {
@@ -85,90 +550,54 @@ export default function BuildingModal({ visible, building, onClose, onDirections
     });
   }, [onClose, translateY]);
 
-  const panResponder = useRef(
-    PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
-      onMoveShouldSetPanResponder: (_, gs) => Math.abs(gs.dy) > 5,
-      onPanResponderMove: (_, gs) => {
-        const newPos = currentPosRef.current + gs.dy;
-        if (newPos >= 0) {
-          translateY.setValue(newPos);
-        }
-      },
-      onPanResponderRelease: (_, gs) => {
-        const finalPos = Math.max(0, currentPosRef.current + gs.dy);
+  const panResponder = useRef(buildPanResponder({ translateY, currentPosRef, onClose })).current;
 
-        if (gs.vy > VELOCITY_THRESHOLD) {
-          currentPosRef.current = SHEET_HEIGHT;
-          Animated.timing(translateY, {
-            toValue: SHEET_HEIGHT,
-            duration: 250,
-            useNativeDriver: true,
-          }).start(() => onClose());
-          return;
-        }
+  const phoneNumberForPress = building?.properties?.phoneNumber;
+  const websiteForPress = building?.properties?.website;
 
-        if (gs.vy < -VELOCITY_THRESHOLD) {
-          currentPosRef.current = 0;
-          Animated.spring(translateY, {
-            toValue: 0,
-            useNativeDriver: true,
-            tension: 65,
-            friction: 11,
-          }).start();
-          return;
-        }
+  const handlePhonePress = useCallback(() => {
+    if (!phoneNumberForPress) return;
+    placePhoneCall(phoneNumberForPress).catch(() => undefined);
+  }, [phoneNumberForPress]);
 
-        if (finalPos > DISMISS_THRESHOLD) {
-          currentPosRef.current = SHEET_HEIGHT;
-          Animated.timing(translateY, {
-            toValue: SHEET_HEIGHT,
-            duration: 250,
-            useNativeDriver: true,
-          }).start(() => onClose());
-          return;
-        }
-
-        currentPosRef.current = 0;
-        Animated.spring(translateY, {
-          toValue: 0,
-          useNativeDriver: true,
-          tension: 65,
-          friction: 11,
-        }).start();
-      },
-    })
-  ).current;
+  const handleWebsitePress = useCallback(() => {
+    if (!websiteForPress) return;
+    openWebsiteUrl(websiteForPress).catch(() => undefined);
+  }, [websiteForPress]);
 
   if (!building) return null;
 
   const {
     code,
     name,
+    address,
     'addr:housenumber': number,
     'addr:street': street,
     'addr:city': city,
     accessibility,
     amenities,
+    phoneNumber,
+    pricing,
+    website,
+    rating,
+    isOpen,
+    categoryLabel,
+    photoUrl,
+    detailsLoading,
+    detailsError,
   } = building.properties;
 
-  const buildingImage = code ? BUILDING_IMAGES[code] : null;
-  const hasAddress = !!(number || street || city);
-  const hasIndoorMap = !!(code && getBuildingIndoorMap(code));
-
-  const addressParts: string[] = [];
-  if (number && street) addressParts.push(`${number} ${street}`);
-  else if (street) addressParts.push(street);
-  else if (number) addressParts.push(number);
-  if (city) addressParts.push(city);
-  const addressString = addressParts.join(', ');
+  const buildingImage = getBuildingImageSource(mode, photoUrl, code);
+  const hasAddress = mode === 'poi' ? !!address : !!(number || street || city);
+  const indoorMapCode = mode === 'building' && code && getBuildingIndoorMap(code) ? code : undefined;
+  const addressString = getAddressString(mode, address, number, street, city);
 
   return (
-    <Modal visible={visible} transparent animationType="none" onRequestClose={handleClose}>
+    <Modal visible={visible} transparent animationType="none" onRequestClose={() => handleClose()}>
       <View style={styles.overlay}>
         <TouchableOpacity
           style={styles.backdrop}
-          onPress={handleClose}
+          onPress={() => handleClose()}
           activeOpacity={1}
           testID="modal-backdrop"
         />
@@ -187,7 +616,7 @@ export default function BuildingModal({ visible, building, onClose, onDirections
             <View style={[styles.handleBar, { backgroundColor: isDark ? '#555' : '#ccc' }]} />
           </View>
 
-          <TouchableOpacity style={styles.closeButton} onPress={handleClose} testID="close-button">
+          <TouchableOpacity style={styles.closeButton} onPress={() => handleClose()} testID="close-button">
             {renderIcon(UI_ICONS.close, 18, secondaryColor)}
           </TouchableOpacity>
 
@@ -196,9 +625,9 @@ export default function BuildingModal({ visible, building, onClose, onDirections
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.scrollContainer}
           >
-            {code && (
+            {(code || (mode === 'poi' && categoryLabel)) && (
               <View style={[styles.codeBadge, { backgroundColor: isDark ? '#3a1a1a' : '#fdf2f2' }]}>
-                <Text style={[styles.codeBadgeText, { color: COLORS.red }]}>{code}</Text>
+                <Text style={[styles.codeBadgeText, { color: COLORS.red }]}>{code ?? categoryLabel}</Text>
               </View>
             )}
 
@@ -224,95 +653,37 @@ export default function BuildingModal({ visible, building, onClose, onDirections
               </View>
             )}
 
-            {amenities && amenities.length > 0 && (
-              <View style={styles.section}>
-                <Text style={[styles.sectionTitle, { color: secondaryColor }]}>SERVICES</Text>
-                <View style={styles.iconsRow}>
-                  {amenities.map((key) => {
-                    const config = AMENITY_ICONS[key];
-                    if (!config) return null;
-                    return (
-                      <View key={key} style={[styles.iconTile, { backgroundColor: iconTileColor }]}>
-                        {renderIcon(config, 20, isDark ? '#e0e0e0' : '#444')}
-                        <Text
-                          style={[styles.iconLabel, { color: secondaryColor }]}
-                          numberOfLines={1}
-                        >
-                          {config.label}
-                        </Text>
-                      </View>
-                    );
-                  })}
-                </View>
-              </View>
-            )}
-
-            {accessibility && accessibility.length > 0 && (
-              <View style={styles.section}>
-                <Text style={[styles.sectionTitle, { color: secondaryColor }]}>ACCESSIBILITY</Text>
-                <View style={styles.iconsRow}>
-                  {accessibility.map((key) => {
-                    const config = ACCESSIBILITY_ICONS[key];
-                    if (!config) return null;
-                    return (
-                      <View key={key} style={[styles.iconTile, { backgroundColor: iconTileColor }]}>
-                        {renderIcon(config, 20, isDark ? '#e0e0e0' : '#444')}
-                        <Text
-                          style={[styles.iconLabel, { color: secondaryColor }]}
-                          numberOfLines={1}
-                        >
-                          {config.label}
-                        </Text>
-                      </View>
-                    );
-                  })}
-                </View>
-              </View>
-            )}
+            <BuildingContentSection
+              mode={mode}
+              amenities={amenities}
+              accessibility={accessibility}
+              secondaryColor={secondaryColor}
+              iconTileColor={iconTileColor}
+              textColor={textColor}
+              isDark={isDark}
+              isOpen={isOpen}
+              rating={rating}
+              pricing={pricing}
+              website={website}
+              phoneNumber={phoneNumber}
+              detailsLoading={detailsLoading}
+              detailsError={detailsError}
+              name={name}
+              onPhonePress={handlePhonePress}
+              onWebsitePress={handleWebsitePress}
+            />
 
             <View style={styles.buttonsContainer}>
-
-              {hasIndoorMap && onShowIndoorMap && (
-                <TouchableOpacity
-                  style={[styles.directionButton, styles.indoorMapButton]}
-                  onPress={() => handleClose(() => onShowIndoorMap(code))}
-                  activeOpacity={0.7}
-                  testID="indoor-map-button"
-                >
-                  <View style={styles.buttonIcon}>{renderIcon(UI_ICONS.mapMarker, 16, COLORS.red)}</View>
-                  <Text style={[styles.indoorMapButtonText, { color: COLORS.red }]}>Show Indoor Map</Text>
-                </TouchableOpacity>
-              )}
-
-              <TouchableOpacity
-                style={[styles.directionButton, styles.directionButtonFrom, { borderColor: COLORS.red }]}
-                onPress={() => {
-                  onDirectionsFrom(building);
-                  handleClose();
-                }}
-                activeOpacity={0.7}
-                testID="directions-from-button"
-              >
-                <View style={styles.buttonIcon}>{renderIcon(UI_ICONS.route, 16, COLORS.red)}</View>
-                <Text style={[styles.directionButtonFromText, { color: COLORS.red }]}>Get Directions From</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[
-                  styles.directionButton,
-                  styles.directionButtonTo,
-                  { backgroundColor: COLORS.red },
-                ]}
-                onPress={() => {
-                  onDirectionsTo(building);
-                  handleClose();
-                }}
-                activeOpacity={0.7}
-                testID="directions-to-button"
-              >
-                <View style={styles.buttonIcon}>{renderIcon(UI_ICONS.route, 16, '#fff')}</View>
-                <Text style={styles.directionButtonToText}>Get Directions To</Text>
-              </TouchableOpacity>
+              <BuildingActionsSection
+                mode={mode}
+                building={building}
+                indoorMapCode={indoorMapCode}
+                onDirectionsFrom={onDirectionsFrom}
+                onDirectionsTo={onDirectionsTo}
+                onGetDirections={onGetDirections}
+                onShowIndoorMap={onShowIndoorMap}
+                onClose={handleClose}
+              />
             </View>
           </ScrollView>
         </Animated.View>
@@ -442,6 +813,32 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     marginTop: 6,
     textAlign: 'center',
+  },
+  poiMetaContainer: {
+    marginBottom: 10,
+  },
+  poiMetaLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 0.8,
+    textTransform: 'uppercase',
+    marginBottom: 2,
+  },
+  poiMetaValue: {
+    fontSize: 14,
+    fontWeight: '500',
+    lineHeight: 19,
+  },
+  poiClickableValue: {
+    textDecorationLine: 'underline',
+  },
+  poiFetchStatus: {
+    fontSize: 13,
+    marginTop: 6,
+  },
+  poiFetchStatusError: {
+    fontSize: 13,
+    marginTop: 6,
   },
 
   buttonsContainer: {

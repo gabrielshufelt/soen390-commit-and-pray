@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import * as Location from 'expo-location';
+import { AppState } from 'react-native';
 import { DEV_OVERRIDE_LOCATION } from '../utils/devConfig';
 
 export interface WatchLocationState {
@@ -54,8 +55,13 @@ export function useWatchLocation(options: UseWatchLocationOptions = {}) {
 
     let intervalId: ReturnType<typeof setInterval>;
     let isMounted = true;
+    let appState = AppState.currentState;
 
     const updateLocation = async () => {
+      if (appState !== 'active') {
+        return;
+      }
+
       try {
         if (!isMounted) return;
         
@@ -69,16 +75,40 @@ export function useWatchLocation(options: UseWatchLocationOptions = {}) {
           setLocationState({ location, loading: false, error: null });
         }
       } catch (error) {
-        console.error('Error updating location:', error);
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        const isTransientUnavailable = /current location is unavailable/i.test(errorMessage);
+
+        // This often happens briefly when returning from external apps (phone/browser).
+        // Keep the last known location and avoid surfacing a noisy warning in dev.
+        if (isTransientUnavailable) {
+          if (isMounted) {
+            setLocationState(prev => ({
+              ...prev,
+              loading: false,
+              error: null,
+            }));
+          }
+          return;
+        }
+
+        console.warn('Error updating location:', error);
         if (isMounted) {
           setLocationState(prev => ({
             ...prev,
             loading: false,
-            error: error instanceof Error ? error.message : 'Unknown error',
+            error: errorMessage,
           }));
         }
       }
     };
+
+    const appStateSubscription = AppState.addEventListener('change', (nextState) => {
+      appState = nextState;
+
+      if (nextState === 'active') {
+        void updateLocation();
+      }
+    });
 
     // Get initial location
     updateLocation();
@@ -88,6 +118,7 @@ export function useWatchLocation(options: UseWatchLocationOptions = {}) {
 
     return () => {
       isMounted = false;
+      appStateSubscription.remove();
       if (intervalId) {
         clearInterval(intervalId);
       }

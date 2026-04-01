@@ -28,6 +28,7 @@ jest.mock('expo-router', () => ({
     const { useEffect } = require('react');
     useEffect(() => { cb(); }, []);
   },
+  useLocalSearchParams: () => mockLocalSearchParams,
 }));
 
 jest.mock('../utils/devConfig', () => ({
@@ -193,6 +194,7 @@ jest.mock('react-native-maps', () => {
 let mockSearchBarProperties: any = {};
 let mockBuildingModalProperties: any = {};
 let mockIndoorMapModalProperties: any = {};
+let mockLocalSearchParams: Record<string, string | undefined> = {};
 
 jest.mock('../components/searchBar', () => {
   const React = require('react');
@@ -371,6 +373,7 @@ describe('<Index />', () => {
     mockSearchBarProperties = {};
     mockBuildingModalProperties = {};
     mockIndoorMapModalProperties = {};
+    mockLocalSearchParams = {};
     mockPolygonRenderCount = 0;
     mockMapDirectionsBehavior = 'none';
     setupDefaults();
@@ -1195,6 +1198,63 @@ describe('<Index />', () => {
         expect(mockIndoorMapModalProperties.visible).toBeFalsy();
       });
     });
+
+    it('closes IndoorMapModal and clears preset route when close is pressed', async () => {
+      const { getByText, getByTestId, queryByTestId } = await renderWithTheme(<Index />);
+
+      fireEvent.press(getByText('Indoor'));
+      await waitFor(() => expect(getByTestId('indoor-map-modal')).toBeTruthy());
+
+      fireEvent.press(getByTestId('indoor-map-close'));
+
+      await waitFor(() => {
+        expect(queryByTestId('indoor-map-modal')).toBeNull();
+        expect(mockIndoorMapModalProperties.visible).toBe(false);
+      });
+    });
+  });
+
+  describe('Nearby deep-link params handling', () => {
+    it('sets nearby destination and resets route state when nearby params are valid', async () => {
+      mockLocalSearchParams = {
+        nearbyNonce: 'nonce-1',
+        nearbyLat: '45.5001',
+        nearbyLng: '-73.6001',
+        nearbyName: 'Nearby Cafe',
+      };
+
+      await renderWithTheme(<Index />);
+
+      await waitFor(() => {
+        expect(mockSearchBarProperties.destination).toEqual(
+          expect.objectContaining({
+            id: 'nearby-nonce-1',
+            name: 'Nearby Cafe',
+            coordinate: { latitude: 45.5001, longitude: -73.6001 },
+          })
+        );
+      });
+
+      expect(mockEndDirections).toHaveBeenCalled();
+      expect(mockClearCombinedRoute).toHaveBeenCalled();
+    });
+
+    it('ignores nearby params when coordinates are invalid', async () => {
+      mockLocalSearchParams = {
+        nearbyNonce: 'nonce-2',
+        nearbyLat: 'abc',
+        nearbyLng: '-73.6001',
+        nearbyName: 'Bad Coords',
+      };
+
+      await renderWithTheme(<Index />);
+
+      await waitFor(() => {
+        expect(mockSearchBarProperties.destination).toBeNull();
+      });
+      expect(mockEndDirections).not.toHaveBeenCalled();
+      expect(mockClearCombinedRoute).not.toHaveBeenCalled();
+    });
   });
 
   describe('Combined routing for room destinations', () => {
@@ -1547,6 +1607,68 @@ describe('<Index />', () => {
       await waitFor(() => {
         expect(getByText(/Indoor handoff/)).toBeTruthy();
       });
+    });
+
+    it('uses combined navigation prev/next handlers instead of hook prevStep/nextStep', async () => {
+      const combinedState: any = {
+        fullRoute: [],
+        isCalculating: false,
+        clearRoute: mockClearCombinedRoute,
+        calculateRoute: jest.fn(async () => {
+          combinedState.fullRoute = [
+            {
+              instruction: 'Combined Step One',
+              distance: '20 m',
+              source: 'outdoor',
+              coordinates: { latitude: 45.4972, longitude: -73.579 },
+            },
+            {
+              instruction: 'Combined Step Two',
+              distance: '30 m',
+              source: 'outdoor',
+              coordinates: { latitude: 45.498, longitude: -73.58 },
+            },
+          ];
+          return combinedState.fullRoute;
+        }),
+      };
+      mockCombinedNavigationHook.mockImplementation(() => combinedState);
+
+      const { getByText, queryByText } = await renderWithTheme(<Index />);
+
+      await act(async () => {
+        mockSearchBarProperties.onChangeDestination({
+          id: 'H',
+          name: 'Hall Building',
+          code: 'H',
+          room: '820',
+          coordinate: { latitude: 45.497, longitude: -73.579 },
+          campus: 'SGW',
+        });
+      });
+
+      await act(async () => {
+        mockSearchBarProperties.onStartRoute();
+      });
+
+      await waitFor(() => expect(getByText('Combined Step One')).toBeTruthy());
+
+      // At index 0, prev should no-op in combined branch.
+      fireEvent.press(getByText('‹'));
+      expect(getByText('Combined Step One')).toBeTruthy();
+
+      fireEvent.press(getByText('›'));
+      await waitFor(() => expect(getByText('Combined Step Two')).toBeTruthy());
+
+      // At last index, next should no-op in combined branch.
+      fireEvent.press(getByText('›'));
+      expect(getByText('Combined Step Two')).toBeTruthy();
+
+      fireEvent.press(getByText('‹'));
+      await waitFor(() => expect(getByText('Combined Step One')).toBeTruthy());
+
+      expect(mockNextStep).not.toHaveBeenCalled();
+      expect(mockPrevStep).not.toHaveBeenCalled();
     });
   });
 
