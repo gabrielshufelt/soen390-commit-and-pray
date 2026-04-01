@@ -5,9 +5,9 @@ import shuttleData from '../data/shuttleSchedule.json';
 import { styles, BLACK, WHITE, RED, GRAY, BLUE } from '../styles/shuttleScheduleModal.styles';
 
 interface ShuttleScheduleModalProps {
-  visible: boolean;
-  onClose: () => void;
-  onShowRoute?: () => void;
+  readonly visible: boolean;
+  readonly onClose: () => void;
+  readonly onShowRoute?: () => void;
 }
 
 export default function ShuttleScheduleModal({ visible, onClose, onShowRoute }: ShuttleScheduleModalProps) {

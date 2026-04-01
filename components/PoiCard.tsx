@@ -4,8 +4,8 @@ import { FontAwesome } from '@expo/vector-icons';
 import { styles, MAROON, MUTED } from '../styles/searchBar.styles';
 
 interface PoiCardProps {
-  poi: any;
-  onPress: (poi: any) => void;
+  readonly poi: any;
+  readonly onPress: (poi: any) => void;
 }
 
 export default function PoiCard({ poi, onPress }: PoiCardProps) {

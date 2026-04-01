@@ -3,6 +3,7 @@
   "compilerOptions": {
     "jsx": "react",
     "strict": true,
+    "lib": ["ES2021"],
     "paths": {
       "@/*": [
         "./*"

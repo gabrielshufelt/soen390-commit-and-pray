@@ -32,14 +32,14 @@ type IndoorStep = BaseStep & {
 export type NavigationStep = OutdoorStep | IndoorStep;
 
 type Props = {
-  steps: NavigationStep[];
-  currentStepIndex: number;
-  totalDistance: string;
-  totalDuration: string;
-  isOffRoute?: boolean;
-  onEndNavigation: () => void;
-  onNextStep?: () => void;
-  onPrevStep?: () => void;
+  readonly steps: NavigationStep[];
+  readonly currentStepIndex: number;
+  readonly totalDistance: string;
+  readonly totalDuration: string;
+  readonly isOffRoute?: boolean;
+  readonly onEndNavigation: () => void;
+  readonly onNextStep?: () => void;
+  readonly onPrevStep?: () => void;
 };
 
 const MANEUVER_ICONS: Record<string, string> = {
@@ -68,8 +68,8 @@ function getManeuverIcon(maneuver?: string): string {
 
 function stripHtml(html: string): string {
   return html
-    .replace(/<[^>]{0,10000}>/g, " ")
-    .replace(/\s+/g, " ")
+    .replaceAll(/<[^>]{0,10000}>/g, " ")
+    .replaceAll(/\s+/g, " ")
     .trim();
 }
 

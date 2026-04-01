@@ -19,16 +19,16 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 const THEME_STORAGE_KEY = '@theme_preference';
 
-export function ThemeProvider({ children }: { children: React.ReactNode }) {
+export function ThemeProvider({ children }: { readonly children: React.ReactNode }) {
   const deviceColorScheme = useDeviceColorScheme();
-  const [theme, setThemeState] = useState<ThemePreference>('system');
+  const [theme, setTheme] = useState<ThemePreference>('system');
   const [isLoaded, setIsLoaded] = useState(false);
 
   // Load saved theme preference on mount
   useEffect(() => {
     AsyncStorage.getItem(THEME_STORAGE_KEY).then((savedTheme: string | null) => {
       if (savedTheme === 'light' || savedTheme === 'dark' || savedTheme === 'system') {
-        setThemeState(savedTheme);
+        setTheme(savedTheme);
       }
       setIsLoaded(true);
     });
@@ -42,8 +42,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   }, [isLoaded]);
 
   // Save theme preference when it changes
-  const setTheme = (newTheme: ThemePreference) => {
-    setThemeState(newTheme);
+  const setThemeWithStorage = (newTheme: ThemePreference) => {
+    setTheme(newTheme);
     AsyncStorage.setItem(THEME_STORAGE_KEY, newTheme);
   };
 
@@ -53,7 +53,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
 
   const contextValue = useMemo(
-    () => ({ theme, colorScheme, setTheme }),
+    () => ({ theme, colorScheme, setTheme: setThemeWithStorage }),
     [theme, colorScheme]
   );
 
