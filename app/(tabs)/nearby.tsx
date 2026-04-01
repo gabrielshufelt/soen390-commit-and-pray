@@ -789,7 +789,7 @@ function NearbyMainContent({
         const totalCategoryCount = filteredCategories.find(([categoryKey]) => categoryKey === key)?.[1].pois.length ?? 0;
 
         return (
-          <POICategory
+          <POICategorySection
             key={key}
             categoryKey={key}
             category={category}
@@ -1209,7 +1209,7 @@ export default function NearbyScreen() {
   );
 }
 
-function POICategory({ 
+function POICategorySection({ 
   categoryKey,
   category, 
   onPressPoi,
