@@ -171,7 +171,7 @@
       "floor": 1,
       "x": 981,
       "y": 1126,
-      "label": "",
+      "label": "Elevator",
       "accessible": true
     },
     {
@@ -181,7 +181,7 @@
       "floor": 1,
       "x": 1060,
       "y": 1125,
-      "label": "",
+      "label": "Elevator",
       "accessible": true
     },
     {
@@ -191,7 +191,7 @@
       "floor": 1,
       "x": 1137,
       "y": 1125,
-      "label": "",
+      "label": "Elevator",
       "accessible": true
     },
     {
@@ -201,7 +201,7 @@
       "floor": 1,
       "x": 980,
       "y": 1214,
-      "label": "",
+      "label": "Elevator",
       "accessible": true
     },
     {
@@ -211,7 +211,7 @@
       "floor": 1,
       "x": 1058,
       "y": 1212,
-      "label": "",
+      "label": "Elevator",
       "accessible": true
     },
     {
@@ -221,7 +221,7 @@
       "floor": 1,
       "x": 1135,
       "y": 1212,
-      "label": "",
+      "label": "Elevator",
       "accessible": true
     },
     {
@@ -927,7 +927,7 @@
       "floor": 1,
       "x": 1225,
       "y": 1540,
-      "label": "",
+      "label": "washroom",
       "accessible": true
     },
     {
@@ -937,7 +937,7 @@
       "floor": 1,
       "x": 1203,
       "y": 1588,
-      "label": "",
+      "label": "water",
       "accessible": true
     }
   ],
