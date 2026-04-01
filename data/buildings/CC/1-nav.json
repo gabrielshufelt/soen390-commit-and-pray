@@ -223,7 +223,7 @@
       "y": 904,
       "latitude": 45.45850012191065, 
       "longitude": -73.64074316181494,
-      "label": "",
+      "label": "CC building entry",
       "accessible": true
     },
     {
@@ -233,7 +233,7 @@
       "floor": 1,
       "x": 88,
       "y": 904,
-      "label": "",
+      "label": "CC building exit",
       "accessible": true
     },
     {
@@ -245,7 +245,7 @@
       "y": 985,
       "latitude": 45.45815018667116, 
       "longitude": -73.63990818920387,
-      "label": "",
+      "label": "CC building entry",
       "accessible": true
     },
     {
@@ -255,7 +255,7 @@
       "floor": 1,
       "x": 1948,
       "y": 985,
-      "label": "",
+      "label": "CC building exit",
       "accessible": true
     },
     {
@@ -407,7 +407,7 @@
       "y": 1072,
       "latitude": 45.45844917381449, 
       "longitude": -73.64078404319054,
-      "label": "",
+      "label": "CC building entry",
       "accessible": true
     },
     {
@@ -417,7 +417,7 @@
       "floor": 1,
       "x": 83,
       "y": 1072,
-      "label": "",
+      "label": "CC building exit",
       "accessible": true
     },
     {
@@ -539,7 +539,7 @@
       "y": 1066,
       "latitude": 45.458115149767515, 
       "longitude": -73.63992578340687,
-      "label": "",
+      "label": "CC building entry",
       "accessible": true
     },
     {
@@ -549,7 +549,7 @@
       "floor": 1,
       "x": 1948,
       "y": 1066,
-      "label": "",
+      "label": "CC building exit",
       "accessible": true
     },
     {

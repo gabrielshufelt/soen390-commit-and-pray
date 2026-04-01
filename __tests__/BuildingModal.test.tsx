@@ -18,6 +18,10 @@ jest.mock('../constants/buildingImages', () => ({
   default: { H: 1, LB: 2 },
 }));
 
+jest.mock('../utils/indoorMapData', () => ({
+  getBuildingIndoorMap: (code: string) => (code === 'H' ? { buildingId: 'H', floors: [] } : null),
+}));
+
 jest.mock('../constants/buildingIcons', () => ({
   AMENITY_ICONS: {
     info: { lib: 'FontAwesome5', icon: 'info-circle', label: 'Info' },
@@ -412,6 +416,57 @@ describe('<BuildingModal />', () => {
       />
     );
     expect(queryByText('H')).toBeNull();
+  });
+
+  // --- Indoor map button ---
+  it('renders Show Indoor Map button when building has an indoor map and onShowIndoorMap is provided', () => {
+    const onShowIndoorMap = jest.fn();
+    const building = makeBuilding();
+    const { getByTestId } = render(
+      <BuildingModal
+        visible={true}
+        building={building as any}
+        onClose={onClose}
+        onDirectionsFrom={onDirectionsFrom}
+        onDirectionsTo={onDirectionsTo}
+        onShowIndoorMap={onShowIndoorMap}
+      />
+    );
+    expect(getByTestId('indoor-map-button')).toBeTruthy();
+  });
+
+  it('calls onShowIndoorMap with building code when Show Indoor Map is pressed', () => {
+    const onShowIndoorMap = jest.fn();
+    const building = makeBuilding();
+    const { getByTestId } = render(
+      <BuildingModal
+        visible={true}
+        building={building as any}
+        onClose={onClose}
+        onDirectionsFrom={onDirectionsFrom}
+        onDirectionsTo={onDirectionsTo}
+        onShowIndoorMap={onShowIndoorMap}
+      />
+    );
+
+    fireEvent.press(getByTestId('indoor-map-button'));
+    act(() => { jest.advanceTimersByTime(300); });
+
+    expect(onShowIndoorMap).toHaveBeenCalledWith('H');
+  });
+
+  it('does not render Show Indoor Map button when onShowIndoorMap is not provided', () => {
+    const building = makeBuilding();
+    const { queryByTestId } = render(
+      <BuildingModal
+        visible={true}
+        building={building as any}
+        onClose={onClose}
+        onDirectionsFrom={onDirectionsFrom}
+        onDirectionsTo={onDirectionsTo}
+      />
+    );
+    expect(queryByTestId('indoor-map-button')).toBeNull();
   });
 
   // --- PanResponder: fast downward flick dismisses ---

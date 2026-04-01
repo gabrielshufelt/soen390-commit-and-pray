@@ -377,6 +377,14 @@ export default function Index() {
     setSelectedBuildingData(null);
   };
 
+  const handleShowIndoorMapFromModal = (buildingCode: string) => {
+    const normalized = buildingCode.toUpperCase();
+    if (!getBuildingIndoorMap(normalized)) return;
+    setIndoorBuildingCode(normalized);
+    setIndoorPresetRoute(null);
+    setShowIndoorMapModal(true);
+  };
+
   const buildingToChoice = (b: any): BuildingChoice => ({
     id: b.id,
     name: b.properties?.name ?? b.properties?.code ?? "Unknown building",
@@ -542,6 +550,7 @@ export default function Index() {
   const activeSteps = combinedRouteActive ? fullRoute : directionsState.steps;
   const currentStepIndex = combinedRouteActive ? combinedStepIndex : directionsState.currentStepIndex;
   const navigationActive = directionsState.isActive || combinedRouteActive;
+  const previewActive = !directionsState.isActive && !!directionsState.origin;
   const canGoPrev = currentStepIndex > 0;
   const canGoNext = currentStepIndex < activeSteps.length - 1;
 
@@ -567,7 +576,6 @@ export default function Index() {
     }
     nextStep();
   };
-
 
   const buildingPolygons = useMemo(() => {
     return campusBuildingsData.map((building: any) => {
@@ -853,6 +861,19 @@ export default function Index() {
         />
       )}
 
+      {previewActive && !navigationActive && (
+        <TouchableOpacity
+          testID="exit-preview.button"
+          style={styles.exitPreviewButton}
+          onPress={handleEndDirections}
+          activeOpacity={0.9}
+          accessibilityRole="button"
+          accessibilityLabel="Exit preview"
+        >
+          <Text style={styles.exitPreviewButtonText}>Exit Preview</Text>
+        </TouchableOpacity>
+      )}
+
         <IndoorMapModal
           visible={showIndoorMapModal}
           initialBuildingCode={indoorBuildingCode}
@@ -864,7 +885,7 @@ export default function Index() {
           onClearRoute={handleEndDirections}
          />
 
-      {!navigationActive && (
+      {!navigationActive && !previewActive && (
         <NextClassModal
           nextClass={nextClass}
           status={nextClassStatus}
@@ -924,12 +945,7 @@ export default function Index() {
         onClose={handleCloseModal}
         onDirectionsFrom={handleDirectionsFrom}
         onDirectionsTo={handleDirectionsTo}
-        onGetDirections={(building) => {
-          if (effectiveLocation) {
-            startDirectionsToBuilding(effectiveLocation, building.geometry.coordinates[0]);
-          }
-          handleCloseModal();
-        }}
+        onShowIndoorMap={handleShowIndoorMapFromModal}
       />
 
       <ShuttleScheduleModal
@@ -1001,6 +1017,30 @@ const styles = StyleSheet.create({
 
   shuttleButtonText: {
     fontSize: 28,
+  },
+
+  exitPreviewButton: {
+    position: "absolute",
+    bottom: 40,
+    alignSelf: "center",
+    left: "25%",
+    right: "25%",
+    paddingVertical: 14,
+    borderRadius: 28,
+    backgroundColor: "#8B0000",
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 6,
+    zIndex: 1000,
+  },
+  exitPreviewButtonText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "700",
   },
 
   busStopMarker: {
