@@ -2,32 +2,46 @@ appId: com.commitandpray.soen390project
 ---
 - tapOn: Search buildings, rooms...
 - tapOn: Room in H (e.g. 920)
-- tapOn: 101, H room
+
+# Selecting a room from Hall 9th floor
+- inputText: "903"
+- tapOn: 903, H room
+
 - tapOn: Where to?
-- inputText: "mb"
-- tapOn: John Molson School of Business (MB)
-- tapOn: Room in MB (e.g. 3.255)
-- tapOn: 1.115, MB room
-- tapOn: Walking
+- inputText: "vl"
+- tapOn: Concordia Vanier Library (VL), Loyola Campus
+- tapOn: Room in VL (e.g. 3.255)
+- tapOn: 101-1, VL room
+- tapOn: Transit
+- tapOn: Use Concordia Shuttle
 - tapOn: Start Directions
 
 #Indoor ui shows up to get out of H building
 - assertVisible: H Indoor Map
-- assertVisible: "Route: 101 to H building entry"
+- assertVisible: "Route: 903 to H building entry"
+- assertVisible: Take elevator to Floor 8
+- tapOn: ◀
+- assertVisible: Arrive from Floor 9
+- assertVisible: Take elevator to Floor 2
+- tapOn: ◀
+- assertVisible: Arrive from Floor 8
+- assertVisible: Take stairs to Floor 1
+- tapOn: ◀
+- assertVisible: Arrive from Floor 2
 - tapOn: Close
 
 #Outdoor directions
-- assertVisible: Step 1 of 4
+- assertVisible: Step 1 of 7
 - repeat:
     while:
-      notVisible: "Step 3 of 4"
+      notVisible: "Step 6 of 7"
     commands:
       - tapOn: ›
 - tapOn: Enter building
 
-#Enter MB building 
-- assertVisible: MB Indoor Map
-- assertVisible: "Route: MB building entry to 1.115"
+#Enter VL building
+- assertVisible: VL Indoor Map
+- assertVisible: "Route: VL building entry to 101-1"
 
 #End directions
 - tapOn: Close
