@@ -12,178 +12,34 @@ import { useWatchLocation } from '../../hooks/useWatchLocation';
 import { getDistanceMeters } from '../../utils/geometry';
 import { getBuildingCoordinate } from '../../utils/buildingCoordinates';
 import { styles } from '@/styles/nearby.styles';
-
-interface POI {
-  id: string;
-  name: string;
-  address: string;
-  distance: number;
-  isOpen: boolean;
-  rating?: number;
-  latitude: number;
-  longitude: number;
-  source: 'study' | 'google';
-  categoryLabel?: string;
-  phoneNumber?: string;
-  pricing?: string;
-  photoUrl?: string;
-  website?: string;
-}
-
-interface POICategory {
-  title: string;
-  icon: string;
-  pois: POI[];
-  isLoading: boolean;
-  error?: string;
-}
-
-const POI_CATEGORIES = {
-  study: { title: 'Study Spaces', icon: 'book', color: '#4B5563' },
-  coffee: { title: 'Coffee Shops', icon: 'coffee', color: '#8B4513' },
-  restaurant: { title: 'Restaurants', icon: 'cutlery', color: '#D2691E' },
-  grocery: { title: 'Grocery Stores', icon: 'shopping-cart', color: '#228B22' },
-};
-
-const CATEGORY_TO_GOOGLE_TYPE: Record<string, string> = {
-  coffee: 'cafe',
-  restaurant: 'restaurant',
-  grocery: 'supermarket',
-};
-
-const FETCH_DEBOUNCE_MS = 2000;
-const FETCH_MIN_DISTANCE_METERS = 150;
-const FETCH_RADIUS_METERS = 2000;
-const MAX_POIS_PER_CATEGORY = 5;
-const SEE_ALL_PAGE_SIZE = 10;
-const CACHE_EXPIRATION_MS = 30 * 60 * 1000; // 30 minutes
-const CACHE_KEY_PREFIX = 'nearby_pois_';
-
-interface CacheEntry {
-  pois: POI[];
-  timestamp: number;
-  latitude: number;
-  longitude: number;
-}
-
-interface Coordinates {
-  latitude: number;
-  longitude: number;
-}
-
-type CategoryKey = keyof typeof POI_CATEGORIES;
-const CATEGORY_KEYS = Object.keys(POI_CATEGORIES) as CategoryKey[];
-const DEFAULT_RADIUS_KM = 2;
-const MIN_RADIUS_KM = 0.5;
-const MAX_RADIUS_KM = 10;
-
-interface StudySpaceConfig {
-  id: string;
-  code: string;
-  name: string;
-  address: string;
-  openHour: number;
-  closeHour: number;
-  openDays: number[];
-}
-
-const STUDY_SPACE_CONFIG: StudySpaceConfig[] = [
-  {
-    id: 'study-lb',
-    code: 'LB',
-    name: 'J. W. McConnell Library Building',
-    address: '1400 De Maisonneuve Blvd W',
-    openHour: 8,
-    closeHour: 23,
-    openDays: [1, 2, 3, 4, 5, 6, 0],
-  },
-  {
-    id: 'study-vl',
-    code: 'VL',
-    name: 'Vanier Library',
-    address: '7141 Sherbrooke St W',
-    openHour: 8,
-    closeHour: 22,
-    openDays: [1, 2, 3, 4, 5, 6, 0],
-  },
-  {
-    id: 'study-h',
-    code: 'H',
-    name: 'Hall Building Study Areas',
-    address: '1455 De Maisonneuve Blvd W',
-    openHour: 7,
-    closeHour: 23,
-    openDays: [1, 2, 3, 4, 5, 6, 0],
-  },
-  {
-    id: 'study-sp',
-    code: 'SP',
-    name: 'Science Complex Study Areas',
-    address: '7141 Sherbrooke St W',
-    openHour: 7,
-    closeHour: 22,
-    openDays: [1, 2, 3, 4, 5],
-  },
-  {
-    id: 'study-mb',
-    code: 'MB',
-    name: 'John Molson Study Areas',
-    address: '1450 Guy St',
-    openHour: 7,
-    closeHour: 23,
-    openDays: [1, 2, 3, 4, 5],
-  },
-  {
-    id: 'study-cc',
-    code: 'CC',
-    name: 'Central Building Study Areas',
-    address: '7141 Sherbrooke St W',
-    openHour: 8,
-    closeHour: 22,
-    openDays: [1, 2, 3, 4, 5, 6],
-  },
-];
-
-interface GooglePlacesNearbyResult {
-  place_id: string;
-  name: string;
-  vicinity?: string;
-  rating?: number;
-  geometry?: {
-    location?: {
-      lat?: number;
-      lng?: number;
-    };
-  };
-  opening_hours?: {
-    open_now?: boolean;
-  };
-}
-
-interface GooglePlacesNearbyResponse {
-  status: string;
-  results?: GooglePlacesNearbyResult[];
-  error_message?: string;
-}
-
-interface GooglePlaceDetailsResponse {
-  status: string;
-  error_message?: string;
-  result?: {
-    formatted_address?: string;
-    formatted_phone_number?: string;
-    international_phone_number?: string;
-    price_level?: number;
-    website?: string;
-    photos?: Array<{
-      photo_reference?: string;
-    }>;
-  };
-}
-
-type CategoryFetchResult =
-  | { categoryKey: string; pois: POI[] }
-  | { categoryKey: string; error: string };
+import {
+  CATEGORY_KEYS,
+  CATEGORY_TO_GOOGLE_TYPE,
+  CACHE_EXPIRATION_MS,
+  CACHE_KEY_PREFIX,
+  DEFAULT_RADIUS_KM,
+  FETCH_DEBOUNCE_MS,
+  FETCH_MIN_DISTANCE_METERS,
+  FETCH_RADIUS_METERS,
+  MAX_POIS_PER_CATEGORY,
+  MAX_RADIUS_KM,
+  MIN_RADIUS_KM,
+  POI_CATEGORIES,
+  SEE_ALL_PAGE_SIZE,
+  STUDY_SPACE_CONFIG,
+} from '@/constants/poi.types';
+import type {
+  CacheEntry,
+  CategoryFetchResult,
+  CategoryKey,
+  Coordinates,
+  GooglePlaceDetailsResponse,
+  GooglePlacesNearbyResponse,
+  GooglePlacesNearbyResult,
+  POI,
+  POICategory,
+  StudySpaceConfig,
+} from '@/constants/poi.types';
 
 const isStudySpaceOpenNow = (studySpace: StudySpaceConfig, now: Date): boolean => {
   if (!studySpace.openDays.includes(now.getDay())) return false;
