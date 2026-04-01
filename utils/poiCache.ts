@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { CACHE_EXPIRATION_MS, CACHE_KEY_PREFIX } from '@/constants/poi.types';
+import { CACHE_EXPIRATION_MS, CACHE_KEY_PREFIX } from '@/constants/poiCategories';
 import type { CacheEntry, POI } from '@/constants/poi.types';
 
 const getCacheKey = (categoryKey: string): string => `${CACHE_KEY_PREFIX}${categoryKey}`;

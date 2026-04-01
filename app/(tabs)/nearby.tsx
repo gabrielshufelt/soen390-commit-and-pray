@@ -1,60 +1,37 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, RefreshControl, Modal, TextInput, FlatList } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, RefreshControl, Modal, TextInput } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import Slider from '@react-native-community/slider';
 import Constants from 'expo-constants';
 import { useRouter } from 'expo-router';
 import BuildingModal from '../../components/buildingModal';
+import POICategorySection, { SeeAllCategoryView } from '../../components/POICategorySection';
 import type { BuildingData } from '../../components/buildingModal';
 import { useTheme } from '../../context/ThemeContext';
 import { useWatchLocation } from '../../hooks/useWatchLocation';
 import { getDistanceMeters } from '../../utils/geometry';
-import { getBuildingCoordinate } from '../../utils/buildingCoordinates';
-import { clearCache, getCachedPOIs, setCachedPOIs } from '@/utils/poiCache';
+import { clearCache } from '@/utils/poiCache';
+import { applyFetchedResults, buildStudySpacePois, fetchGoogleCategoryResults, resolvePoiDetails } from '@/utils/poiFetch';
 import { styles } from '@/styles/nearby.styles';
 import {
   CATEGORY_KEYS,
-  CATEGORY_TO_GOOGLE_TYPE,
   DEFAULT_RADIUS_KM,
   FETCH_DEBOUNCE_MS,
   FETCH_MIN_DISTANCE_METERS,
-  FETCH_RADIUS_METERS,
   MAX_POIS_PER_CATEGORY,
   MAX_RADIUS_KM,
   MIN_RADIUS_KM,
   POI_CATEGORIES,
   SEE_ALL_PAGE_SIZE,
-  STUDY_SPACE_CONFIG,
-} from '@/constants/poi.types';
+} from '@/constants/poiCategories';
 import type {
-  CategoryFetchResult,
   CategoryKey,
+} from '@/constants/poiCategories';
+import type {
   Coordinates,
-  GooglePlaceDetailsResponse,
-  GooglePlacesNearbyResponse,
-  GooglePlacesNearbyResult,
   POI,
   POICategory,
-  StudySpaceConfig,
 } from '@/constants/poi.types';
-
-const isStudySpaceOpenNow = (studySpace: StudySpaceConfig, now: Date): boolean => {
-  if (!studySpace.openDays.includes(now.getDay())) return false;
-  const hour = now.getHours();
-  return hour >= studySpace.openHour && hour < studySpace.closeHour;
-};
-
-const formatPriceLevel = (priceLevel?: number): string => {
-  if (priceLevel === undefined || priceLevel < 0 || priceLevel > 4) {
-    return 'Not available';
-  }
-
-  if (priceLevel === 0) {
-    return 'Free';
-  }
-
-  return '$'.repeat(priceLevel);
-};
 
 const createInitialCategories = (): Record<string, POICategory> =>
   Object.fromEntries(
@@ -63,6 +40,10 @@ const createInitialCategories = (): Record<string, POICategory> =>
       { title: POI_CATEGORIES[key].title, icon: POI_CATEGORIES[key].icon, pois: [], isLoading: true },
     ])
   );
+
+const ALL_CATEGORIES_SELECTED = Object.fromEntries(
+  CATEGORY_KEYS.map((key) => [key, true])
+) as Record<CategoryKey, boolean>;
 
 const markLocationPermissionError = (prev: Record<string, POICategory>): Record<string, POICategory> => {
   const next = { ...prev };
@@ -110,191 +91,9 @@ const shouldSkipAutoFetch = (
   return isWithinDistance(currentCoords, lastFetchCoords, FETCH_MIN_DISTANCE_METERS);
 };
 
-const buildStudySpacePois = (currentCoords: Coordinates): POI[] => {
-  return STUDY_SPACE_CONFIG
-    .filter((space) => isStudySpaceOpenNow(space, new Date()))
-    .flatMap((space) => {
-      const coordinate = getBuildingCoordinate(space.code);
-      if (!coordinate) return [];
-
-      return [{
-        id: space.id,
-        name: space.name,
-        address: space.address,
-        isOpen: true,
-        latitude: coordinate.latitude,
-        longitude: coordinate.longitude,
-        source: 'study' as const,
-        pricing: 'Free',
-        categoryLabel: POI_CATEGORIES.study.title,
-        distance: getDistanceMeters(
-          currentCoords.latitude,
-          currentCoords.longitude,
-          coordinate.latitude,
-          coordinate.longitude
-        ),
-      }];
-    })
-    .sort((a, b) => a.distance - b.distance);
-};
-
-const buildPoiFromNearbyResult = (
-  result: GooglePlacesNearbyResult,
-  categoryKey: string,
-  currentCoords: Coordinates
-): POI | null => {
-  const latitude = result.geometry?.location?.lat;
-  const longitude = result.geometry?.location?.lng;
-  if (latitude == null || longitude == null) return null;
-
-  return {
-    id: result.place_id,
-    name: result.name,
-    address: result.vicinity ?? 'Address unavailable',
-    isOpen: result.opening_hours?.open_now === true,
-    rating: result.rating,
-    latitude,
-    longitude,
-    source: 'google' as const,
-    categoryLabel: POI_CATEGORIES[categoryKey as CategoryKey]?.title,
-    distance: getDistanceMeters(
-      currentCoords.latitude,
-      currentCoords.longitude,
-      latitude,
-      longitude
-    ),
-  };
-};
-
-const fetchCategoryResult = async (
-  categoryKey: string,
-  googleType: string,
-  currentCoords: Coordinates,
-  apiKey: string
-): Promise<CategoryFetchResult> => {
-  try {
-    const cachedEntry = await getCachedPOIs(categoryKey);
-    if (
-      cachedEntry &&
-      isWithinDistance(currentCoords, {
-        latitude: cachedEntry.latitude,
-        longitude: cachedEntry.longitude,
-      }, FETCH_MIN_DISTANCE_METERS)
-    ) {
-      return {
-        categoryKey,
-        pois: cachedEntry.pois,
-      };
-    }
-
-    const params = new URLSearchParams({
-      location: `${currentCoords.latitude},${currentCoords.longitude}`,
-      radius: `${FETCH_RADIUS_METERS}`,
-      type: googleType,
-      opennow: 'true',
-      key: apiKey,
-    });
-
-    const response = await fetch(
-      `https://maps.googleapis.com/maps/api/place/nearbysearch/json?${params.toString()}`
-    );
-
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
-    } 
-
-    const data: GooglePlacesNearbyResponse = await response.json();
-
-
-    if (data.status !== 'OK' && data.status !== 'ZERO_RESULTS') {
-      throw new Error(data.error_message ?? data.status);
-    }
-
-    const pois: POI[] = (data.results ?? [])
-    .map((result) => buildPoiFromNearbyResult(result, categoryKey, currentCoords))
-    .filter((poi): poi is POI => poi !== null)
-   .sort((a, b) => a.distance - b.distance);
-
-    await setCachedPOIs(categoryKey, pois, currentCoords.latitude, currentCoords.longitude);
-
-    return {
-      categoryKey,
-      pois,
-    };
-  } catch (error) {
-    return {
-      categoryKey,
-      error: error instanceof Error ? error.message : 'Failed to fetch nearby places',
-    };
-  }
-};
-
-const getMissingApiKeyResults = (): CategoryFetchResult[] => ([
-  { categoryKey: 'coffee', error: 'Missing Google Maps API key' },
-  { categoryKey: 'restaurant', error: 'Missing Google Maps API key' },
-  { categoryKey: 'grocery', error: 'Missing Google Maps API key' },
-]);
-
-const fetchGoogleCategoryResults = async (
-  apiKey: string,
-  currentCoords: Coordinates
-): Promise<CategoryFetchResult[]> => {
-  if (apiKey) {
-    const entries = Object.entries(CATEGORY_TO_GOOGLE_TYPE);
-    return Promise.all(
-      entries.map(([categoryKey, googleType]) => {
-        return fetchCategoryResult(categoryKey, googleType, currentCoords, apiKey);
-      })
-    );
-  }
-
-  return getMissingApiKeyResults();
-};
-
-const applyFetchedResults = (
-  prev: Record<string, POICategory>,
-  studySpaces: POI[],
-  categoryResults: CategoryFetchResult[]
-): Record<string, POICategory> => {
-  const next = { ...prev };
-
-  next.study = {
-    ...next.study,
-    isLoading: false,
-    error: undefined,
-    pois: studySpaces,
-  };
-
-  categoryResults.forEach((result) => {
-    if ('error' in result) {
-      next[result.categoryKey] = {
-        ...next[result.categoryKey],
-        isLoading: false,
-        error: result.error,
-        pois: [],
-      };
-      return;
-    }
-
-    next[result.categoryKey] = {
-      ...next[result.categoryKey],
-      isLoading: false,
-      error: undefined,
-      pois: result.pois,
-    };
-  });
-
-  return next;
-};
-
 const getFilterActionBackgroundColor = (hasActiveFilters: boolean, isDark: boolean): string => {
   if (!hasActiveFilters) return 'transparent';
   return isDark ? '#3a2a2f' : '#fdecef';
-};
-
-const formatDistance = (distance: number): string => {
-  if (distance < 1000) return `${Math.round(distance)}m`;
-  return `${(distance / 1000).toFixed(1)}km`;
 };
 
 const mapBuildingDataToPoi = (buildingData: BuildingData, selectedPoiDetails: POI | null): POI | null => {
@@ -319,170 +118,6 @@ const mapBuildingDataToPoi = (buildingData: BuildingData, selectedPoiDetails: PO
     website: buildingData.properties?.website,
   };
 };
-
-const fetchGooglePlaceDetails = async (poi: POI, apiKey: string): Promise<GooglePlaceDetailsResponse> => {
-  const params = new URLSearchParams({
-    place_id: poi.id,
-    fields: [
-      'formatted_address',
-      'formatted_phone_number',
-      'international_phone_number',
-      'price_level',
-      'photos',
-      'website',
-    ].join(','),
-    key: apiKey,
-  });
-
-  const response = await fetch(
-    `https://maps.googleapis.com/maps/api/place/details/json?${params.toString()}`
-  );
-
-  const data: GooglePlaceDetailsResponse = await response.json();
-
-  if (!response.ok) {
-    throw new Error(`HTTP ${response.status}`);
-  }
-
-  if (data.status !== 'OK') {
-    throw new Error(data.error_message ?? data.status);
-  }
-
-  return data;
-};
-
-const buildDetailedPoi = (poi: POI, details: GooglePlaceDetailsResponse, apiKey: string): POI => {
-  const photoReference = details.result?.photos?.[0]?.photo_reference;
-  const photoUrl = photoReference
-    ? `https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=${encodeURIComponent(photoReference)}&key=${apiKey}`
-    : undefined;
-
-  return {
-    ...poi,
-    address: details.result?.formatted_address ?? poi.address,
-    phoneNumber: details.result?.formatted_phone_number ?? details.result?.international_phone_number,
-    pricing: formatPriceLevel(details.result?.price_level),
-    website: details.result?.website,
-    photoUrl,
-  };
-};
-
-const resolvePoiDetails = async (
-  poi: POI,
-  apiKey: string
-): Promise<{ details: POI | null; error: string | null }> => {
-  if (poi.source !== 'google') {
-    return {
-      details: {
-        ...poi,
-        pricing: poi.pricing ?? 'Free',
-      },
-      error: null,
-    };
-  }
-
-  if (!apiKey) {
-    return {
-      details: null,
-      error: 'Missing Google Maps API key',
-    };
-  }
-
-  try {
-    const details = await fetchGooglePlaceDetails(poi, apiKey);
-    return {
-      details: buildDetailedPoi(poi, details, apiKey),
-      error: null,
-    };
-  } catch (error) {
-    return {
-      details: null,
-      error: error instanceof Error ? error.message : 'Unable to load POI details',
-    };
-  }
-};
-
-function SeeAllCategoryView({
-  category,
-  visiblePois,
-  hasMoreSeeAllItems,
-  isDark,
-  textColor,
-  bgColor,
-  secondaryBgColor,
-  borderColor,
-  onBack,
-  onOpenPoiDetails,
-  onGetDirections,
-  onLoadMore,
-  onScrollBegin,
-}: Readonly<{
-  category: POICategory;
-  visiblePois: POI[];
-  hasMoreSeeAllItems: boolean;
-  isDark: boolean;
-  textColor: string;
-  bgColor: string;
-  secondaryBgColor: string;
-  borderColor: string;
-  onBack: () => void;
-  onOpenPoiDetails: (poi: POI) => void;
-  onGetDirections: (poi: POI) => void;
-  onLoadMore: () => void;
-  onScrollBegin: () => void;
-}>) {
-  return (
-    <View style={[styles.fullPageContainer, { backgroundColor: bgColor }]}> 
-      <View style={[styles.fullPageHeader, { borderBottomColor: borderColor }]}> 
-        <TouchableOpacity
-          onPress={onBack}
-          style={styles.backButton}
-          accessibilityRole="button"
-          accessibilityLabel="Back to nearby"
-        >
-          <FontAwesome name="chevron-left" size={16} color={isDark ? '#ffffff' : '#000000'} />
-        </TouchableOpacity>
-        <Text style={[styles.fullPageTitle, { color: textColor }]}>{category.title}</Text>
-        <View style={{ width: 32 }} />
-      </View>
-
-      <FlatList
-        data={visiblePois}
-        keyExtractor={(poi) => poi.id}
-        contentContainerStyle={styles.fullPageList}
-        onMomentumScrollBegin={onScrollBegin}
-        onEndReached={onLoadMore}
-        onEndReachedThreshold={0.4}
-        renderItem={({ item: poi }) => (
-          <POICard
-            poi={poi}
-            onPress={onOpenPoiDetails}
-            onGetDirections={onGetDirections}
-            isDark={isDark}
-            secondaryBgColor={secondaryBgColor}
-            borderColor={borderColor}
-            variant="vertical"
-          />
-        )}
-        ListEmptyComponent={
-          <View style={[styles.emptyState, { backgroundColor: secondaryBgColor }]}> 
-            <FontAwesome name="search" size={24} color={isDark ? '#8e8e93' : '#6e6e73'} />
-            <Text style={{ color: isDark ? '#8e8e93' : '#6e6e73', marginTop: 8 }}>
-              No {category.title.toLowerCase()} found nearby
-            </Text>
-          </View>
-        }
-        ListFooterComponent={
-          hasMoreSeeAllItems ? (
-            <Text style={[styles.loadMoreHint, { color: isDark ? '#8e8e93' : '#6e6e73' }]}> 
-              Scroll to load more
-            </Text>
-          ) : null
-        }
-      />
-    </View>
-  );
-}
 
 function NearbyMainContent({
   categories,
@@ -556,6 +191,7 @@ function NearbyMainContent({
       }
     >
 
+      {/* Placeholder search UI: intentionally disabled until full search behavior is implemented by @yassinehajou. */}
       <TouchableOpacity
         style={[
           styles.searchBar,
@@ -723,12 +359,7 @@ export default function NearbyScreen() {
   const [manualRefreshTrigger, setManualRefreshTrigger] = useState(0);
   const lastHandledManualRefreshRef = useRef(0);
   const [showFilterModal, setShowFilterModal] = useState(false);
-  const [selectedCategories, setSelectedCategories] = useState<Record<CategoryKey, boolean>>({
-    study: true,
-    coffee: true,
-    restaurant: true,
-    grocery: true,
-  });
+  const [selectedCategories, setSelectedCategories] = useState<Record<CategoryKey, boolean>>(ALL_CATEGORIES_SELECTED);
   const [selectedRadiusKm, setSelectedRadiusKm] = useState(DEFAULT_RADIUS_KM);
   const [radiusInputKm, setRadiusInputKm] = useState(DEFAULT_RADIUS_KM.toFixed(1));
   const [selectedSeeAllCategory, setSelectedSeeAllCategory] = useState<CategoryKey | null>(null);
@@ -797,12 +428,7 @@ export default function NearbyScreen() {
   };
 
   const clearAllFilters = () => {
-    setSelectedCategories({
-      study: true,
-      coffee: true,
-      restaurant: true,
-      grocery: true,
-    });
+    setSelectedCategories(ALL_CATEGORIES_SELECTED);
     setSelectedRadiusKm(DEFAULT_RADIUS_KM);
     setRadiusInputKm(DEFAULT_RADIUS_KM.toFixed(1));
   };
@@ -1012,174 +638,5 @@ export default function NearbyScreen() {
       onClosePoiDetailsModal={closePoiDetailsModal}
       onPoiModalDirections={handlePoiModalDirections}
     />
-  );
-}
-
-function POICategorySection({ 
-  categoryKey,
-  category, 
-  onPressPoi,
-  onGetDirections,
-  onSeeAll,
-  totalCount,
-  isDark, 
-  textColor, 
-  secondaryBgColor, 
-  borderColor 
-}: Readonly<{
-  categoryKey: CategoryKey;
-  category: POICategory;
-  onPressPoi: (poi: POI) => void;
-  onGetDirections: (poi: POI) => void;
-  onSeeAll: (categoryKey: CategoryKey) => void;
-  totalCount: number;
-  isDark: boolean;
-  textColor: string;
-  secondaryBgColor: string;
-  borderColor: string;
-}>) {
-  return (
-    <View style={styles.categorySection}>
-      {/* Category Header */}
-      <View style={styles.categoryHeader}>
-        <View style={styles.categoryTitle}>
-          <FontAwesome 
-            name={category.icon as any} 
-            size={20} 
-            color={isDark ? '#8e8e93' : '#6e6e73'} 
-          />
-          <Text style={[styles.categoryName, { color: textColor, marginLeft: 10 }]}>
-            {category.title}
-          </Text>
-        </View>
-        {!category.isLoading && totalCount > MAX_POIS_PER_CATEGORY && (
-          <TouchableOpacity onPress={() => onSeeAll(categoryKey)}>
-            <Text style={styles.seeAllText}>See all</Text>
-          </TouchableOpacity>
-        )}
-      </View>
-
-      {/* Loading State */}
-      {category.isLoading && (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="small" color={isDark ? '#0a84ff' : '#007aff'} />
-          <Text style={{ color: isDark ? '#8e8e93' : '#6e6e73', marginTop: 8 }}>
-            Loading {category.title.toLowerCase()}...
-          </Text>
-        </View>
-      )}
-
-      {/* Error State */}
-      {category.error && !category.isLoading && (
-        <View style={[styles.emptyState, { backgroundColor: secondaryBgColor }]}>
-          <FontAwesome name="exclamation-circle" size={24} color={isDark ? '#8e8e93' : '#6e6e73'} />
-          <Text style={{ color: isDark ? '#8e8e93' : '#6e6e73', marginTop: 8 }}>
-            {category.error}
-          </Text>
-        </View>
-      )}
-
-      {/* POI List */}
-      {!category.isLoading && category.pois.length > 0 && (
-        <FlatList
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.poiScrollContent}
-          style={styles.poiScroll}
-          data={category.pois}
-          keyExtractor={(poi) => poi.id}
-          renderItem={({ item: poi }) => (
-            <POICard
-              poi={poi}
-              onPress={onPressPoi}
-              onGetDirections={onGetDirections}
-              isDark={isDark}
-              secondaryBgColor={secondaryBgColor}
-              borderColor={borderColor}
-            />
-          )}
-        />
-      )}
-
-      {/* Empty State */}
-      {!category.isLoading && category.pois.length === 0 && !category.error && (
-        <View style={[styles.emptyState, { backgroundColor: secondaryBgColor }]}>
-          <FontAwesome name="search" size={24} color={isDark ? '#8e8e93' : '#6e6e73'} />
-          <Text style={{ color: isDark ? '#8e8e93' : '#6e6e73', marginTop: 8 }}>
-            No {category.title.toLowerCase()} found nearby
-          </Text>
-        </View>
-      )}
-    </View>
-  );
-}
-
-function POICard({ 
-  poi, 
-  onPress,
-  onGetDirections,
-  isDark, 
-  secondaryBgColor,
-  borderColor,
-  variant = 'horizontal',
-}: Readonly<{
-  poi: POI;
-  onPress: (poi: POI) => void;
-  onGetDirections: (poi: POI) => void;
-  isDark: boolean;
-  secondaryBgColor: string;
-  borderColor: string;
-  variant?: 'horizontal' | 'vertical';
-}>) {
-  const textColor = isDark ? '#ffffff' : '#000000';
-  const mutedColor = isDark ? '#8e8e93' : '#6e6e73';
-
-  return (
-    <TouchableOpacity 
-      style={[
-        styles.poiCard, 
-        variant === 'vertical' ? styles.poiCardVertical : undefined,
-        { 
-          backgroundColor: secondaryBgColor,
-          borderColor: borderColor,
-        }
-      ]}
-      onPress={() => onPress(poi)}
-      accessibilityRole="button"
-      accessibilityLabel={`Open details for ${poi.name}`}
-    >
-      {/* Card Header */}
-      <View style={styles.cardHeader}>
-        <View style={{ flex: 1 }}>
-          <Text style={[styles.poiName, { color: textColor }]} numberOfLines={2}>
-            {poi.name}
-          </Text>
-          <Text style={[styles.poiAddress, { color: mutedColor }]} numberOfLines={1}>
-            {poi.address}
-          </Text>
-        </View>
-      </View>
-
-      {/* Distance & Status */}
-      <View style={styles.cardFooter}>
-        <View>
-          <Text style={[styles.distance, { color: '#a94a5c' }]}>
-            {formatDistance(poi.distance)}
-          </Text>
-          <Text style={[styles.status, { color: poi.isOpen ? '#34C759' : '#FF3B30' }]}>
-            {poi.isOpen ? 'Open' : 'Closed'}
-          </Text>
-        </View>
-      </View>
-
-      {/* Get Directions Button */}
-      <TouchableOpacity 
-        style={styles.directionsButton}
-        onPress={() => onGetDirections(poi)}
-      >
-        <FontAwesome name="location-arrow" size={14} color="#ffffff" />
-        <Text style={styles.directionsText}>Get Directions</Text>
-      </TouchableOpacity>
-    </TouchableOpacity>
   );
 }
