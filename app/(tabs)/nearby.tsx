@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, RefreshControl, Modal, TextInput, FlatList } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import Slider from '@react-native-community/slider';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import Constants from 'expo-constants';
 import { useRouter } from 'expo-router';
 import BuildingModal from '../../components/buildingModal';
@@ -11,12 +10,11 @@ import { useTheme } from '../../context/ThemeContext';
 import { useWatchLocation } from '../../hooks/useWatchLocation';
 import { getDistanceMeters } from '../../utils/geometry';
 import { getBuildingCoordinate } from '../../utils/buildingCoordinates';
+import { clearCache, getCachedPOIs, setCachedPOIs } from '@/utils/poiCache';
 import { styles } from '@/styles/nearby.styles';
 import {
   CATEGORY_KEYS,
   CATEGORY_TO_GOOGLE_TYPE,
-  CACHE_EXPIRATION_MS,
-  CACHE_KEY_PREFIX,
   DEFAULT_RADIUS_KM,
   FETCH_DEBOUNCE_MS,
   FETCH_MIN_DISTANCE_METERS,
@@ -29,7 +27,6 @@ import {
   STUDY_SPACE_CONFIG,
 } from '@/constants/poi.types';
 import type {
-  CacheEntry,
   CategoryFetchResult,
   CategoryKey,
   Coordinates,
@@ -57,55 +54,6 @@ const formatPriceLevel = (priceLevel?: number): string => {
   }
 
   return '$'.repeat(priceLevel);
-};
-
-const getCacheKey = (categoryKey: string): string => `${CACHE_KEY_PREFIX}${categoryKey}`;
-
-const getCachedPOIs = async (categoryKey: string): Promise<CacheEntry | null> => {
-  try {
-    const cached = await AsyncStorage.getItem(getCacheKey(categoryKey));
-    if (!cached) return null;
-
-    const entry: CacheEntry = JSON.parse(cached);
-    const now = Date.now();
-
-    // Check if cache is expired
-    if (now - entry.timestamp > CACHE_EXPIRATION_MS) {
-      await AsyncStorage.removeItem(getCacheKey(categoryKey));
-      return null;
-    }
-
-    return entry;
-  } catch (error) {
-    console.warn(`Failed to read cache for ${categoryKey}:`, error);
-    return null;
-  }
-};
-
-const setCachedPOIs = async (categoryKey: string, pois: POI[], latitude: number, longitude: number): Promise<void> => {
-  try {
-    const entry: CacheEntry = {
-      pois,
-      timestamp: Date.now(),
-      latitude,
-      longitude,
-    };
-    await AsyncStorage.setItem(getCacheKey(categoryKey), JSON.stringify(entry));
-  } catch (error) {
-    console.warn(`Failed to cache POIs for ${categoryKey}:`, error);
-  }
-};
-
-const clearCache = async (): Promise<void> => {
-  try {
-    const keys = await AsyncStorage.getAllKeys();
-    const cacheKeys = keys.filter((key) => key.startsWith(CACHE_KEY_PREFIX));
-    if (cacheKeys.length > 0) {
-      await AsyncStorage.multiRemove(cacheKeys);
-    }
-  } catch (error) {
-    console.warn('Failed to clear cache:', error);
-  }
 };
 
 const createInitialCategories = (): Record<string, POICategory> => ({
