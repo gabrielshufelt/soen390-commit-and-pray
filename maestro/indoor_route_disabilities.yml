@@ -1,11 +1,16 @@
 appId: com.commitandpray.soen390project
 ---
+# CASE 1: Accessibility ENABLED
 - tapOn: Indoor
 - tapOn: Route options
 - tapOn:
     id: indoor.options.wheelchair
 - tapOn:
     id: indoor.options.avoid-stairs
+- tapOn: "Done"
+
+# Because my maestro doesn't wanna show the animation on maestro app 
+- tapOn: Route options
 - tapOn: "Done"
 
 # User enters a start room and a destination room in the same building
@@ -19,28 +24,41 @@ appId: com.commitandpray.soen390project
 - assertVisible: "Route: 220 to 110"
 - assertVisible: Take elevator to Floor 1
 
-# The app computes a route that avoids stairs and uses only elevator
-- assertVisible:
-    id: route-segment
-    index: 3
-- assertVisible:
-    id: route-segment
-    index: 2
-- assertVisible:
-    id: route-segment
-    index: 4
+- assertNotVisible: Take stairs to Floor 1
+
 - tapOn: ◀
 
 #Step-by-step instructions reference elevators rather than stairs
 - assertVisible: "Route: 220 to 110"
 - assertVisible: Arrive from Floor 2
 
-#The app computes a route that avoids stairs and uses only elevators and accessible corridors
-- assertVisible:
-    id: route-segment
-    index: 5
-- assertVisible:
-    id: route-segment
-- assertVisible:
-    id: route-segment
-    index: 1
+ # CASE 2: Accessibility DISABLED (Expect: Stairs route)
+- tapOn: Clear Route
+- tapOn: Route options
+- tapOn: Route options
+- tapOn:
+    id: indoor.options.wheelchair
+- tapOn:
+    id: indoor.options.avoid-stairs
+- tapOn: "Done"
+
+# Because my maestro doesn't wanna show the animation on maestro app 
+- tapOn: Route options
+- tapOn: "Done"
+
+# User enters a start room and a destination room in the same building
+- tapOn: "110"
+- tapOn: "Get Directions To"
+- tapOn: ▶
+- tapOn: "220"
+- tapOn: "Get Directions From"
+
+#Step-by-step instructions reference stairs rather than elevators 
+- assertVisible: "Route: 220 to 110"
+- assertVisible: Take stairs to Floor 1
+
+- assertNotVisible: Take elevator to Floor 1
+
+- tapOn: ◀
+- assertVisible: "Route: 220 to 110"
+- assertVisible: Arrive from Floor 2
