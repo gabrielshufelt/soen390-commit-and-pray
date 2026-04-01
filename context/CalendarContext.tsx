@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import * as SecureStore from 'expo-secure-store';
 
 export interface GoogleCalendar {
@@ -158,17 +158,20 @@ export function CalendarProvider({ children }: { readonly children: React.ReactN
     }
   };
 
+  const value = useMemo(
+    () => ({
+      calendars,
+      selectedCalendarId,
+      isLoadingCalendars,
+      fetchCalendars,
+      selectCalendar,
+      clearCalendars,
+    }),
+    [calendars, selectedCalendarId, isLoadingCalendars, fetchCalendars, selectCalendar, clearCalendars]
+  );
+
   return (
-    <CalendarContext.Provider
-      value={{
-        calendars,
-        selectedCalendarId,
-        isLoadingCalendars,
-        fetchCalendars,
-        selectCalendar,
-        clearCalendars,
-      }}
-    >
+    <CalendarContext.Provider value={value}>
       {children}
     </CalendarContext.Provider>
   );

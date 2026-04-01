@@ -51,6 +51,25 @@ function formattedTimeUntil(minutes: number): string {
 
 // End of helpers
 
+// Renders the late warning card
+function WarningCard({ hasStarted, isLate, walkingMinutes }: { readonly hasStarted: boolean; readonly isLate: boolean; readonly walkingMinutes: number | null }): React.ReactElement | null {
+  if (hasStarted) {
+    return (
+      <Text style={{ color: '#ef4444', fontSize: 10, fontWeight: '700', marginBottom: 2 }}>
+        ⚠️ CLASS HAS STARTED
+      </Text>
+    );
+  }
+  if (isLate) {
+    return (
+      <Text style={{ color: '#f59e0b', fontSize: 10, fontWeight: '700', marginBottom: 2 }}>
+        ⚠️ YOU WILL BE LATE ({formattedTimeUntil(walkingMinutes ?? 0)} WALK)
+      </Text>
+    );
+  }
+  return null;
+}
+
 // Renders status-based states (loading, errors, no-class, etc.).
 // Returns undefined when the main card should be rendered instead.
 function renderStatusCard(
@@ -137,11 +156,10 @@ export default function NextClassModal({ nextClass, status, isLoading, onGetDire
     ? `${nextClass.buildingCode}-${nextClass.room}`
     : nextClass.buildingCode;
   const countdownLabel = minutesUntil <= 0 ? 'Starting now' : `In ${formattedTimeUntil(minutesUntil)}`;
-  const walkLabel = isAlreadyThere 
-    ? " You are here" 
-    : nextClass.walkingMinutes === null
-      ? ' Walk time unavailable'
-      : ` ${formattedTimeUntil(nextClass.walkingMinutes)} walk`;
+  const walkTimeLabel = nextClass.walkingMinutes === null
+    ? ' Walk time unavailable'
+    : ` ${formattedTimeUntil(nextClass.walkingMinutes)} walk`;
+  const walkLabel = isAlreadyThere ? " You are here" : walkTimeLabel;
 
   return (
     <View style={cardStyle}>
@@ -171,15 +189,7 @@ export default function NextClassModal({ nextClass, status, isLoading, onGetDire
 	    </Text>
           </View>
 	  {/* LATE WARNING */}
-          {hasStarted ? (
-	    <Text style={{ color: '#ef4444', fontSize: 10, fontWeight: '700', marginBottom: 2 }}>
-    	      ⚠️ CLASS HAS STARTED
-            </Text>
-          ) : isLate ? (
-            <Text style={{ color: '#f59e0b', fontSize: 10, fontWeight: '700', marginBottom: 2 }}>
-    	      ⚠️ YOU WILL BE LATE ({formattedTimeUntil(nextClass.walkingMinutes ?? 0)} WALK)
-            </Text>
-          ) : null}
+          <WarningCard hasStarted={hasStarted} isLate={isLate} walkingMinutes={nextClass.walkingMinutes} />
 
           {/* Class name */}
           <Text style={[styles.className, textStyle]} numberOfLines={1}>

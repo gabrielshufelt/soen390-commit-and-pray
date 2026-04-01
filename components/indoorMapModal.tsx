@@ -134,6 +134,16 @@ const getNodeDisplayLabel = (node: IndoorNode): string => {
   return getAccessibilityLabel(facility);
 };
 
+const getRouteInfoMessage = (routeStartNode: IndoorNode | null, routeEndNode: IndoorNode | null): string => {
+  if (routeStartNode) {
+    return `Start set: ${routeStartNode.label.trim()}`;
+  }
+  if (routeEndNode) {
+    return `Destination set: ${routeEndNode.label.trim()}`;
+  }
+  return "Pick rooms to generate a route.";
+};
+
 export default function IndoorMapModal({
   visible,
   initialBuildingCode,
@@ -716,11 +726,7 @@ export default function IndoorMapModal({
                       </Text>
                     ) : (
                       <Text style={styles.routeInfoText}>
-                        {routeStartNode
-                          ? `Start set: ${routeStartNode.label.trim()}`
-                          : routeEndNode
-                            ? `Destination set: ${routeEndNode.label.trim()}`
-                            : "Pick rooms to generate a route."}
+                        {getRouteInfoMessage(routeStartNode, routeEndNode)}
                       </Text>
                     )}
 
