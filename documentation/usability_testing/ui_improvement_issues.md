@@ -1,10 +1,7 @@
-# UI Improvement GitHub Issues
+## Issue 1 [ALREADY DONE]
+Issue: https://github.com/gabrielshufelt/soen390-commit-and-pray/issues/241
 
-These are copy-pastable GitHub issues based on the usability issues identified during full-scale usability testing (Sprint 5). Each issue maps directly to one of the recommended UI improvement actions from section 6.5.5.2 of the usability testing wiki.
-
----
-
-## Issue 1
+PR: https://github.com/gabrielshufelt/soen390-commit-and-pray/pull/259
 
 **Title:** `[UT-IMP] Add "Exit Preview" Button Directly on the Map View`
 
@@ -12,7 +9,7 @@ These are copy-pastable GitHub issues based on the usability issues identified d
 
 **Description:**
 
-Currently, when a user previews a route, the only way to exit the preview is by reopening the search bar sheet and finding the "Exit Preview" button inside it. There is no persistent button or indicator on the map itself that lets the user cancel the preview without going back into the search component.
+Currently, when a user previews a route, the only way to exit the preview is by reopening the search bar  and finding the "Exit Preview" button inside it. There is no persistent button or indicator on the map itself that lets the user cancel the preview without going back into the search component.
 
 # Goal
 
@@ -44,13 +41,13 @@ This is not intuitive. 5 out of 12 participants mentioned this as a source of co
 
 ---
 
-## Issue 2
+## Issue 2 [CREATED]
 
 **Title:** `[UT-IMP] Redesign the Indoor Navigation Flow for Improved Usability`
 
 **Label:** `usability-testing-improvements`
 
-**Description:**
+# Description
 
 The indoor navigation feature currently has significant usability issues. Task 7 (the indoor directions task) was by far the most problematic task in our full-scale usability test, with an average completion time of 150.5 seconds (nearly 3x the next slowest task), 85 total errors, 49 rage clicks, and 4 out of 12 participants specifically mentioning indoor navigation as a source of confusion.
 
@@ -80,9 +77,6 @@ Several different aspects of the indoor UI contributed to confusion:
    - Show something like "Floor 8 --> Floor 1" or a step counter so users understand where they are in the route
    - For cross-floor transitions, make it more obvious when the user needs to switch floors (e.g. a more visible callout, not just a small text block)
 
-4. General cleanup
-   - Consider adding a "Reset Route" button so users can easily start over without having to figure out how to deselect rooms
-
 # Expected Outcome
 
 - Users can find and use indoor directions without confusion
@@ -92,15 +86,15 @@ Several different aspects of the indoor UI contributed to confusion:
 
 ---
 
-## Issue 3
+## Issue 3 [CREATED]
 
-**Title:** `[UT-IMP] Replace the Indoor Route Options Menu Icon with a Wheelchair Symbol`
+**Title:** `[UT-IMP] Replace the Indoor Route Options Menu Icon with a Wheelchair Icon`
 
 **Label:** `usability-testing-improvements`
 
-**Description:**
+# Description
 
-The indoor map has an accessibility routing option that allows users to get a wheelchair-accessible route (prioritizing ramps, avoiding stairs, etc.). However, this option is hidden behind a generic hamburger/three-lines menu icon in the indoor map header. There is no wheelchair symbol or any other visual indicator that suggests the button is related to accessibility.
+The indoor map has an accessibility routing option that allows users to get a wheelchair-accessible route (prioritizing ramps, avoiding stairs, preferring elevators). However, this option is hidden behind a generic hamburger/three-lines menu icon in the indoor map header. There is no wheelchair symbol or any other visual indicator that suggests the button is related to accessibility.
 
 # Goal
 
@@ -135,15 +129,15 @@ The accessible routing toggle lives in `IndoorRouteOptionsModal`. The modal is o
 
 ---
 
-## Issue 4
+## Issue 4 [CREATED]
 
 **Title:** `[UT-FIX] Fix Shuttle "Show Route on Map" to Display a Preview Instead of Starting Active Navigation`
 
 **Label:** `usability-testing-improvements`
 
-**Description:**
+# Description
 
-When a user opens the shuttle schedule modal and taps "Show Shuttle Route on Map", the app starts full active turn-by-turn navigation from the Loyola bus stop to the SGW bus stop. This is not the expected behavior -- the user just wants to see where the shuttle goes on the map, not get turn-by-turn directions.
+When a user opens the shuttle schedule modal and taps "Show Shuttle Route on Map", the app starts full active turn-by-turn navigation from the Loyola bus stop to the SGW bus stop. This is not the expected behavior, the user just wants to see where the shuttle goes on the map, not get turn-by-turn directions.
 
 # Goal
 
@@ -178,7 +172,10 @@ Task 5 had 9 total errors across all participants, and P12 failed the task entir
 
 ---
 
-## Issue 5
+## Issue 5 [ALREADY DONE]
+Issue: https://github.com/gabrielshufelt/soen390-commit-and-pray/issues/248
+
+PR: https://github.com/gabrielshufelt/soen390-commit-and-pray/pull/249
 
 **Title:** `[UT-FIX] Ensure Route Lines and Pop-ups Are Cleared Automatically When Navigation Ends`
 
@@ -217,7 +214,11 @@ The issue may be related to certain edge cases (e.g. the shuttle "View Route" fl
 
 ---
 
-## Issue 6
+## Issue 6 [ALREADY DONE]
+
+Issue: https://github.com/gabrielshufelt/soen390-commit-and-pray/issues/241
+
+PR: https://github.com/gabrielshufelt/soen390-commit-and-pray/pull/259
 
 **Title:** `[UT-IMP] Add Clear (×) Buttons to the Start and Destination Input Fields in the Search Bar`
 
