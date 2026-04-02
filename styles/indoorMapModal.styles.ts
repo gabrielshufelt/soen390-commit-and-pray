@@ -467,12 +467,18 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 4,
     borderRadius: 4,
   },
+  roomLabelCompact: {
+    fontSize: 9,
+  },
   roomLabelSelected: {
     backgroundColor: CONCORDIA_RED,
     color: WHITE,
     paddingHorizontal: 6,
     fontSize: 12,
     fontWeight: "700",
+  },
+  roomLabelSelectedCompact: {
+    fontSize: 10,
   },
 
   // Route Options Modal
