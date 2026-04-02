@@ -1,0 +1,68 @@
+appId: com.commitandpray.soen390project
+---
+- tapOn: Nearby
+
+# The Nearby page displays four sections, one per category: Study Spaces, Coffee Shops, Restaurants, and Grocery
+- assertVisible: Study Spaces
+- assertVisible: Coffee Shops
+- assertVisible: Restaurants
+- swipe:
+    direction: UP
+- assertVisible: Grocery Stores
+- swipe:
+    direction: DOWN
+
+#Study spaces are sourced from internal campus data
+- assertVisible: Hall Building Study Areas
+- assertVisible: 1455 De Maisonneuve Blvd W
+- assertVisible: 20m
+- assertVisible: Open
+
+#Each section shows up to 5 POIs
+- assertVisible: Open details for Tim Hortons
+- assertVisible: Open details for Couche-Tard
+- swipe:
+    direction: LEFT 
+- assertVisible: Open details for Marche Beau-Soir
+- swipe:
+    direction: LEFT 
+- assertVisible: Open details for Tim Hortons
+- assertVisible: Open details for Ambrose House & Café | Petit Hôtel à Mille Carré Doré - Centre Ville de Montréal
+
+#If user wants to see more POI
+- tapOn: See all
+- assertVisible: Open details for Tim Hortons
+- assertVisible: Open details for Couche-Tard
+- assertVisible: Open details for Marche Beau-Soir
+- swipe:
+    direction: UP
+- assertVisible: Open details for Tim Hortons
+- assertVisible: Open details for Ambrose House & Café | Petit Hôtel à Mille Carré Doré - Centre Ville de Montréal
+- tapOn: Back to nearby
+
+#POIs are sorted by distance (ascending) from the user's current location
+- assertVisible: 133m
+- assertVisible: 282m
+
+#Each POI is rendered as a card displaying at minimum: name, distance from user, and open/close status
+- assertVisible: Tim Hortons
+- assertVisible: 2081 Rue Guy, Montréal
+- assertVisible: 133m
+- assertVisible: Open
+- assertVisible: , Get Directions
+
+#Tapping Get Directions initiates directions from the user's current location to the POI using the existing
+- tapOn:
+    text: Get Directions
+    index: 2
+- assertVisible: Henry F. Hall Building (H)
+- assertVisible: Tim Hortons
+- assertVisible: ESTIMATED TIME
+- assertVisible: 1 min • 0.2 km
+- assertVisible: Start Directions
+- tapOn: , Nearby
+#If user wants to filter
+- tapOn: , Filter
+- tapOn: Study Spaces
+- tapOn: Apply
+- assertNotVisible: Study Spaces
