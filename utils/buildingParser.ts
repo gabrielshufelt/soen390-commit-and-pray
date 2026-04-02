@@ -195,6 +195,17 @@ export function parseBuildingLocation(location: string): ParsedLocation | null {
     }
   }
 
+  // Step 2b: Handle indoor navigation node IDs (contain underscores)
+  // Matches: "H H_F1_room_18", "MB MB_F1_elevator_1", "VL VL_F1_room_39"
+  const indoorNodeMatch = raw.match(/^([A-Za-z]{1,3})\s+([A-Za-z0-9][A-Za-z0-9._]*_[A-Za-z0-9._-]+)$/);
+  if (indoorNodeMatch) {
+    const code = indoorNodeMatch[1].toUpperCase();
+    const room = indoorNodeMatch[2];
+    if (VALID_CODES.has(code)) {
+      return { buildingCode: code, buildingName: CODE_TO_NAME[code], room };
+    }
+  }
+
   // Step 3: Name based lookup (partial or full building name + optional room)
   // Matches: "Hall Building 820", "Henry F. Hall Building", "Central Building 405"
   // Strategy: strip common suffixes, look up normalised name in NAME_TO_CODE
