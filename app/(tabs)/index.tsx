@@ -218,6 +218,23 @@ export default function Index() {
   const handleStartRoute = async () => {
     if (!destChoice || !effectiveLocation) return;
 
+    // Same-building indoor POI with no start room: open the indoor map and highlight the POI.
+    // When a start room is specified, fall through to the combined flow which handles routing.
+    const destBuildingCode = destChoice.code?.toUpperCase();
+    const isIndoorPoi = !!(destChoice.room && destBuildingCode && getBuildingIndoorMap(destBuildingCode));
+    if (isIndoorPoi && !startChoice?.room) {
+      const effectiveBuildingCode =
+        startChoice && startChoice.id !== "current-location"
+          ? startChoice.code?.toUpperCase()
+          : userBuilding?.code?.toUpperCase();
+      if (effectiveBuildingCode === destBuildingCode) {
+        setIndoorBuildingCode(destBuildingCode);
+        setIndoorPresetRoute({ endNodeId: destChoice.room });
+        setShowIndoorMapModal(true);
+        return;
+      }
+    }
+
     if (!shouldUseCombinedFlow) {
       setCombinedRouteActive(false);
       setOutdoorLegMode("DRIVING");
