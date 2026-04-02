@@ -557,6 +557,131 @@ describe('<Index />', () => {
       );
     });
 
+    it('opens IndoorMapModal with endNodeId when start is same building as indoor POI and no start room', async () => {
+      await renderWithTheme(<Index />);
+      await waitFor(() => expect(mockSearchBarProperties.onStartRoute).toBeDefined());
+
+      await act(async () => {
+        mockSearchBarProperties.onChangeStart({
+          id: 'H',
+          name: 'Hall Building',
+          code: 'H',
+          coordinate: { latitude: 45.497, longitude: -73.579 },
+        });
+      });
+
+      await act(async () => {
+        mockSearchBarProperties.onChangeDestination({
+          id: 'H_F1_room_18',
+          name: 'Elevator',
+          code: 'H',
+          room: 'H_F1_room_18',
+          coordinate: { latitude: 45.497, longitude: -73.579 },
+        });
+      });
+
+      await act(async () => {
+        mockSearchBarProperties.onStartRoute();
+      });
+
+      await waitFor(() => {
+        expect(mockIndoorMapModalProperties.visible).toBe(true);
+        expect(mockIndoorMapModalProperties.initialBuildingCode).toBe('H');
+        expect(mockIndoorMapModalProperties.presetRoute).toEqual({ endNodeId: 'H_F1_room_18' });
+      });
+
+      expect(mockStartDirections).not.toHaveBeenCalled();
+      expect(mockCalculateCombinedRoute).not.toHaveBeenCalled();
+    });
+
+    it('opens IndoorMapModal when start is "current-location" and userBuilding matches POI building', async () => {
+      // Start with no building so startChoice auto-sets to "current-location" (avoids getInteriorPoint crash).
+      // Then swap the mock before setting the destination so handleStartRoute sees userBuilding.code = 'H'.
+      await renderWithTheme(<Index />);
+      await waitFor(() => expect(mockSearchBarProperties.onStartRoute).toBeDefined());
+
+      // startChoice is now { id: "current-location", ... } — switch userBuilding to H
+      mockUserBuilding.mockReturnValue({ code: 'H', name: 'Henry F. Hall Building' });
+
+      await act(async () => {
+        mockSearchBarProperties.onChangeDestination({
+          id: 'H_F1_room_18',
+          name: 'Elevator',
+          code: 'H',
+          room: 'H_F1_room_18',
+          coordinate: { latitude: 45.497, longitude: -73.579 },
+        });
+      });
+
+      await act(async () => {
+        mockSearchBarProperties.onStartRoute();
+      });
+
+      await waitFor(() => {
+        expect(mockIndoorMapModalProperties.visible).toBe(true);
+        expect(mockIndoorMapModalProperties.presetRoute).toEqual({ endNodeId: 'H_F1_room_18' });
+      });
+    });
+
+    it('does NOT open IndoorMapModal when user is outside and POI building does not match', async () => {
+      // userBuilding = null (outside), startChoice stays null → effectiveBuildingCode = undefined ≠ 'H'
+      await renderWithTheme(<Index />);
+      await waitFor(() => expect(mockSearchBarProperties.onStartRoute).toBeDefined());
+
+      await act(async () => {
+        mockSearchBarProperties.onChangeDestination({
+          id: 'H_F1_room_18',
+          name: 'Elevator',
+          code: 'H',
+          room: 'H_F1_room_18',
+          coordinate: { latitude: 45.497, longitude: -73.579 },
+        });
+      });
+
+      await act(async () => {
+        mockSearchBarProperties.onStartRoute();
+      });
+
+      await waitFor(() => {
+        expect(mockIndoorMapModalProperties.visible).toBeFalsy();
+      });
+    });
+
+    it('falls through to combined flow (does NOT open IndoorMapModal) when start room is set', async () => {
+      await renderWithTheme(<Index />);
+      await waitFor(() => expect(mockSearchBarProperties.onStartRoute).toBeDefined());
+
+      await act(async () => {
+        mockSearchBarProperties.onChangeStart({
+          id: 'H',
+          name: 'Hall Building',
+          code: 'H',
+          room: '920',
+          coordinate: { latitude: 45.497, longitude: -73.579 },
+        });
+      });
+
+      await act(async () => {
+        mockSearchBarProperties.onChangeDestination({
+          id: 'H_F1_room_18',
+          name: 'Elevator',
+          code: 'H',
+          room: 'H_F1_room_18',
+          coordinate: { latitude: 45.497, longitude: -73.579 },
+        });
+      });
+
+      await act(async () => {
+        mockSearchBarProperties.onStartRoute();
+      });
+
+      // Combined flow is invoked instead
+      await waitFor(() => {
+        expect(mockCalculateCombinedRoute).toHaveBeenCalled();
+      });
+      expect(mockIndoorMapModalProperties.visible).toBeFalsy();
+    });
+
     it('previews route from selected start building to destination', async () => {
       await renderWithTheme(<Index />);
       await waitFor(() => expect(mockSearchBarProperties.onPreviewRoute).toBeDefined());
