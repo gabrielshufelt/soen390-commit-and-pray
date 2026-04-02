@@ -357,11 +357,12 @@ export default function IndoorMapModal({
     const hasLabels = !!(presetRoute?.startLabel && presetRoute?.endLabel);
 
     const allNodes = indoorMap?.floors.flatMap((floor) => floor.nodes) ?? [];
-    const startNode = hasNodeIds
-      ? allNodes.find((node) => node.id === presetRoute?.startNodeId)
-      : hasLabels
-        ? allNodes.find((node) => node.label.trim() === presetRoute?.startLabel?.trim())
-        : undefined;
+    let startNode;
+    if (hasNodeIds) {
+      startNode = allNodes.find((node) => node.id === presetRoute?.startNodeId);
+    } else if (hasLabels) {
+      startNode = allNodes.find((node) => node.label.trim() === presetRoute?.startLabel?.trim());
+    }
     const endNode = presetRoute?.endNodeId
       ? allNodes.find((node) => node.id === presetRoute?.endNodeId)
       : allNodes.find((node) => node.label.trim() === presetRoute?.endLabel?.trim());
