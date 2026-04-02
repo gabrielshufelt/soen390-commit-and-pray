@@ -85,7 +85,7 @@ const getNodeAccessibility = (node: IndoorNode): AccessibilityFilter | null => {
   if (type.includes("washroom") || label.includes("washroom") || label.includes("bathroom")) {
     return "washroom";
   }
-  if (type.includes("water") || label.includes("water") || label.includes("fountain")) {
+  if (type.includes("water") || label.includes("water")) {
     return "water";
   }
   if (type.includes("vending") || label.includes("vending")) {
@@ -104,7 +104,7 @@ const extractAccessibility = (roomLabel: string): AccessibilityFilter[] => {
   const labelLower = roomLabel.toLowerCase();
 
   if (labelLower.includes("washroom") || labelLower.includes("bathroom")) accessibilities.push("washroom");
-  if (labelLower.includes("water") || labelLower.includes("fountain")) accessibilities.push("water");
+  if (labelLower.includes("water")) accessibilities.push("water");
   if (labelLower.includes("elevator")) accessibilities.push("elevator");
   if (labelLower.includes("vending")) accessibilities.push("vending");
 
