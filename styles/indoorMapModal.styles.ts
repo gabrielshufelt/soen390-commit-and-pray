@@ -437,6 +437,7 @@ export const styles = StyleSheet.create({
   },
   roomDotContainerSelected: {
     transform: [{ translateX: -12 }, { translateY: -12 }, { scale: 1.4 }],
+    zIndex: 10,
   },
   roomDot: {
     width: 8,
@@ -467,12 +468,18 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 4,
     borderRadius: 4,
   },
+  roomLabelCompact: {
+    fontSize: 9,
+  },
   roomLabelSelected: {
     backgroundColor: CONCORDIA_RED,
     color: WHITE,
     paddingHorizontal: 6,
     fontSize: 12,
     fontWeight: "700",
+  },
+  roomLabelSelectedCompact: {
+    fontSize: 10,
   },
 
   // Route Options Modal

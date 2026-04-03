@@ -7,6 +7,7 @@ import {
   Image,
   TextInput,
   FlatList,
+  type DimensionValue,
 } from "react-native";
 import Svg, { Polyline } from "react-native-svg";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
@@ -36,14 +37,14 @@ type IndoorMapModalProps = {
 };
 
 const ROOM_NODE_TYPE = "room";
-const ACCESSIBILITY_ICONS = {
-  water: "💧",
-  washroom: "🚻",
-  elevator: "🛗",
-  food: "🍽️",
-};
+const ACCESSIBILITY_META = {
+  water: { icon: "💧", label: "Water" },
+  washroom: { icon: "🚻", label: "Washroom" },
+  elevator: { icon: "🛗", label: "Elevator" },
+  vending: { icon: "🥤", label: "Vending Machine" },
+} as const;
 
-type AccessibilityFilter = keyof typeof ACCESSIBILITY_ICONS;
+type AccessibilityFilter = keyof typeof ACCESSIBILITY_META;
 
 type RouteTransition = {
   id: string;
@@ -78,16 +79,18 @@ const getRoomNodes = (nodes: IndoorNode[]): IndoorNode[] => {
 
 const getNodeAccessibility = (node: IndoorNode): AccessibilityFilter | null => {
   const type = node.type.toLowerCase();
-  const label = node.label.toLowerCase();
+  const label = (node.label ?? "").toLowerCase();
 
   if (type.includes("elevator") || label.includes("elevator")) return "elevator";
   if (type.includes("washroom") || label.includes("washroom") || label.includes("bathroom")) {
     return "washroom";
   }
-  if (type.includes("water") || label.includes("water") || label.includes("fountain")) {
+  if (type.includes("water") || label.includes("water")) {
     return "water";
   }
-  if (label.includes("cafe") || label.includes("food")) return "food";
+  if (type.includes("vending") || label.includes("vending")) {
+    return "vending";
+  }
 
   return null;
 };
@@ -103,16 +106,32 @@ const extractAccessibility = (roomLabel: string): AccessibilityFilter[] => {
   if (labelLower.includes("washroom") || labelLower.includes("bathroom")) accessibilities.push("washroom");
   if (labelLower.includes("water")) accessibilities.push("water");
   if (labelLower.includes("elevator")) accessibilities.push("elevator");
-  if (labelLower.includes("cafe") || labelLower.includes("food")) accessibilities.push("food");
+  if (labelLower.includes("vending")) accessibilities.push("vending");
 
   return accessibilities;
 };
 
+const getAccessibilityLabel = (facility: AccessibilityFilter): string => ACCESSIBILITY_META[facility].label;
+const getAccessibilityFilterLabel = (facility: AccessibilityFilter): string =>
+  facility === "vending" ? "Vending" : getAccessibilityLabel(facility);
+
 const getNodeDisplayLabel = (node: IndoorNode): string => {
-  if (node.label?.trim()) return node.label;
   const facility = getNodeAccessibility(node);
+  const trimmedLabel = node.label?.trim();
+
+  if (trimmedLabel) {
+    if (facility) {
+      const normalizedLabel = trimmedLabel.toLowerCase().replace(/[_\s]+/g, " ").trim();
+      const normalizedFacilityLabel = getAccessibilityLabel(facility).toLowerCase();
+      if (normalizedLabel === normalizedFacilityLabel || normalizedLabel === facility) {
+        return getAccessibilityLabel(facility);
+      }
+    }
+    return trimmedLabel;
+  }
+
   if (!facility) return "Unknown";
-  return facility.charAt(0).toUpperCase() + facility.slice(1);
+  return getAccessibilityLabel(facility);
 };
 
 export default function IndoorMapModal({
@@ -331,19 +350,33 @@ export default function IndoorMapModal({
 
   useEffect(() => {
     if (!visible || !indoorMap) return;
+    const hasEnd = !!(presetRoute?.endNodeId || presetRoute?.endLabel);
+    if (!hasEnd) return;
+
     const hasNodeIds = !!(presetRoute?.startNodeId && presetRoute?.endNodeId);
     const hasLabels = !!(presetRoute?.startLabel && presetRoute?.endLabel);
-    if (!hasNodeIds && !hasLabels) return;
 
     const allNodes = indoorMap?.floors.flatMap((floor) => floor.nodes) ?? [];
-    const startNode = hasNodeIds
-      ? allNodes.find((node) => node.id === presetRoute?.startNodeId)
-      : allNodes.find((node) => node.label.trim() === presetRoute?.startLabel?.trim());
-    const endNode = hasNodeIds
+    let startNode;
+    if (hasNodeIds) {
+      startNode = allNodes.find((node) => node.id === presetRoute?.startNodeId);
+    } else if (hasLabels) {
+      startNode = allNodes.find((node) => node.label.trim() === presetRoute?.startLabel?.trim());
+    }
+    const endNode = presetRoute?.endNodeId
       ? allNodes.find((node) => node.id === presetRoute?.endNodeId)
       : allNodes.find((node) => node.label.trim() === presetRoute?.endLabel?.trim());
 
-    if (!startNode || !endNode) return;
+    if (!endNode) return;
+
+    // End-only: highlight the destination node without computing a route
+    if (!startNode) {
+      setSelectedRoom(endNode);
+      setViewMode("map");
+      const endFloorIndex = indoorMap?.floors.findIndex((floor) => floor.floor === endNode.floor) ?? -1;
+      if (endFloorIndex >= 0) setFloorIndex(endFloorIndex);
+      return;
+    }
 
     setRouteStartNode(startNode);
     setRouteEndNode(endNode);
@@ -458,8 +491,15 @@ export default function IndoorMapModal({
             isSelected && styles.roomDotSelected,
           ]}
         />
-        <Text style={[styles.roomLabel, isSelected && styles.roomLabelSelected]}>
-          {isFacility && facility ? `${ACCESSIBILITY_ICONS[facility]} ${getNodeDisplayLabel(room)}` : room.label}
+        <Text
+          style={[
+            styles.roomLabel,
+            facility === "vending" && styles.roomLabelCompact,
+            isSelected && styles.roomLabelSelected,
+            isSelected && facility === "vending" && styles.roomLabelSelectedCompact,
+          ]}
+        >
+          {isFacility && facility ? `${ACCESSIBILITY_META[facility].icon} ${getNodeDisplayLabel(room)}` : room.label}
         </Text>
       </TouchableOpacity>
     );
@@ -471,7 +511,7 @@ export default function IndoorMapModal({
     const label = getNodeDisplayLabel(room);
     const accessibilityStatus = room.accessible ? "Accessible" : "Not accessible";
     const facilityText = facility
-      ? `${facility.charAt(0).toUpperCase() + facility.slice(1)} facility`
+      ? `${getAccessibilityLabel(facility)} facility`
       : null;
     const accessibilityText = facilityText ?? accessibilityStatus;
     return (
@@ -481,7 +521,7 @@ export default function IndoorMapModal({
         onPress={() => handleRoomPress(room)}
       >
         <Text style={[styles.roomCardCode, isSelected && styles.roomCardCodeSelected]}>
-          {facility ? `${ACCESSIBILITY_ICONS[facility]} ${label}` : label}
+          {facility ? `${ACCESSIBILITY_META[facility].icon} ${label}` : label}
         </Text>
         <Text style={styles.roomCardMeta}>
           {accessibilityText}
@@ -737,7 +777,7 @@ export default function IndoorMapModal({
                 </View>
 
                 <View style={styles.filterContainer}>
-                  {(Object.keys(ACCESSIBILITY_ICONS) as AccessibilityFilter[]).map((filter) => (
+                  {(Object.keys(ACCESSIBILITY_META) as AccessibilityFilter[]).map((filter) => (
                     <TouchableOpacity
                       key={filter}
                       style={[
@@ -746,14 +786,15 @@ export default function IndoorMapModal({
                       ]}
                       onPress={() => toggleFilter(filter)}
                     >
-                      <Text style={styles.filterIcon}>{ACCESSIBILITY_ICONS[filter]}</Text>
+                      <Text style={styles.filterIcon}>{ACCESSIBILITY_META[filter].icon}</Text>
                       <Text
+                        numberOfLines={1}
                         style={[
                           styles.filterLabel,
                           activeFilters.includes(filter) && styles.filterLabelActive,
                         ]}
                       >
-                        {filter.charAt(0).toUpperCase() + filter.slice(1)}
+                        {getAccessibilityFilterLabel(filter)}
                       </Text>
                     </TouchableOpacity>
                   ))}

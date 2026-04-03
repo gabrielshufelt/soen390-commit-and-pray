@@ -101,6 +101,49 @@ describe('parseBuildingLocation', () => {
     expect(parseBuildingLocation('ZZ 101')).toBeNull();
   });
 
+  // Step 2b: indoor navigation node IDs (contain underscores)
+  it('parses "H H_F1_room_18" (Hall elevator node ID)', () => {
+    expect(parseBuildingLocation('H H_F1_room_18')).toEqual({
+      buildingCode: 'H',
+      buildingName: 'Henry F. Hall Building',
+      room: 'H_F1_room_18',
+    });
+  });
+
+  it('parses "MB MB_F1_elevator_1" (MB elevator node ID)', () => {
+    expect(parseBuildingLocation('MB MB_F1_elevator_1')).toEqual({
+      buildingCode: 'MB',
+      buildingName: 'John Molson School of Business',
+      room: 'MB_F1_elevator_1',
+    });
+  });
+
+  it('parses "VL VL_F1_room_39" (VL elevator node ID)', () => {
+    expect(parseBuildingLocation('VL VL_F1_room_39')).toEqual({
+      buildingCode: 'VL',
+      buildingName: 'Concordia Vanier Library',
+      room: 'VL_F1_room_39',
+    });
+  });
+
+  it('parses "CC CC_F1_doorway_68" (CC doorway node ID)', () => {
+    expect(parseBuildingLocation('CC CC_F1_doorway_68')).toEqual({
+      buildingCode: 'CC',
+      buildingName: 'Central Building',
+      room: 'CC_F1_doorway_68',
+    });
+  });
+
+  it('returns null for step 2b when building code is invalid', () => {
+    expect(parseBuildingLocation('ZZ ZZ_F1_room_1')).toBeNull();
+  });
+
+  it('does not treat "H Building" as a node ID (no underscore in room part)', () => {
+    // "H Building" has no underscore → step 2b does not match
+    // (step 1 requires a room after "Building", step 3 has no exact alias, step 4 fails)
+    expect(parseBuildingLocation('H Building')).toBeNull();
+  });
+
   // Step 3: Full / partial name lookup
   it('parses "Hall Building 820" (name alias + room)', () => {
     const result = parseBuildingLocation('Hall Building 820');
