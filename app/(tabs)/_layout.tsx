@@ -3,8 +3,12 @@ import React from 'react';
 import { FontAwesome } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
 
-function HomeTabIcon({ color, size }: { readonly color: string; readonly size: number }) {
-  return <FontAwesome name="home" size={size} color={color} />;
+function MapTabIcon({ color, size }: { readonly color: string; readonly size: number }) {
+  return <FontAwesome name="map" size={size} color={color} />;
+}
+
+function NearbyTabIcon({ color, size }: { readonly color: string; readonly size: number }) {
+  return <FontAwesome name="star" size={size} color={color} />;
 }
 
 function SettingsTabIcon({ color, size }: { readonly color: string; readonly size: number }) {
