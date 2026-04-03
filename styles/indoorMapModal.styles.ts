@@ -45,11 +45,18 @@ export const styles = StyleSheet.create({
     justifyContent: "center",
     backgroundColor: WHITE,
   },
+  menuButtonActive: {
+    borderColor: CONCORDIA_RED,
+    backgroundColor: "#FCE7EA",
+  },
   menuButtonText: {
     color: BLACK,
-    fontSize: 20,
-    lineHeight: 20,
+    fontSize: 21,
+    lineHeight: 22,
     fontWeight: "700",
+  },
+  menuButtonTextActive: {
+    color: CONCORDIA_RED,
   },
   closeButton: {
     paddingHorizontal: 12,

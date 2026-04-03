@@ -61,7 +61,7 @@ export default function IndoorRouteOptionsModal({
       <SafeAreaView style={styles.optionsOverlay}>
         <View style={styles.optionsCard}>
           <View style={styles.optionsHeader}>
-            <Text style={styles.optionsTitle}>Route Options</Text>
+            <Text style={styles.optionsTitle}>Accessibility & Route Options</Text>
             <TouchableOpacity style={styles.optionsCloseButton} onPress={onClose}>
               <Text style={styles.optionsCloseButtonText}>Done</Text>
             </TouchableOpacity>
