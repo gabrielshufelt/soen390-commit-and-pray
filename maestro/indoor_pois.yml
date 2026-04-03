@@ -1,0 +1,73 @@
+appId: com.commitandpray.soen390project
+---
+
+# IF user is outdoor and looks for POI
+- tapOn: Search buildings, rooms...
+- tapOn: Where to?
+- inputText: "elevator"
+- tapOn: elevator door — Floor 1, MB · 93m away
+- tapOn: Walking
+- tapOn: Start Directions
+
+# User can see the steps from outside 
+- assertVisible: 75 m
+- assertVisible: Head northeast on Rue Sainte-Catherine O toward Rue Guy
+- assertVisible: NEXT
+- assertVisible: Turn left onto Rue Guy Destination will be on the left
+- assertVisible: 57 m
+- assertVisible: Step 1 of 3
+- repeat:
+    while:
+      notVisible: "Step 2 of 3"
+    commands:
+      - tapOn: ›
+- tapOn: Enter building
+
+# User can see indoor map once inside building
+- assertVisible: MB Indoor Map
+
+# Indoor route generated
+- assertVisible:
+    id: route-segment
+- assertVisible:
+    id: route-segment
+    index: 2
+- assertVisible:
+    id: route-segment
+    index: 3
+- assertVisible:
+    id: route-segment
+    index: 4
+- assertVisible:
+    id: route-segment
+    index: 5
+- assertVisible:
+    id: route-segment
+    index: 6
+- assertVisible:
+    id: route-segment
+    index: 7
+- assertVisible: 🛗 Elevator
+
+# If user already in building (need to mock the location in devConfig and relauch)
+- tapOn: Indoor
+- tapOn: Rooms
+- tapOn: Elevator
+- tapOn: 🛗 Elevator, Elevator facility
+- tapOn: Map
+- tapOn: Get Directions From
+- tapOn: "1.210"
+- tapOn: Get Directions To
+
+# Indoor route genereated
+- assertVisible:
+    id: route-segment
+- assertVisible:
+    id: route-segment
+    index: 1
+- assertVisible:
+    id: route-segment
+    index: 2
+- assertVisible:
+    id: route-segment
+    index: 3
