@@ -648,7 +648,7 @@ export default function Index() {
             }))}
             fillColor={isSelected || isUserInside ? HIGHLIGHT_COLOR : BUILDING_POLYGON_COLORS.fillColor}
             strokeColor={isSelected || isUserInside ? STROKE_COLOR : BUILDING_POLYGON_COLORS.strokeColor}
-            strokeWidth={isSelected || isUserInside ? BUILDING_POLYGON_COLORS.strokeWidth : BUILDING_POLYGON_COLORS.strokeWidth}
+            strokeWidth={BUILDING_POLYGON_COLORS.strokeWidth}
             tappable
             onPress={() => handleBuildingSelect(building.id, building)}
           />
