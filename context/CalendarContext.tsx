@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import * as SecureStore from 'expo-secure-store';
 
 export interface GoogleCalendar {
@@ -63,7 +63,7 @@ const CalendarContext = createContext<CalendarContextType | undefined>(undefined
 const SELECTED_CALENDAR_KEY = 'selected_calendar_id';
 const CACHED_CALENDARS_KEY = 'cached_calendars';
 
-export function CalendarProvider({ children }: { children: React.ReactNode }) {
+export function CalendarProvider({ children }: { readonly children: React.ReactNode }) {
   const [calendars, setCalendars] = useState<GoogleCalendar[]>([]);
   const [selectedCalendarId, setSelectedCalendarId] = useState<string | null>(null);
   const [isLoadingCalendars, setIsLoadingCalendars] = useState(false);
@@ -158,17 +158,20 @@ export function CalendarProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const value = useMemo(
+    () => ({
+      calendars,
+      selectedCalendarId,
+      isLoadingCalendars,
+      fetchCalendars,
+      selectCalendar,
+      clearCalendars,
+    }),
+    [calendars, selectedCalendarId, isLoadingCalendars, fetchCalendars, selectCalendar, clearCalendars]
+  );
+
   return (
-    <CalendarContext.Provider
-      value={{
-        calendars,
-        selectedCalendarId,
-        isLoadingCalendars,
-        fetchCalendars,
-        selectCalendar,
-        clearCalendars,
-      }}
-    >
+    <CalendarContext.Provider value={value}>
       {children}
     </CalendarContext.Provider>
   );
