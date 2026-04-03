@@ -714,7 +714,14 @@ export default function ExpandedSearchBar({
           <View style={styles.filterRow}>
             {(["Home", "Library", "Favorites"] as const).map((k) => {
               const active = quickFilter === k;
-              const iconName = k === "Home" ? "home" : k === "Library" ? "book" : "star";
+              let iconName: React.ComponentProps<typeof FontAwesome>["name"];
+              if (k === "Home") {
+                iconName = "home";
+              } else if (k === "Library") {
+                iconName = "book";
+              } else {
+                iconName = "star";
+              }
               return (
                 <TouchableOpacity
                   key={k}
