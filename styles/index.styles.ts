@@ -2,6 +2,8 @@ import { StyleSheet } from "react-native";
 
 export const HIGHLIGHT_COLOR = "rgba(33, 150, 243, 0.4)";
 export const STROKE_COLOR = "#2196F3";
+export const BUILDING_STROKE_COLOR = "#E5A712"; 
+export const BUILDING_STROKE_WIDTH = 2;
 
 export const styles = StyleSheet.create({
   container: { flex: 1, position: "relative" },

@@ -184,3 +184,31 @@ export function getDistanceMeters(
 
     return R * c;
 }
+
+/**
+ * Calculates a minimum tap target radius for small buildings.
+ * Returns the buffer radius in degrees needed to create a minimum hit area.
+ * This ensures small building polygons have an expanded tappable area.
+ * 
+ * @param polygon - Array of [longitude, latitude] pairs (GeoJSON order)
+ * @param minRadiusDegrees - Minimum tap target radius in degrees (default: 0.0005 ≈ 55m at equator)
+ * @returns Radius in degrees if building is smaller than minimum, otherwise 0
+ */
+export function getMinimumTapTargetBuffer(
+    polygon: number[][],
+    minRadiusDegrees: number = 0.0005
+): number {
+    const { minLat, maxLat, minLng, maxLng } = computeBoundingBox(polygon);
+
+    const heightDegrees = maxLat - minLat;
+    const widthDegrees = maxLng - minLng;
+
+    const buildingSizeDegrees = Math.max(heightDegrees, widthDegrees);
+    
+    if (buildingSizeDegrees < minRadiusDegrees * 2) {
+        const bufferNeeded = minRadiusDegrees - (buildingSizeDegrees / 2);
+        return Math.max(bufferNeeded, minRadiusDegrees * 0.75); 
+    }
+    
+    return 0;
+}
