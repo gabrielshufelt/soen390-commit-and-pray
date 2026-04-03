@@ -106,13 +106,13 @@ const createIndoorMap = () => ({
           accessible: false,
         },
         {
-          id: 'r-food',
-          type: 'room',
+          id: 'v1',
+          type: 'vending_machine',
           buildingId: 'H',
           floor: 1,
           x: 180,
           y: 210,
-          label: 'Campus Cafe',
+          label: 'Vending Machine',
           accessible: true,
         },
         {
@@ -251,6 +251,7 @@ describe('<IndoorMapModal />', () => {
     expect(getByText('Floor 1')).toBeTruthy();
     expect(getByText('H-101')).toBeTruthy();
     expect(getByText('🛗 Main Elevator')).toBeTruthy();
+    expect(getByText('🥤 Vending Machine')).toBeTruthy();
   });
 
   it('switches to Rooms tab and filters rooms by search input', () => {
@@ -263,6 +264,7 @@ describe('<IndoorMapModal />', () => {
     expect(getByText('H-101')).toBeTruthy();
     expect(getByText('🛗 Main Elevator')).toBeTruthy();
     expect(getByText('💧 Water')).toBeTruthy();
+    expect(getByText('🥤 Vending Machine')).toBeTruthy();
 
     fireEvent.changeText(getByPlaceholderText('Search rooms, facilities...'), 'elev');
 
