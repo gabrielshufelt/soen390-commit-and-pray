@@ -1,5 +1,4 @@
 /* istanbul ignore file */
-import type { MapViewDirectionsMode } from "react-native-maps-directions";
 
 export type BuildingChoice = {
   id: string;

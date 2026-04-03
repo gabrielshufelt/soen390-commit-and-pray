@@ -16,11 +16,11 @@ type Props = {
 };
 
 type ToggleItemProps = {
-  title: string;
-  description: string;
-  value: boolean;
-  onValueChange: (value: boolean) => void;
-  testID: string;
+  readonly title: string;
+  readonly description: string;
+  readonly value: boolean;
+  readonly onValueChange: (value: boolean) => void;
+  readonly testID: string;
 };
 
 function ToggleItem({ title, description, value, onValueChange, testID }: ToggleItemProps) {

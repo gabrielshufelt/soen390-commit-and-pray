@@ -1,6 +1,5 @@
 import React, { useMemo, useState, useCallback, useRef, useEffect } from "react";
 import { useFocusEffect, useLocalSearchParams } from "expo-router";
-import * as Location from "expo-location";
 import { useNavigationCamera } from "../../hooks/useNavigationCamera";
 import MapView, { Circle, Marker, Polygon, Region } from "react-native-maps";
 import { Alert, StyleSheet, View, Text, TouchableOpacity } from "react-native";
@@ -74,7 +73,6 @@ export default function Index() {
     apiKey,
     startDirections,
     previewDirections,
-    startDirectionsToBuilding,
     onRouteReady,
     endDirections,
     nextStep,

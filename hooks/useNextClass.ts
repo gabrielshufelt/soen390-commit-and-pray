@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import Constants from 'expo-constants';
 import * as Location from 'expo-location';
 
-import { useCalendar, fetchEvents } from '../context/CalendarContext';
+import { useCalendar, fetchEvents, GoogleCalendarEvent } from '../context/CalendarContext';
 import { useAuth } from '../context/AuthContext';
 import { parseBuildingLocation } from '../utils/buildingParser';
 import { getBuildingCoordinate } from '../utils/buildingCoordinates';
@@ -90,6 +90,40 @@ async function resolveWalkingMinutes(
   );
 }
 
+// Find the next upcoming event from today's calendar events
+async function getNextUpcomingEvent(
+  events: GoogleCalendarEvent[],
+  now: Date
+): Promise<GoogleCalendarEvent | null> {
+  const upcoming = events.filter(e => e.start?.dateTime && new Date(e.start.dateTime) > now);
+  return upcoming.length > 0 ? upcoming[0] : null;
+}
+
+// Process event data into ParsedNextClass
+function processEventData(
+  event: GoogleCalendarEvent,
+  userLocation: Location.LocationObject | null,
+  apiKey: string,
+  userBuildingCode?: string | null
+): Omit<ParsedNextClass, 'walkingMinutes'> & { walkingMinutes: Promise<number | null> } {
+  const startTime = new Date(event.start?.dateTime ?? '');
+  const endTime = new Date(event.end?.dateTime ?? '');
+  const rawLocation = event.location ?? '';
+  const parsed = parseBuildingLocation(rawLocation);
+  const walkingMinutes = resolveWalkingMinutes(userLocation, parsed, apiKey, userBuildingCode);
+
+  return {
+    title: event.summary.trim(),
+    buildingCode: parsed?.buildingCode ?? '',
+    buildingName: parsed?.buildingName ?? rawLocation,
+    room: parsed?.room ?? '',
+    startTime,
+    endTime,
+    rawLocation,
+    walkingMinutes,
+  };
+}
+
 /**
  * Fetches today's calendar events for the user's selected calendar and returns
  * the next upcoming class along with walking time from the user's position.
@@ -146,49 +180,34 @@ export function useNextClass(
         const endOfDay = new Date(now);
         endOfDay.setHours(23, 59, 59, 999);
 
-        const allToday = await fetchEvents(accessToken, selectedCalendarId, startOfDay.toISOString(),
-          endOfDay.toISOString());
+        const allToday = await fetchEvents(accessToken, selectedCalendarId, startOfDay.toISOString(), endOfDay.toISOString());
 
         if (cancelled) return;
 
-        // Determine next upcoming event
-        // fetchEvents already orders by startTime and uses timeMin=now, BUT
-        // Google may include events already in progress (startTime < now).
-        // Filter strictly to future events.
-        const upcoming = allToday.filter(e => e.start?.dateTime && new Date(e.start.dateTime) > now);
-
-        if (upcoming.length === 0) {
+        // Find next upcoming event
+        const nextEvent = await getNextUpcomingEvent(allToday, now);
+        if (!nextEvent) {
           setStatus(allToday.length > 0 ? 'done_today' : 'no_class');
           setNextClass(null);
           setIsLoading(false);
           return;
         }
 
-        // Parse soonest event
-        const event = upcoming[0];
-        const startTime = new Date(event.start.dateTime);
-        const endTime = new Date(event.end.dateTime);
-
-        const rawLocation = event.location ?? '';
-        const parsed = parseBuildingLocation(rawLocation);
-
-        // Walking time
-        const walkingMinutes = await resolveWalkingMinutes(userLocation, parsed, apiKey, userBuildingCode);
+        // Process event data
+        const eventData = processEventData(nextEvent, userLocation, apiKey, userBuildingCode);
+        const walkingMinutes = await eventData.walkingMinutes;
 
         if (cancelled) return;
 
-        // Keep the event type suffix (e.g. " - Lecture", " - Tutorial") to indicate to the user what kind of event it is
-        const title = event.summary.trim();
-
         setNextClass({
-          title,
-          buildingCode: parsed?.buildingCode ?? '',
-          buildingName: parsed?.buildingName ?? rawLocation,
-          room: parsed?.room ?? '',
-          startTime,
-          endTime,
+          title: eventData.title,
+          buildingCode: eventData.buildingCode,
+          buildingName: eventData.buildingName,
+          room: eventData.room,
+          startTime: eventData.startTime,
+          endTime: eventData.endTime,
           walkingMinutes,
-          rawLocation,
+          rawLocation: eventData.rawLocation,
         });
         setStatus('found');
       } catch (err) {

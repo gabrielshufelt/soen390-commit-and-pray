@@ -6,9 +6,9 @@ import { styles, MAROON } from '../styles/searchBar.styles';
 
 
 type Props = {
-  selectedMode: MapViewDirectionsMode;
-  onModeSelect: (mode: MapViewDirectionsMode) => void;
-  disabled?: boolean;
+  readonly selectedMode: MapViewDirectionsMode;
+  readonly onModeSelect: (mode: MapViewDirectionsMode) => void;
+  readonly disabled?: boolean;
 };
 
 const MODES: { mode: MapViewDirectionsMode; label: string; icon: string }[] = [
