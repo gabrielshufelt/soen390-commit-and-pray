@@ -1,0 +1,136 @@
+appId: com.commitandpray.soen390project
+---
+- tapOn: Nearby
+
+# The Nearby page displays four sections, one per category: Study Spaces, Coffee Shops, Restaurants, and Grocery
+- assertVisible: Study Spaces
+- assertVisible: Coffee Shops
+- assertVisible: Restaurants
+- swipe:
+    direction: UP
+- assertVisible: Grocery Stores
+- swipe:
+    direction: DOWN
+
+#Study spaces are sourced from internal campus data
+- assertVisible: Hall Building Study Areas
+- assertVisible: 1455 De Maisonneuve Blvd W
+- assertVisible: 20m
+- assertVisible: Open
+
+#Each section shows up to 5 POIs
+- assertVisible: Pigeon Espresso Bar
+- assertVisible: Tim Hortons
+- assertVisible: Starbucks Coffee Company
+- swipe:
+    direction: LEFT 
+- assertVisible: Café Van Houtte
+- swipe:
+    direction: LEFT 
+- assertVisible: Tim Hortons
+
+
+
+#If user wants to see more POI
+- tapOn: See all
+- assertVisible: Open details for Tim Hortons
+- scrollUntilVisible:
+    element:
+      text: Open details for Le Petit Hotel
+- tapOn: Back to nearby
+#POIs are sorted by distance (ascending) from the user's current location
+- assertVisible: 97m
+- assertVisible: 139m
+
+#Each POI is rendered as a card displaying at minimum: name, distance from user, and open/close status
+- assertVisible: Pigeon Espresso Bar
+- assertVisible: 1394 Boulevard De Maisonneuve Ouest, Montreal
+- assertVisible: 97m
+- assertVisible:
+    text: Open
+    index: 2
+- assertVisible:
+    text: Get Directions
+    index: 2
+
+#Tapping Get Directions initiates directions from the user's current location to the POI using the existing
+- tapOn:
+    text: Get Directions
+    index: 2
+- assertVisible: Henry F. Hall Building (H)
+- assertVisible: Pigeon Espresso Bar
+- assertVisible: ESTIMATED TIME
+- assertVisible: 3 min • 0.5 km
+- assertVisible: Start Directions
+- tapOn: , Nearby
+
+# Too show the furtest POI 
+- tapOn: See all
+- scrollUntilVisible:
+    element:
+      text: Open details for Le Petit Hotel
+- assertVisible: 2.0km
+- tapOn: Back to nearby
+
+
+#If user wants to filter destination radius from the default 2 km to 1 km
+- tapOn: , Filter
+- assertVisible: Filter POIs
+- assertVisible: Destination Radius
+- assertVisible: "2.0"
+- tapOn: "2.0"
+- eraseText: 3
+- inputText: "1.0"
+- tapOn: Apply
+
+#Check if changing radius applied
+- tapOn: See all
+- scrollUntilVisible:
+    element:
+      text: 666 Rue Sherbrooke Ouest, Montréal
+- assertVisible: 980m
+- assertNotVisible: 2.0km
+- tapOn: 
+
+#Verify the selected radius persists and can be reset to the default value
+- tapOn: , Filter
+- assertVisible: "1.0"
+- tapOn: Clear All
+- assertVisible: "2.0"
+- tapOn: Apply
+
+#Recheck if reset works
+- tapOn: See all
+- scrollUntilVisible:
+    element:
+      text: Le Petit Hotel
+- assertNotVisible: 980m
+- assertVisible: 2.0km
+- tapOn: 
+
+#Too look more in dept a POI
+- tapOn: Open details for Pigeon Espresso Bar
+- tapOn: Route, Get Directions
+- tapOn: Start Directions
+- assertVisible: Step 1 of 3
+- tapOn: Next step
+- tapOn: Next step
+- tapOn: End
+
+#Check if filter categories work
+- tapOn: Nearby
+- tapOn: Filter
+- tapOn: Study Spaces
+- tapOn: Coffee Shops
+- tapOn: Restaurants
+- tapOn: Grocery Stores
+- tapOn: Apply
+- tapOn: Filter
+- tapOn: 
+- assertVisible: No categories selected in filter
+- tapOn: Filter
+- tapOn: Clear All
+- tapOn: 
+- assertVisible: Study Spaces
+- assertVisible: Coffee Shops
+- tapOn: Restaurants

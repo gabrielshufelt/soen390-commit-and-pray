@@ -171,7 +171,7 @@
       "floor": 1,
       "x": 981,
       "y": 1126,
-      "label": "",
+      "label": "Elevator",
       "accessible": true
     },
     {
@@ -181,7 +181,7 @@
       "floor": 1,
       "x": 1060,
       "y": 1125,
-      "label": "",
+      "label": "Elevator",
       "accessible": true
     },
     {
@@ -191,7 +191,7 @@
       "floor": 1,
       "x": 1137,
       "y": 1125,
-      "label": "",
+      "label": "Elevator",
       "accessible": true
     },
     {
@@ -201,7 +201,7 @@
       "floor": 1,
       "x": 980,
       "y": 1214,
-      "label": "",
+      "label": "Elevator",
       "accessible": true
     },
     {
@@ -211,7 +211,7 @@
       "floor": 1,
       "x": 1058,
       "y": 1212,
-      "label": "",
+      "label": "Elevator",
       "accessible": true
     },
     {
@@ -221,7 +221,7 @@
       "floor": 1,
       "x": 1135,
       "y": 1212,
-      "label": "",
+      "label": "Elevator",
       "accessible": true
     },
     {
@@ -633,7 +633,7 @@
       "y": 1808,
       "latitude": 45.4955008664397, 
       "longitude": -73.57915690500853,
-      "label": "",
+      "label": "MB building entry",
       "accessible": true
     },
     {
@@ -643,7 +643,7 @@
       "floor": 1,
       "x": 692,
       "y": 1808,
-      "label": "",
+      "label": "MB building exit",
       "accessible": true
     },
     {
@@ -895,7 +895,7 @@
       "y": 209,
       "latitude": 45.495217933169, 
       "longitude": -73.57857958459395,
-      "label": "",
+      "label": "MB building entry",
       "accessible": true
     },
     {
@@ -907,7 +907,7 @@
       "y": 209,
       "latitude": 45.495217933169, 
       "longitude": -73.57857958459395,
-      "label": "",
+      "label": "MB building exit",
       "accessible": true
     },
     {
@@ -927,7 +927,7 @@
       "floor": 1,
       "x": 1225,
       "y": 1540,
-      "label": "",
+      "label": "washroom",
       "accessible": true
     },
     {
@@ -937,7 +937,7 @@
       "floor": 1,
       "x": 1203,
       "y": 1588,
-      "label": "",
+      "label": "water",
       "accessible": true
     }
   ],

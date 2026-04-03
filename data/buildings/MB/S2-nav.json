@@ -641,7 +641,7 @@
       "floor": -2,
       "x": 1066,
       "y": 1188,
-      "label": "",
+      "label": "Elevator",
       "accessible": true
     },
     {
@@ -651,7 +651,7 @@
       "floor": -2,
       "x": 1136,
       "y": 1188,
-      "label": "",
+      "label": "Elevator",
       "accessible": true
     },
     {
@@ -661,7 +661,7 @@
       "floor": -2,
       "x": 993,
       "y": 1105,
-      "label": "",
+      "label": "Elevator",
       "accessible": true
     },
     {
@@ -671,7 +671,7 @@
       "floor": -2,
       "x": 1066,
       "y": 1105,
-      "label": "",
+      "label": "Elevator",
       "accessible": true
     },
     {
@@ -681,7 +681,7 @@
       "floor": -2,
       "x": 1136,
       "y": 1105,
-      "label": "",
+      "label": "Elevator",
       "accessible": true
     },
     {
@@ -751,7 +751,7 @@
       "floor": -2,
       "x": 990,
       "y": 1187,
-      "label": "",
+      "label": "Elevator",
       "accessible": true
     },
     {
@@ -921,7 +921,7 @@
       "floor": -2,
       "x": 1060,
       "y": 1552,
-      "label": "",
+      "label": "water",
       "accessible": true
     },
     {
@@ -1111,7 +1111,7 @@
       "floor": -2,
       "x": 1095,
       "y": 1512,
-      "label": "",
+      "label": "washroom",
       "accessible": true
     },
     {
@@ -1231,7 +1231,7 @@
       "floor": -2,
       "x": 335,
       "y": 889,
-      "label": "",
+      "label": "MB building entry",
       "accessible": true
     },
     {
@@ -1241,7 +1241,7 @@
       "floor": -2,
       "x": 335,
       "y": 889,
-      "label": "",
+      "label": "MB building exit",
       "accessible": true
     }
   ],

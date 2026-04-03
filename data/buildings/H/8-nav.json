@@ -1641,7 +1641,7 @@
       "floor": 8,
       "x": 1157,
       "y": 1413,
-      "label": "",
+      "label": "washroom",
       "accessible": true
     },
     {
@@ -1681,7 +1681,7 @@
       "floor": 8,
       "x": 1319,
       "y": 1512,
-      "label": "",
+      "label": "water",
       "accessible": true
     },
     {

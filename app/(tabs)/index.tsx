@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useCallback, useRef, useEffect } from "react";
-import { useFocusEffect } from "expo-router";
+import { useFocusEffect, useLocalSearchParams } from "expo-router";
 import * as Location from "expo-location";
 import { useNavigationCamera } from "../../hooks/useNavigationCamera";
 import MapView, { Circle, Marker, Polygon, Region } from "react-native-maps";
@@ -38,6 +38,12 @@ const LABEL_ZOOM_THRESHOLD = 0.015;
 const ANCHOR_OFFSET = { x: 0.5, y: 0.5 };
 
 export default function Index() {
+  const nearbyParams = useLocalSearchParams<{
+    nearbyLat?: string;
+    nearbyLng?: string;
+    nearbyName?: string;
+    nearbyNonce?: string;
+  }>();
   const { colorScheme } = useTheme();
   const isDark = colorScheme === "dark";
 
@@ -92,6 +98,8 @@ export default function Index() {
   const [showLabels, setShowLabels] = useState(
     defaultCampus.initialRegion.latitudeDelta <= LABEL_ZOOM_THRESHOLD
   );
+  const handledNearbyNonceRef = useRef<string | null>(null);
+  const [searchBarNonce, setSearchBarNonce] = useState<string | null>(null);
 
   const [selectedBuilding, setSelectedBuilding] = useState<string | null>(null);
   const [selectedBuildingData, setSelectedBuildingData] = useState<any>(null);
@@ -209,6 +217,23 @@ export default function Index() {
 
   const handleStartRoute = async () => {
     if (!destChoice || !effectiveLocation) return;
+
+    // Same-building indoor POI with no start room: open the indoor map and highlight the POI.
+    // When a start room is specified, fall through to the combined flow which handles routing.
+    const destBuildingCode = destChoice.code?.toUpperCase();
+    const isIndoorPoi = !!(destChoice.room && destBuildingCode && getBuildingIndoorMap(destBuildingCode));
+    if (isIndoorPoi && !startChoice?.room) {
+      const effectiveBuildingCode =
+        startChoice && startChoice.id !== "current-location"
+          ? startChoice.code?.toUpperCase()
+          : userBuilding?.code?.toUpperCase();
+      if (effectiveBuildingCode === destBuildingCode) {
+        setIndoorBuildingCode(destBuildingCode);
+        setIndoorPresetRoute({ endNodeId: destChoice.room });
+        setShowIndoorMapModal(true);
+        return;
+      }
+    }
 
     if (!shouldUseCombinedFlow) {
       setCombinedRouteActive(false);
@@ -377,6 +402,14 @@ export default function Index() {
     setSelectedBuildingData(null);
   };
 
+  const handleShowIndoorMapFromModal = (buildingCode: string) => {
+    const normalized = buildingCode.toUpperCase();
+    if (!getBuildingIndoorMap(normalized)) return;
+    setIndoorBuildingCode(normalized);
+    setIndoorPresetRoute(null);
+    setShowIndoorMapModal(true);
+  };
+
   const buildingToChoice = (b: any): BuildingChoice => ({
     id: b.id,
     name: b.properties?.name ?? b.properties?.code ?? "Unknown building",
@@ -452,6 +485,39 @@ export default function Index() {
       }
     }
   }, [effectiveLocation, userBuilding, startChoice, campusKey, currentCampus]);
+
+  useEffect(() => {
+    const nearbyNonce = nearbyParams.nearbyNonce;
+    if (!nearbyNonce || handledNearbyNonceRef.current === nearbyNonce) return;
+    if (!effectiveLocation) return;
+
+    const lat = Number(nearbyParams.nearbyLat);
+    const lng = Number(nearbyParams.nearbyLng);
+
+    handledNearbyNonceRef.current = nearbyNonce;
+
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+      return;
+    }
+
+    const destination = { latitude: lat, longitude: lng };
+    const nearbyCampus = findCampusForCoordinate(lat, lng)?.campus.name as "SGW" | "Loyola" | undefined;
+    const nearbyName = nearbyParams.nearbyName || "Nearby Destination";
+
+    endDirections();
+    clearRoute();
+    setCombinedRouteActive(false);
+    setCombinedStepIndex(0);
+    setUseShuttle(false);
+    setOutdoorLegMode("DRIVING");
+    setSearchBarNonce(nearbyNonce);
+    setDestChoice({
+      id: `nearby-${nearbyNonce}`,
+      name: nearbyName,
+      coordinate: destination,
+      campus: nearbyCampus,
+    });
+  }, [nearbyParams, effectiveLocation, clearRoute, endDirections]);
 
   const roomOptionsByBuilding = useMemo(() => {
     const grouped = new Map<string, Set<string>>();
@@ -542,6 +608,7 @@ export default function Index() {
   const activeSteps = combinedRouteActive ? fullRoute : directionsState.steps;
   const currentStepIndex = combinedRouteActive ? combinedStepIndex : directionsState.currentStepIndex;
   const navigationActive = directionsState.isActive || combinedRouteActive;
+  const previewActive = !directionsState.isActive && !!directionsState.origin;
   const canGoPrev = currentStepIndex > 0;
   const canGoNext = currentStepIndex < activeSteps.length - 1;
 
@@ -567,7 +634,6 @@ export default function Index() {
     }
     nextStep();
   };
-
 
   const buildingPolygons = useMemo(() => {
     return campusBuildingsData.map((building: any) => {
@@ -832,6 +898,7 @@ export default function Index() {
 
       {!navigationActive && (
         <SearchBar
+          key={`search-${searchBarNonce ?? 'default'}`}
           buildings={buildingChoices}
           roomOptionsByBuilding={roomOptionsByBuilding}
           start={startChoice}
@@ -841,6 +908,7 @@ export default function Index() {
           transportMode={directionsState.transportMode}
           onChangeTransportMode={setTransportMode}
           routeActive={navigationActive}
+          defaultExpanded={!!searchBarNonce}
           previewActive={!directionsState.isActive && !!directionsState.origin}
           onEndRoute={handleEndDirections}
           onStartRoute={handleStartRoute}
@@ -851,6 +919,19 @@ export default function Index() {
           onUseShuttleChange={setUseShuttle}
           onOpenBuilding={handleOpenIndoorMap}
         />
+      )}
+
+      {previewActive && !navigationActive && (
+        <TouchableOpacity
+          testID="exit-preview.button"
+          style={styles.exitPreviewButton}
+          onPress={handleEndDirections}
+          activeOpacity={0.9}
+          accessibilityRole="button"
+          accessibilityLabel="Exit preview"
+        >
+          <Text style={styles.exitPreviewButtonText}>Exit Preview</Text>
+        </TouchableOpacity>
       )}
 
         <IndoorMapModal
@@ -864,7 +945,7 @@ export default function Index() {
           onClearRoute={handleEndDirections}
          />
 
-      {!navigationActive && (
+      {!navigationActive && !previewActive && (
         <NextClassModal
           nextClass={nextClass}
           status={nextClassStatus}
@@ -924,12 +1005,7 @@ export default function Index() {
         onClose={handleCloseModal}
         onDirectionsFrom={handleDirectionsFrom}
         onDirectionsTo={handleDirectionsTo}
-        onGetDirections={(building) => {
-          if (effectiveLocation) {
-            startDirectionsToBuilding(effectiveLocation, building.geometry.coordinates[0]);
-          }
-          handleCloseModal();
-        }}
+        onShowIndoorMap={handleShowIndoorMapFromModal}
       />
 
       <ShuttleScheduleModal
@@ -1001,6 +1077,30 @@ const styles = StyleSheet.create({
 
   shuttleButtonText: {
     fontSize: 28,
+  },
+
+  exitPreviewButton: {
+    position: "absolute",
+    bottom: 40,
+    alignSelf: "center",
+    left: "25%",
+    right: "25%",
+    paddingVertical: 14,
+    borderRadius: 28,
+    backgroundColor: "#8B0000",
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 6,
+    zIndex: 1000,
+  },
+  exitPreviewButtonText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "700",
   },
 
   busStopMarker: {

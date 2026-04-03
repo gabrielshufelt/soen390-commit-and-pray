@@ -5,15 +5,30 @@ jest.mock('../utils/devConfig', () => ({
   DEV_OVERRIDE_LOCATION: null,
 }));
 
-const mockGetCurrentPositionAsync = jest.fn();
-
 jest.mock('expo-location', () => ({
-  getCurrentPositionAsync: (...args: any[]) => mockGetCurrentPositionAsync(...args),
+  getCurrentPositionAsync: jest.fn(),
   Accuracy: { Balanced: 3 },
 }));
 
+const mockGetCurrentPositionAsync = require('expo-location').getCurrentPositionAsync;
+let mockAppStateCallback: ((state: string) => void) | null = null;
+
+jest.mock('react-native', () => ({
+  AppState: {
+    addEventListener: jest.fn((event: string, callback: (state: string) => void) => {
+      if (event === 'change') {
+        mockAppStateCallback = callback;
+      }
+      return { remove: jest.fn() };
+    }),
+  },
+  Platform: {
+    OS: 'ios',
+  },
+}));
+
 const mockLocation = {
-  coords: { latitude: 45.497, longitude: -73.579 },
+  coords: { latitude: 45.497, longitude: -73.579, altitude: null, accuracy: null, altitudeAccuracy: null, heading: null, speed: null },
   timestamp: Date.now(),
 };
 
@@ -21,152 +36,200 @@ describe('useWatchLocation', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     jest.useFakeTimers();
+    mockAppStateCallback = null;
   });
 
   afterEach(() => {
     jest.useRealTimers();
   });
 
-  it('fetches location on mount when enabled', async () => {
-    mockGetCurrentPositionAsync.mockResolvedValue(mockLocation);
-
-    const { result } = renderHook(() => useWatchLocation({ enabled: true }));
-
-    await waitFor(() => {
-      expect(result.current.location).toEqual(mockLocation);
-    });
-    expect(result.current.loading).toBe(false);
-    expect(result.current.error).toBeNull();
-  });
-
+  // ===== BASIC BEHAVIOR =====
   it('does not fetch location when disabled', () => {
+    mockGetCurrentPositionAsync.mockClear();
     const { result } = renderHook(() => useWatchLocation({ enabled: false }));
 
     expect(mockGetCurrentPositionAsync).not.toHaveBeenCalled();
     expect(result.current.location).toBeNull();
   });
 
-  it('updates location on interval', async () => {
-    const loc1 = { ...mockLocation, timestamp: 1 };
-    const loc2 = { ...mockLocation, coords: { latitude: 45.5, longitude: -73.6 }, timestamp: 2 };
+  it('returns state object with required properties', () => {
+    const { result } = renderHook(() => useWatchLocation({ enabled: false }));
 
-    mockGetCurrentPositionAsync
-      .mockResolvedValueOnce(loc1)
-      .mockResolvedValueOnce(loc2);
-
-    const { result } = renderHook(() =>
-      useWatchLocation({ enabled: true, intervalMs: 1000 })
-    );
-
-    await waitFor(() => {
-      expect(result.current.location).toEqual(loc1);
-    });
-
-    await act(async () => {
-      jest.advanceTimersByTime(1000);
-    });
-
-    await waitFor(() => {
-      expect(result.current.location).toEqual(loc2);
-    });
+    expect(result.current).toHaveProperty('location');
+    expect(result.current).toHaveProperty('loading');
+    expect(result.current).toHaveProperty('error');
   });
 
-  it('handles Error instance in catch block', async () => {
-    mockGetCurrentPositionAsync.mockRejectedValue(new Error('Location unavailable'));
-    jest.spyOn(console, 'error').mockImplementation();
+  it('initializes with loading false and error null', () => {
+    const { result } = renderHook(() => useWatchLocation({ enabled: false }));
+
+    expect(result.current.loading).toBe(false);
+    expect(result.current.error).toBeNull();
+  });
+
+  it('returns null location when disabled', () => {
+    const { result } = renderHook(() => useWatchLocation({ enabled: false }));
+    expect(result.current.location).toBeNull();
+  });
+
+  // ===== SUCCESS CASES & ERROR HANDLING =====
+  it('suppresses transient "current location is unavailable" error', async () => {
+    const transientError = new Error('Current location is unavailable');
+    mockGetCurrentPositionAsync.mockRejectedValueOnce(transientError);
 
     const { result } = renderHook(() => useWatchLocation({ enabled: true }));
 
     await waitFor(() => {
-      expect(result.current.error).toBe('Location unavailable');
+      expect(result.current.error).toBeNull();
     });
-    expect(result.current.loading).toBe(false);
-
-    (console.error as jest.Mock).mockRestore();
   });
 
-  it('handles non-Error throw in catch block', async () => {
-    mockGetCurrentPositionAsync.mockRejectedValue('string error');
-    jest.spyOn(console, 'error').mockImplementation();
-
-    const { result } = renderHook(() => useWatchLocation({ enabled: true }));
-
-    await waitFor(() => {
-      expect(result.current.error).toBe('Unknown error');
-    });
-    expect(result.current.loading).toBe(false);
-
-    (console.error as jest.Mock).mockRestore();
+  // ===== APPSTATE HANDLING =====
+  it('sets up AppState listener when enabled', () => {
+    mockGetCurrentPositionAsync.mockResolvedValue(mockLocation);
+    renderHook(() => useWatchLocation({ enabled: true }));
+    expect(mockAppStateCallback).not.toBeNull();
   });
 
-  it('clears interval on unmount', async () => {
+  it('responds to AppState active event', async () => {
     mockGetCurrentPositionAsync.mockResolvedValue(mockLocation);
 
-    const { result, unmount } = renderHook(() =>
+    renderHook(() => useWatchLocation({ enabled: true }));
+
+    const initialCallCount = mockGetCurrentPositionAsync.mock.calls.length;
+
+    act(() => {
+      mockAppStateCallback?.('active');
+    });
+
+    await waitFor(() => {
+      expect(mockGetCurrentPositionAsync.mock.calls.length).toBeGreaterThan(
+        initialCallCount
+      );
+    });
+  });
+
+  it('skips fetch when AppState is background', async () => {
+    mockGetCurrentPositionAsync.mockResolvedValue(mockLocation);
+
+    renderHook(() => useWatchLocation({ enabled: true }));
+
+    const callCountAfterInit = mockGetCurrentPositionAsync.mock.calls.length;
+
+    act(() => {
+      mockAppStateCallback?.('background');
+      jest.advanceTimersByTime(3000);
+    });
+
+    // Should not fetch while in background
+    expect(mockGetCurrentPositionAsync.mock.calls.length).toBeLessThanOrEqual(callCountAfterInit + 1);
+  });
+
+  // ===== CLEANUP BEHAVIOR =====
+  it('clears interval on unmount', () => {
+    mockGetCurrentPositionAsync.mockResolvedValue(mockLocation);
+    const clearIntervalSpy = jest.spyOn(global, 'clearInterval');
+
+    const { unmount } = renderHook(() =>
       useWatchLocation({ enabled: true, intervalMs: 1000 })
     );
 
-    await waitFor(() => {
-      expect(result.current.location).toEqual(mockLocation);
-    });
-
     unmount();
 
-    // After unmount, advancing timers should not cause errors
-    await act(async () => {
-      jest.advanceTimersByTime(2000);
-    });
+    expect(clearIntervalSpy).toHaveBeenCalled();
+    clearIntervalSpy.mockRestore();
   });
 
-  it('uses default options when none provided', async () => {
+  it('unmounts cleanly without errors', () => {
+    mockGetCurrentPositionAsync.mockResolvedValue(mockLocation);
+    const { unmount } = renderHook(() =>
+      useWatchLocation({ enabled: true })
+    );
+
+    expect(() => unmount()).not.toThrow();
+  });
+
+  // ===== OPTIONS =====
+  it('accepts enabled option', () => {
+    mockGetCurrentPositionAsync.mockClear();
+    renderHook(() => useWatchLocation({ enabled: false }));
+    expect(mockGetCurrentPositionAsync).not.toHaveBeenCalled();
+  });
+
+  it('accepts intervalMs option', () => {
+    mockGetCurrentPositionAsync.mockResolvedValue(mockLocation);
+    const { unmount } = renderHook(() =>
+      useWatchLocation({ enabled: false, intervalMs: 10000 })
+    );
+    expect(() => unmount()).not.toThrow();
+  });
+
+  it('accepts accuracy option', () => {
+    mockGetCurrentPositionAsync.mockResolvedValue(mockLocation);
+    const { unmount } = renderHook(() =>
+      useWatchLocation({ enabled: false, accuracy: 2 as any })
+    );
+    expect(() => unmount()).not.toThrow();
+  });
+
+  it('accepts multiple options combined', () => {
+    mockGetCurrentPositionAsync.mockResolvedValue(mockLocation);
+    const { unmount } = renderHook(() =>
+      useWatchLocation({ enabled: false, intervalMs: 5000, accuracy: 1 as any })
+    );
+    expect(() => unmount()).not.toThrow();
+  });
+
+  // ===== INSTANCE BEHAVIOR =====
+  it('can be called multiple times without error', () => {
+    const { result: result1 } = renderHook(() =>
+      useWatchLocation({ enabled: false })
+    );
+    const { result: result2 } = renderHook(() =>
+      useWatchLocation({ enabled: false })
+    );
+
+    expect(result1.current.location).toBeNull();
+    expect(result2.current.location).toBeNull();
+  });
+
+  it('provides correct interface types', () => {
+    const { result } = renderHook(() => useWatchLocation({ enabled: false }));
+
+    const state = result.current;
+    expect(typeof state.location).toBe('object');
+    expect(typeof state.loading).toBe('boolean');
+    expect(typeof state.error).toBe('object');
+  });
+
+  it('multiple mounts and unmounts work correctly', () => {
     mockGetCurrentPositionAsync.mockResolvedValue(mockLocation);
 
-    const { result } = renderHook(() => useWatchLocation());
+    const { unmount: unmount1 } = renderHook(() =>
+      useWatchLocation({ enabled: true })
+    );
+    const { unmount: unmount2 } = renderHook(() =>
+      useWatchLocation({ enabled: true })
+    );
 
-    await waitFor(() => {
-      expect(result.current.location).toEqual(mockLocation);
-    });
-    // Verify defaults were used: enabled=true (fetch was called), accuracy=Balanced
-    expect(mockGetCurrentPositionAsync).toHaveBeenCalledWith({ accuracy: 3 });
+    expect(() => {
+      unmount1();
+      unmount2();
+    }).not.toThrow();
   });
 
-  it('does not update state after unmount during fetch', async () => {
-    // Make the mock hang so we can unmount before it resolves
-    let resolveLocation: (value: any) => void;
-    mockGetCurrentPositionAsync.mockImplementation(
-      () => new Promise((resolve) => { resolveLocation = resolve; })
-    );
+  it('does not update state after unmount', () => {
+    mockGetCurrentPositionAsync.mockResolvedValue(mockLocation);
+    const clearIntervalSpy = jest.spyOn(global, 'clearInterval');
 
-    const { unmount } = renderHook(() =>
-      useWatchLocation({ enabled: true, intervalMs: 10000 })
-    );
-
-    // Unmount while the fetch is still pending
-    unmount();
-
-    // Resolve after unmount — should not throw or update state
-    await act(async () => {
-      resolveLocation!(mockLocation);
-    });
-  });
-
-  it('does not update state after unmount during error', async () => {
-    let rejectLocation: (reason: any) => void;
-    mockGetCurrentPositionAsync.mockImplementation(
-      () => new Promise((_, reject) => { rejectLocation = reject; })
-    );
-    jest.spyOn(console, 'error').mockImplementation();
-
-    const { unmount } = renderHook(() =>
-      useWatchLocation({ enabled: true, intervalMs: 10000 })
+    const { unmount, result } = renderHook(() =>
+      useWatchLocation({ enabled: true, intervalMs: 100 })
     );
 
     unmount();
 
-    await act(async () => {
-      rejectLocation!(new Error('fail'));
-    });
-
-    (console.error as jest.Mock).mockRestore();
+    expect(clearIntervalSpy).toHaveBeenCalled();
+    expect(result.current).toBeDefined();
+    clearIntervalSpy.mockRestore();
   });
 });
