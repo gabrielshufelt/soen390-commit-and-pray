@@ -1,0 +1,36 @@
+appId: com.commitandpray.soen390project
+---
+#Close POI Walking
+- tapOn: , Nearby
+- tapOn: Open details for Tim Hortons
+- tapOn: Route, Get Directions
+- tapOn: Walking
+- assertVisible: ESTIMATED TIME
+- assertVisible: 2 min • 0.1 km
+- tapOn: Start Directions
+- assertVisible: Step 1 of 2
+- assertVisible: 0.1 km · 2 mins
+- assertVisible: End navigation
+- tapOn: Next step
+- assertVisible: Step 2 of 2
+- tapOn: End navigation
+
+#Long Poi require transit
+- tapOn: , Nearby
+- tapOn: See all
+- scrollUntilVisible:
+    element:
+      text: Open details for Les Glaceurs Vieux-Montréal
+- tapOn: Open details for Les Glaceurs Vieux-Montréal
+- tapOn:
+    text: , Get Directions
+    index: 3
+- assertVisible: Les Glaceurs Vieux-Montréal
+- tapOn: Transit
+- tapOn: Start Directions
+- assertVisible: Subway towards Station Montmorency
+- tapOn: ›
+- assertVisible: Step 2 of 3
+- tapOn: ›
+- assertVisible: Step 3 of 3
+- tapOn: End navigation
