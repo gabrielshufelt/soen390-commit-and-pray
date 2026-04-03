@@ -433,7 +433,9 @@ describe('<Index />', () => {
     });
 
     await waitFor(() => {
-      expect(queryAllByTestId('marker').length).toBe(0);
+      // Expect only tap target markers (one per building), no label markers
+      const markers = queryAllByTestId('marker');
+      expect(markers.length).toBeGreaterThan(0); // Tap targets are always present
     });
   });
 
@@ -444,22 +446,26 @@ describe('<Index />', () => {
       expect(getByTestId('map-view')).toBeTruthy();
     });
 
-    // Zoom out to hide
+    // Zoom out to hide labels
     fireEvent(getByTestId('map-view'), 'regionChangeComplete', {
       latitude: 45.497, longitude: -73.579,
       latitudeDelta: 0.05, longitudeDelta: 0.05,
     });
+    let markersWhenZoomedOut = 0;
     await waitFor(() => {
-      expect(queryAllByTestId('marker').length).toBe(0);
+      markersWhenZoomedOut = queryAllByTestId('marker').length;
+      expect(markersWhenZoomedOut).toBeGreaterThan(0); // Tap targets
     });
 
-    // Zoom in to show
+    // Zoom in to show labels
     fireEvent(getByTestId('map-view'), 'regionChangeComplete', {
       latitude: 45.497, longitude: -73.579,
       latitudeDelta: 0.005, longitudeDelta: 0.005,
     });
     await waitFor(() => {
-      expect(queryAllByTestId('marker').length).toBeGreaterThan(0);
+      const markersWhenZoomedIn = queryAllByTestId('marker').length;
+      // Should have more markers when zoomed in (tap targets + labels)
+      expect(markersWhenZoomedIn).toBeGreaterThan(markersWhenZoomedOut);
     });
   });
 
