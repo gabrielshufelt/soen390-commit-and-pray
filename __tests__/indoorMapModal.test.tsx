@@ -506,6 +506,66 @@ describe('<IndoorMapModal />', () => {
     expect(queryByText('Get Directions From')).toBeNull();
   });
 
+  it('end-only preset: highlights destination node and navigates to its floor without computing a route', async () => {
+    // r2 is on floor 2; passing only endNodeId should select it and show floor 2
+    const { findByText, queryByText } = render(
+      <IndoorMapModal
+        visible={true}
+        initialBuildingCode="H"
+        presetRoute={{ endNodeId: 'r2' }}
+        onClose={onClose}
+      />
+    );
+
+    expect(await findByText('Floor 2')).toBeTruthy();
+    expect(mockFindShortestPath).not.toHaveBeenCalled();
+    expect(queryByText(/^Route:/)).toBeNull();
+  });
+
+  it('end-only preset: highlights destination node by label and navigates to its floor', async () => {
+    const { findByText } = render(
+      <IndoorMapModal
+        visible={true}
+        initialBuildingCode="H"
+        presetRoute={{ endLabel: 'H-101' }}
+        onClose={onClose}
+      />
+    );
+
+    // r1 (label 'H-101') is on floor 1 — floor should stay/navigate to floor 1
+    expect(await findByText('Floor 1')).toBeTruthy();
+    expect(mockFindShortestPath).not.toHaveBeenCalled();
+  });
+
+  it('end-only preset: does nothing when endNodeId does not match any node', async () => {
+    const { getByText } = render(
+      <IndoorMapModal
+        visible={true}
+        initialBuildingCode="H"
+        presetRoute={{ endNodeId: 'nonexistent-node' }}
+        onClose={onClose}
+      />
+    );
+
+    // Should remain on default floor 1 with no route
+    expect(getByText('Floor 1')).toBeTruthy();
+    expect(mockFindShortestPath).not.toHaveBeenCalled();
+  });
+
+  it('does nothing when presetRoute has only startNodeId (no end)', async () => {
+    const { getByText } = render(
+      <IndoorMapModal
+        visible={true}
+        initialBuildingCode="H"
+        presetRoute={{ startNodeId: 'r1' }}
+        onClose={onClose}
+      />
+    );
+
+    expect(getByText('Floor 1')).toBeTruthy();
+    expect(mockFindShortestPath).not.toHaveBeenCalled();
+  });
+
   it('sets floor to preset route start floor when preset route is provided', async () => {
     const { findByText } = render(
       <IndoorMapModal

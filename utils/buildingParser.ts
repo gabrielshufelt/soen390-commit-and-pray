@@ -122,7 +122,7 @@ const NAME_TO_CODE: Record<string, string> = {
 
 // Maps building code -> canonical full name
 const CODE_TO_NAME: Record<string, string> = {
-  H:  'Henry F. Hall Building',
+  H: 'Henry F. Hall Building',
   LB: 'J. W. McConnell Building (Library)',
   MB: 'John Molson School of Business',
   GM: 'Guy Metro Building',
@@ -165,59 +165,62 @@ export function buildRouteRaw(choice: BuildingChoice | null): string {
   return choice.code;
 }
 
+function makeResult(code: string, room: string): ParsedLocation {
+  return { buildingCode: code, buildingName: CODE_TO_NAME[code], room };
+}
+
+// "CJ Building 1.129", "H Building 820", "EV Building 11.119"
+function matchBuildingKeyword(raw: string): ParsedLocation | null {
+  const m = new RegExp(/^([A-Za-z]{1,3})\s+[Bb]uilding\s+([A-Za-z0-9._-]+)/).exec(raw);
+  if (!m) return null;
+  const code = m[1].toUpperCase();
+  return VALID_CODES.has(code) ? makeResult(code, m[2]) : null;
+}
+
+// "H939", "H 939", "H-820", "EV 11.119"
+function matchCodePlusRoom(raw: string): ParsedLocation | null {
+  const m = new RegExp(/^([A-Za-z]{1,3})[\s-]?(\d[A-Za-z0-9._-]*)$/).exec(raw);
+  if (!m) return null;
+  const code = m[1].toUpperCase();
+  return VALID_CODES.has(code) ? makeResult(code, m[2]) : null;
+}
+
+// "H H_F1_room_18", "MB MB_F1_elevator_1", "VL VL_F1_room_39"
+function matchIndoorNodeId(raw: string): ParsedLocation | null {
+  const m = new RegExp(/^([A-Za-z]{1,3})\s+([A-Za-z0-9][A-Za-z0-9._]*_[A-Za-z0-9._-]+)$/).exec(raw);
+  if (!m) return null;
+  const code = m[1].toUpperCase();
+  return VALID_CODES.has(code) ? makeResult(code, m[2]) : null;
+}
+
+// "Hall Building 820", "Henry F. Hall", "Central Building 405"
+function matchBuildingName(raw: string): ParsedLocation | null {
+  const normalised = raw.toLowerCase().replaceAll(/[.,]/g, '').replaceAll(/\s+/g, ' ').trim();
+  for (const [namePart, code] of Object.entries(NAME_TO_CODE)) {
+    if (normalised === namePart) return makeResult(code, '');
+    if (normalised.startsWith(namePart + ' ')) {
+      const room = raw.slice(namePart.length).trim().replace(/^[\s,-]+/, '').trim();
+      return makeResult(code, room);
+    }
+  }
+  return null;
+}
+
+// "H", "EV", "MB"
+function matchBareCode(raw: string): ParsedLocation | null {
+  const code = raw.toUpperCase().trim();
+  return VALID_CODES.has(code) ? makeResult(code, '') : null;
+}
+
 // Parse a Concordia raw location string from a calendar event.
 export function parseBuildingLocation(location: string): ParsedLocation | null {
   if (!location || location.trim() === '') return null;
-
   const raw = location.trim();
-
-  // Step 1: Try the explicit "XX Building ROOM" pattern first
-  // Matches: "CJ Building 1.129", "H Building 820", "EV Building 11.119"
-  const buildingKeywordMatch = raw.match(
-    /^([A-Za-z]{1,3})\s+[Bb]uilding\s+([A-Za-z0-9._-]+)/
+  return (
+    matchBuildingKeyword(raw) ??
+    matchCodePlusRoom(raw) ??
+    matchIndoorNodeId(raw) ??
+    matchBuildingName(raw) ??
+    matchBareCode(raw)
   );
-  if (buildingKeywordMatch) {
-    const code = buildingKeywordMatch[1].toUpperCase();
-    const room = buildingKeywordMatch[2];
-    if (VALID_CODES.has(code)) {
-      return { buildingCode: code, buildingName: CODE_TO_NAME[code], room };
-    }
-  }
-
-  // Step 2: Try "CODE ROOM" or "CODEROOM" with optional dash/space
-  // Matches: "H939", "H 939", "H-820", "EV 11.119", "MB S1.123"
-  const codePlusRoomMatch = raw.match(/^([A-Za-z]{1,3})[\s-]?([0-9][A-Za-z0-9._-]*)$/);
-  if (codePlusRoomMatch) {
-    const code = codePlusRoomMatch[1].toUpperCase();
-    const room = codePlusRoomMatch[2];
-    if (VALID_CODES.has(code)) {
-      return { buildingCode: code, buildingName: CODE_TO_NAME[code], room };
-    }
-  }
-
-  // Step 3: Name based lookup (partial or full building name + optional room)
-  // Matches: "Hall Building 820", "Henry F. Hall Building", "Central Building 405"
-  // Strategy: strip common suffixes, look up normalised name in NAME_TO_CODE
-  const normalised = raw.toLowerCase().replace(/[.,]/g, '').replace(/\s+/g, ' ').trim();
-
-  // Try progressively shorter prefixes of normalised string to find a name match
-  for (const [namePart, code] of Object.entries(NAME_TO_CODE)) {
-    if (normalised === namePart) {
-      return { buildingCode: code, buildingName: CODE_TO_NAME[code], room: '' };
-    }
-    if (normalised.startsWith(namePart + ' ')) {
-      const room = raw.slice(namePart.length).trim().replace(/^[\s,-]+/, '').trim();
-      return { buildingCode: code, buildingName: CODE_TO_NAME[code], room };
-    }
-  }
-
-  // Step 4: Bare code only (no room)
-  // Matches: "H", "EV", "MB"
-  const bareCode = raw.toUpperCase().trim();
-  if (VALID_CODES.has(bareCode)) {
-    return { buildingCode: bareCode, buildingName: CODE_TO_NAME[bareCode], room: '' };
-  }
-
-  // Could not identify the building
-  return null;
 }

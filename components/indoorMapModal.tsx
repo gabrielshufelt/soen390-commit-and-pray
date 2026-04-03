@@ -350,19 +350,33 @@ export default function IndoorMapModal({
 
   useEffect(() => {
     if (!visible || !indoorMap) return;
+    const hasEnd = !!(presetRoute?.endNodeId || presetRoute?.endLabel);
+    if (!hasEnd) return;
+
     const hasNodeIds = !!(presetRoute?.startNodeId && presetRoute?.endNodeId);
     const hasLabels = !!(presetRoute?.startLabel && presetRoute?.endLabel);
-    if (!hasNodeIds && !hasLabels) return;
 
     const allNodes = indoorMap?.floors.flatMap((floor) => floor.nodes) ?? [];
-    const startNode = hasNodeIds
-      ? allNodes.find((node) => node.id === presetRoute?.startNodeId)
-      : allNodes.find((node) => node.label.trim() === presetRoute?.startLabel?.trim());
-    const endNode = hasNodeIds
+    let startNode;
+    if (hasNodeIds) {
+      startNode = allNodes.find((node) => node.id === presetRoute?.startNodeId);
+    } else if (hasLabels) {
+      startNode = allNodes.find((node) => node.label.trim() === presetRoute?.startLabel?.trim());
+    }
+    const endNode = presetRoute?.endNodeId
       ? allNodes.find((node) => node.id === presetRoute?.endNodeId)
       : allNodes.find((node) => node.label.trim() === presetRoute?.endLabel?.trim());
 
-    if (!startNode || !endNode) return;
+    if (!endNode) return;
+
+    // End-only: highlight the destination node without computing a route
+    if (!startNode) {
+      setSelectedRoom(endNode);
+      setViewMode("map");
+      const endFloorIndex = indoorMap?.floors.findIndex((floor) => floor.floor === endNode.floor) ?? -1;
+      if (endFloorIndex >= 0) setFloorIndex(endFloorIndex);
+      return;
+    }
 
     setRouteStartNode(startNode);
     setRouteEndNode(endNode);

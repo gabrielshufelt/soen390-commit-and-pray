@@ -437,6 +437,7 @@ export const styles = StyleSheet.create({
   },
   roomDotContainerSelected: {
     transform: [{ translateX: -12 }, { translateY: -12 }, { scale: 1.4 }],
+    zIndex: 10,
   },
   roomDot: {
     width: 8,
