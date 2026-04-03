@@ -467,6 +467,8 @@ describe('<IndoorMapModal />', () => {
       <IndoorMapModal visible={true} initialBuildingCode="H" onClose={onClose} />
     );
 
+    expect(getByText('♿')).toBeTruthy();
+
     fireEvent.press(getByTestId('indoor.options.menu'));
     fireEvent(getByTestId('indoor.options.wheelchair'), 'valueChange', true);
     fireEvent(getByTestId('indoor.options.avoid-stairs'), 'valueChange', true);

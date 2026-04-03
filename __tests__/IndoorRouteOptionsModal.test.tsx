@@ -53,7 +53,7 @@ describe('<IndoorRouteOptionsModal />', () => {
   it('renders all toggle labels and descriptions', () => {
     const { getByText } = render(<IndoorRouteOptionsModal {...defaultProps} />);
 
-    expect(getByText('Route Options')).toBeTruthy();
+    expect(getByText('Accessibility & Route Options')).toBeTruthy();
 
     expect(getByText('Wheelchair accessible')).toBeTruthy();
     expect(getByText('Prioritise ramps and wide paths')).toBeTruthy();
@@ -70,7 +70,7 @@ describe('<IndoorRouteOptionsModal />', () => {
       <IndoorRouteOptionsModal {...defaultProps} visible={false} />
     );
 
-    expect(queryByText('Route Options')).toBeNull();
+    expect(queryByText('Accessibility & Route Options')).toBeNull();
     expect(queryByText('Wheelchair accessible')).toBeNull();
   });
 
