@@ -21,7 +21,7 @@ import MapViewDirections from "react-native-maps-directions";
 import SearchBar from "@/components/searchBar";
 import { BuildingChoice } from "@/constants/searchBar.types";
 import NavigationSteps from "../../components/NavigationSteps";
-import { HIGHLIGHT_COLOR, STROKE_COLOR, BUILDING_STROKE_COLOR, BUILDING_STROKE_WIDTH } from "@/styles/index.styles";
+import { HIGHLIGHT_COLOR, STROKE_COLOR} from "@/styles/index.styles";
 import { DEV_OVERRIDE_LOCATION } from "../../utils/devConfig";
 import { useNextClass, type ParsedNextClass } from "../../hooks/useNextClass";
 import { getRouteLineStyle } from "../../constants/routeStyles";
@@ -647,8 +647,8 @@ export default function Index() {
               longitude,
             }))}
             fillColor={isSelected || isUserInside ? HIGHLIGHT_COLOR : BUILDING_POLYGON_COLORS.fillColor}
-            strokeColor={isSelected || isUserInside ? STROKE_COLOR : BUILDING_STROKE_COLOR}
-            strokeWidth={isSelected || isUserInside ? BUILDING_POLYGON_COLORS.strokeWidth : BUILDING_STROKE_WIDTH}
+            strokeColor={isSelected || isUserInside ? STROKE_COLOR : BUILDING_POLYGON_COLORS.strokeColor}
+            strokeWidth={isSelected || isUserInside ? BUILDING_POLYGON_COLORS.strokeWidth : BUILDING_POLYGON_COLORS.strokeWidth}
             tappable
             onPress={() => handleBuildingSelect(building.id, building)}
           />
@@ -689,9 +689,9 @@ export default function Index() {
               strokeColor={
                 selectedBuilding === building.id
                   ? STROKE_COLOR
-                  : BUILDING_STROKE_COLOR
+                  : BUILDING_POLYGON_COLORS.strokeColor
               }
-              strokeWidth={selectedBuilding === building.id ? BUILDING_POLYGON_COLORS.strokeWidth : BUILDING_STROKE_WIDTH}
+              strokeWidth={BUILDING_POLYGON_COLORS.strokeWidth}
               tappable
               onPress={() => handleBuildingSelect(building.id, building)}
             />
