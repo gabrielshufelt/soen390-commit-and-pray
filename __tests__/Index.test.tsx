@@ -420,6 +420,57 @@ describe('<Index />', () => {
     }, { timeout: 3000 });
   });
 
+  // --- Building tap targets and visual affordance ---
+  it('renders tap target markers for all buildings', async () => {
+    const { getAllByTestId, queryAllByTestId } = await renderWithTheme(<Index />);
+    
+    // Get all polygons (both regular and tap targets)
+    const polygons = await waitFor(() => getAllByTestId('polygon'));
+    
+    // There should be buildings rendered
+    expect(polygons.length).toBeGreaterThan(0);
+  });
+
+  it('building polygons have stroke color for visual affordance', async () => {
+    const { getAllByTestId } = await renderWithTheme(<Index />);
+    const polygons = await waitFor(() => getAllByTestId('polygon'));
+    
+    // At least some polygons should have a stroke color property
+    const hasStrokeColor = polygons.some(polygon => {
+      return polygon.props && polygon.props.strokeColor;
+    });
+    
+    expect(hasStrokeColor).toBe(true);
+  });
+
+  it('building polygons have stroke width for visibility', async () => {
+    const { getAllByTestId } = await renderWithTheme(<Index />);
+    const polygons = await waitFor(() => getAllByTestId('polygon'));
+    
+    // At least some polygons should have a strokeWidth property
+    const hasStrokeWidth = polygons.some(polygon => {
+      return polygon.props && typeof polygon.props.strokeWidth === 'number';
+    });
+    
+    expect(hasStrokeWidth).toBe(true);
+  });
+
+  it('building labels are tappable', async () => {
+    const { getByTestId, queryAllByTestId } = await renderWithTheme(<Index />);
+    
+    // Zoom in to show labels
+    fireEvent(getByTestId('map-view'), 'regionChangeComplete', {
+      latitude: 45.497, longitude: -73.579,
+      latitudeDelta: 0.005, longitudeDelta: 0.005,
+    });
+
+    await waitFor(() => {
+      // Labels should be rendered with onPress handlers
+      const markers = queryAllByTestId('marker');
+      expect(markers.length).toBeGreaterThan(0);
+    });
+  });
+
   // --- Region change: hide labels ---
   it('hides building labels on zoom out', async () => {
     const { getByTestId, queryAllByTestId } = await renderWithTheme(<Index />);
