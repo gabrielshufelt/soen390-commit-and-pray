@@ -2,35 +2,59 @@ appId: com.commitandpray.soen390project
 ---
 - launchApp
 
+# Start from MB on SGW so the recording clearly shows the walk to the shuttle stop.
 
-- setLocation:
-    latitude: 45.49726
-    longitude: -73.57888
 
-# Cross-campus route setup: Loyola -> SGW
+# Cross-campus route setup: MB (SGW) -> Loyola
 - tapOn: "Search buildings, rooms"
-- tapOn: "Loyola Campus"
-- tapOn: "Where to?"
-- inputText: "lo"
-- tapOn: Loyola Jesuit Hall and Conference Center (RF)
+- tapOn: Room in MB (e.g. 920)
+- inputText: "1"
+- tapOn: "1.115"
+- tapOn: Where to?
+- inputText: "vl"
+- tapOn: Concordia Vanier Library (VL)
+- tapOn: Room in VL (e.g. 3.255)
+- inputText: "1"
+- tapOn: 101-1
 
-# Shuttle option should appear for Transit mode.
+# Shuttle option should appear for Transit mode and directions should start from MB.
 - tapOn: "Transit"
 - assertVisible: "Use Concordia Shuttle"
 - tapOn: Use Concordia Shuttle
-- assertVisible: "Next: 12:30"
-- tapOn: Go back
+- tapOn: Start Directions
 
-# Open shuttle schedule modal and validate stops + schedule content from JSON.
-- tapOn: "🚌"
+# Indoor directions
+- assertVisible: MB Indoor Map
+- assertVisible: "Route: 1.115 to MB building entry"
+- tapOn: Close
+
+#Outdoor steps
+- repeat:
+    while:
+      notVisible: "Step 2 of 7"
+    commands:
+      - tapOn: ›
+# Walk and taking bus steps pause to see on the video
+
+
+- repeat:
+    while:
+      notVisible: "Step 6 of 7"
+    commands:
+      - tapOn: ›
+
+# Go indoor map to layola
+- tapOn: ⬆
+- assertVisible: VL Indoor Map
+- assertVisible: "Route: VL building entry to 101-1"
+- tapOn: Close
+- assertVisible: Step 7 of 7
+- tapOn: End
+
+
+#Check Shuttle schecule
+- tapOn: 🚌
 - assertVisible: 🚌 Shuttle Schedule
-- assertVisible: ⚠️ The following departure times are approximate and may vary due to unexpected circumstances, traffic and weather.
-- assertVisible: "Bus Stops"
-- assertVisible: "Loyola Chapel"
-- assertVisible: "Henry F. Hall Building"
-- assertVisible: "Loyola Departures"
-- assertVisible: "SGW Departures"
-- assertVisible: "9:15"
-
-# Show shuttle route on map.
-- tapOn: 🗺️ Show Shuttle Route on Map
+- tapOn: Friday
+- tapOn: Mon-Thu
+- tapOn: ×
