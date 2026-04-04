@@ -540,13 +540,24 @@ export default function IndoorMapModal({
           </Text>
           <View style={styles.headerActions}>
             <TouchableOpacity
-              style={styles.menuButton}
+              style={[
+                styles.menuButton,
+                wheelchairAccessible && styles.menuButtonActive,
+              ]}
               onPress={() => setShowRouteOptions(true)}
               accessibilityRole="button"
-              accessibilityLabel="Route options"
+              accessibilityLabel="Accessibility and route options"
+              accessibilityHint="Open accessible routing and route preference settings"
               testID="indoor.options.menu"
             >
-              <Text style={styles.menuButtonText}>☰</Text>
+              <Text
+                style={[
+                  styles.menuButtonText,
+                  wheelchairAccessible && styles.menuButtonTextActive,
+                ]}
+              >
+                ♿
+              </Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.closeButton} onPress={onClose}>
               <Text style={styles.closeButtonText}>Close</Text>

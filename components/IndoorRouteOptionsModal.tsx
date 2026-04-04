@@ -16,11 +16,11 @@ type Props = {
 };
 
 type ToggleItemProps = {
-  title: string;
-  description: string;
-  value: boolean;
-  onValueChange: (value: boolean) => void;
-  testID: string;
+  readonly title: string;
+  readonly description: string;
+  readonly value: boolean;
+  readonly onValueChange: (value: boolean) => void;
+  readonly testID: string;
 };
 
 function ToggleItem({ title, description, value, onValueChange, testID }: ToggleItemProps) {
@@ -61,7 +61,7 @@ export default function IndoorRouteOptionsModal({
       <SafeAreaView style={styles.optionsOverlay}>
         <View style={styles.optionsCard}>
           <View style={styles.optionsHeader}>
-            <Text style={styles.optionsTitle}>Route Options</Text>
+            <Text style={styles.optionsTitle}>Accessibility & Route Options</Text>
             <TouchableOpacity style={styles.optionsCloseButton} onPress={onClose}>
               <Text style={styles.optionsCloseButtonText}>Done</Text>
             </TouchableOpacity>

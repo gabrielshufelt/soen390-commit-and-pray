@@ -3,7 +3,7 @@ import type { BuildingChoice } from "./searchBar.types";
 export function stripCodePrefix(name: string, code?: string) {
   if (!code) return name?.trim() ?? "";
   const n = (name ?? "").trim();
-  const pattern = new RegExp(`^${code}\\s*[-—:]\\s*`, "i");
+  const pattern = new RegExp(String.raw`^${code}\s*[-—:]\s*`, "i");
   return n.replace(pattern, "").trim();
 }
 

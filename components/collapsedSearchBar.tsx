@@ -4,7 +4,7 @@ import { FontAwesome } from "@expo/vector-icons";
 import { styles, MAROON } from "../styles/searchBar.styles";
 
 type Props = {
-  onOpen: () => void;
+  readonly onOpen: () => void;
 };
 
 export default function CollapsedSearchBar({ onOpen }: Props) {

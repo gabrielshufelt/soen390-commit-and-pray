@@ -15,10 +15,10 @@ import { styles } from '../styles/nextClassModal.styles';
 const TIMEOUT_MS = 30_000; // 30 seconds, how often the "in X mins" counter updates
 
 interface NextClassModalProps {
-  nextClass: ParsedNextClass | null;
-  status: NextClassStatus;
-  isLoading: boolean;
-  onGetDirections: (nextClass: ParsedNextClass) => void;
+  readonly nextClass: ParsedNextClass | null;
+  readonly status: NextClassStatus;
+  readonly isLoading: boolean;
+  readonly onGetDirections: (nextClass: ParsedNextClass) => void;
 }
 
 // Helpers
@@ -50,6 +50,25 @@ function formattedTimeUntil(minutes: number): string {
 }
 
 // End of helpers
+
+// Renders the late warning card
+function WarningCard({ hasStarted, isLate, walkingMinutes }: { readonly hasStarted: boolean; readonly isLate: boolean; readonly walkingMinutes: number | null }): React.ReactElement | null {
+  if (hasStarted) {
+    return (
+      <Text style={{ color: '#ef4444', fontSize: 10, fontWeight: '700', marginBottom: 2 }}>
+        ⚠️ CLASS HAS STARTED
+      </Text>
+    );
+  }
+  if (isLate) {
+    return (
+      <Text style={{ color: '#f59e0b', fontSize: 10, fontWeight: '700', marginBottom: 2 }}>
+        ⚠️ YOU WILL BE LATE ({formattedTimeUntil(walkingMinutes ?? 0)} WALK)
+      </Text>
+    );
+  }
+  return null;
+}
 
 // Renders status-based states (loading, errors, no-class, etc.).
 // Returns undefined when the main card should be rendered instead.
@@ -94,6 +113,43 @@ function renderStatusCard(
   return undefined;
 }
 
+// Compute theme-dependent styles
+function getThemeStyles(isDark: boolean) {
+  return {
+    card: [styles.card, isDark ? styles.cardDark : styles.cardLight],
+    text: isDark ? styles.textDark : styles.textMain,
+    muted: isDark ? styles.textMutedDark : styles.textMuted,
+    divider: isDark ? styles.dividerDark : styles.dividerLight,
+    walkIcon: isDark ? '#D1D5DB' : '#374151',
+    timeIcon: isDark ? '#9CA3AF' : '#6B7280',
+  };
+}
+
+// Compute state flags for the next class
+function getClassStateFlags(nextClass: ParsedNextClass, minutesUntil: number) {
+  const isAlreadyThere = nextClass.walkingMinutes !== null && nextClass.walkingMinutes < 1;
+  const isLate = nextClass.walkingMinutes !== null && nextClass.walkingMinutes > minutesUntil && !isAlreadyThere;
+  const hasStarted = minutesUntil <= 0;
+  return { isAlreadyThere, isLate, hasStarted };
+}
+
+// Compute labels for the next class
+function getClassLabels(nextClass: ParsedNextClass, minutesUntil: number) {
+  const buildingLabel = nextClass.buildingCode || '?';
+  const roomLabel = nextClass.room
+    ? `${nextClass.buildingCode}-${nextClass.room}`
+    : nextClass.buildingCode;
+  const countdownLabel = minutesUntil <= 0 ? 'Starting now' : `In ${formattedTimeUntil(minutesUntil)}`;
+  return { buildingLabel, roomLabel, countdownLabel };
+}
+
+// Compute walk label
+function getWalkLabel(nextClass: ParsedNextClass, isAlreadyThere: boolean): string {
+  if (isAlreadyThere) return " You are here";
+  if (nextClass.walkingMinutes === null) return ' Walk time unavailable';
+  return ` ${formattedTimeUntil(nextClass.walkingMinutes)} walk`;
+}
+
 export default function NextClassModal({ nextClass, status, isLoading, onGetDirections }: NextClassModalProps) {
   const { colorScheme } = useTheme();
   const isDark = colorScheme === 'dark';
@@ -118,33 +174,13 @@ export default function NextClassModal({ nextClass, status, isLoading, onGetDire
   if (statusCard !== undefined) return statusCard;
   if (!nextClass) return null;
 
-  // logic for late warning and "already there" check
-  const isAlreadyThere = nextClass.walkingMinutes !== null && nextClass.walkingMinutes < 1;
-  const isLate = nextClass.walkingMinutes !== null && nextClass.walkingMinutes > minutesUntil && !isAlreadyThere;
-  const hasStarted = minutesUntil <= 0;
-
-  // Precompute theme-dependent styles to avoid ternaries in JSX
-  const cardStyle = [styles.card, isDark ? styles.cardDark : styles.cardLight];
-  const textStyle = isDark ? styles.textDark : styles.textMain;
-  const mutedStyle = isDark ? styles.textMutedDark : styles.textMuted;
-  const dividerStyle = isDark ? styles.dividerDark : styles.dividerLight;
-  const walkIconColor = isDark ? '#D1D5DB' : '#374151';
-  const timeIconColor = isDark ? '#9CA3AF' : '#6B7280';
-
-  // Next class found
-  const buildingLabel = nextClass.buildingCode || '?';
-  const roomLabel = nextClass.room
-    ? `${nextClass.buildingCode}-${nextClass.room}`
-    : nextClass.buildingCode;
-  const countdownLabel = minutesUntil <= 0 ? 'Starting now' : `In ${formattedTimeUntil(minutesUntil)}`;
-  const walkLabel = isAlreadyThere 
-    ? " You are here" 
-    : nextClass.walkingMinutes != null
-      ? ` ${formattedTimeUntil(nextClass.walkingMinutes)} walk`
-      : ' Walk time unavailable';
+  const themeStyles = getThemeStyles(isDark);
+  const { isAlreadyThere, isLate, hasStarted } = getClassStateFlags(nextClass, minutesUntil);
+  const { buildingLabel, roomLabel, countdownLabel } = getClassLabels(nextClass, minutesUntil);
+  const walkLabel = getWalkLabel(nextClass, isAlreadyThere);
 
   return (
-    <View style={cardStyle}>
+    <View style={themeStyles.card}>
 
       <View style={styles.topSection}>
 
@@ -165,37 +201,29 @@ export default function NextClassModal({ nextClass, status, isLoading, onGetDire
 
           {/* "NEXT CLASS"  ·  "In X mins" */}
           <View style={styles.headerRow}>
-            <Text style={[styles.labelText, mutedStyle]}>NEXT CLASS</Text>
-	    <Text style={[styles.countdownText, (isLate || hasStarted) ? { color: '#ff3b30' } : mutedStyle]}>
+            <Text style={[styles.labelText, themeStyles.muted]}>NEXT CLASS</Text>
+	    <Text style={[styles.countdownText, (isLate || hasStarted) ? { color: '#ff3b30' } : themeStyles.muted]}>
   	      {hasStarted ? 'STARTED' : countdownLabel}
 	    </Text>
           </View>
 	  {/* LATE WARNING */}
-          {hasStarted ? (
-	    <Text style={{ color: '#ef4444', fontSize: 10, fontWeight: '700', marginBottom: 2 }}>
-    	      ⚠️ CLASS HAS STARTED
-            </Text>
-          ) : isLate ? (
-            <Text style={{ color: '#f59e0b', fontSize: 10, fontWeight: '700', marginBottom: 2 }}>
-    	      ⚠️ YOU WILL BE LATE ({formattedTimeUntil(nextClass.walkingMinutes ?? 0)} WALK)
-            </Text>
-          ) : null}
+          <WarningCard hasStarted={hasStarted} isLate={isLate} walkingMinutes={nextClass.walkingMinutes} />
 
           {/* Class name */}
-          <Text style={[styles.className, textStyle]} numberOfLines={1}>
+          <Text style={[styles.className, themeStyles.text]} numberOfLines={1}>
             {nextClass.title || 'Unknown Class'}
           </Text>
 
           {/* Room + time range */}
           <View style={styles.detailRow}>
-            <Text style={[styles.roomText, mutedStyle]}>{roomLabel}</Text>
+            <Text style={[styles.roomText, themeStyles.muted]}>{roomLabel}</Text>
             <Ionicons
               name="time-outline"
               size={13}
-              color={timeIconColor}
+              color={themeStyles.timeIcon}
               style={{ marginLeft: 8, marginRight: 3 }}
             />
-            <Text style={[styles.timeText, mutedStyle]}>
+            <Text style={[styles.timeText, themeStyles.muted]}>
               {formatTime(nextClass.startTime)} – {formatTime(nextClass.endTime)}
             </Text>
           </View>
@@ -203,13 +231,13 @@ export default function NextClassModal({ nextClass, status, isLoading, onGetDire
         </View>
       </View>
 
-      <View style={[styles.divider, dividerStyle]} />
+      <View style={[styles.divider, themeStyles.divider]} />
 
       {/* Bottom section: walk time + button*/}
       <View style={styles.bottomSection}>
         <View style={styles.walkTimeRow}>
-          <Ionicons name="walk-outline" size={16} color={walkIconColor} />
-          <Text style={[styles.walkText, textStyle]}>{walkLabel}</Text>
+          <Ionicons name="walk-outline" size={16} color={themeStyles.walkIcon} />
+          <Text style={[styles.walkText, themeStyles.text]}>{walkLabel}</Text>
         </View>
 
 	{/*Hide button if already there, otherwise trigger navigation */}

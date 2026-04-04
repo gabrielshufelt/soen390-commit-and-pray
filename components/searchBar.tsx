@@ -5,37 +5,37 @@ import ExpandedSearchBar from "./../components/expandedSearchBar";
 import { BuildingChoice } from "@/constants/searchBar.types"
 
 type Props = {
-  buildings: BuildingChoice[];
-  roomOptionsByBuilding: Record<string, string[]>;
+  readonly buildings: BuildingChoice[];
+  readonly roomOptionsByBuilding: Record<string, string[]>;
 
-  start: BuildingChoice | null; // null => current location
-  destination: BuildingChoice | null;
+  readonly start: BuildingChoice | null; // null => current location
+  readonly destination: BuildingChoice | null;
 
-  onChangeStart: (b: BuildingChoice | null) => void;
-  onChangeDestination: (b: BuildingChoice | null) => void;
+  readonly onChangeStart: (b: BuildingChoice | null) => void;
+  readonly onChangeDestination: (b: BuildingChoice | null) => void;
 
-  transportMode: MapViewDirectionsMode;
-  onChangeTransportMode: (mode: MapViewDirectionsMode) => void;
+  readonly transportMode: MapViewDirectionsMode;
+  readonly onChangeTransportMode: (mode: MapViewDirectionsMode) => void;
 
-  routeActive: boolean;
-  defaultExpanded?: boolean;
+  readonly routeActive: boolean;
+  readonly defaultExpanded?: boolean;
 
-  onOpenBuilding?: (b: BuildingChoice) => void;
-  onStartRoute?: () => void;
-  onEndRoute?: () => void;
-  onPreviewRoute?: () => void;
-  onExitPreview?: () => void;
-  previewActive?: boolean;
+  readonly onOpenBuilding?: (b: BuildingChoice) => void;
+  readonly onStartRoute?: () => void;
+  readonly onEndRoute?: () => void;
+  readonly onPreviewRoute?: () => void;
+  readonly onExitPreview?: () => void;
+  readonly previewActive?: boolean;
 
-  previewRouteInfo?: {
-    distanceText: string | null;
-    durationText: string | null;
+  readonly previewRouteInfo?: {
+    readonly distanceText: string | null;
+    readonly durationText: string | null;
   };
 
-  useShuttle?: boolean;
-  onUseShuttleChange?: (active: boolean) => void;
+  readonly useShuttle?: boolean;
+  readonly onUseShuttleChange?: (active: boolean) => void;
 
-  onCampusChange?: (campus: "SGW" | "Loyola") => void;
+  readonly onCampusChange?: (campus: "SGW" | "Loyola") => void;
 };
 
 export default function SearchBar({
