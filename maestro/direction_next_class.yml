@@ -2,27 +2,45 @@ appId: com.commitandpray.soen390project
 ---
 - assertVisible: NEXT CLASS
 # If walkingMinutes > minutesUntilClass, a high-visibility yellow banner ⚠️ YOU WILL BE LATE is displayed.
-- assertVisible: ⚠️ YOU WILL BE LATE (1h33m WALK)
-- assertVisible: In 45m
-- assertVisible: " 1h33m walk"
+- assertVisible: ⚠️ YOU WILL BE LATE (3m WALK)
+- tapOn: In 1m
+- assertVisible: " 3m walk"
 
 #The "Get Directions" button initiates a live route with turn-by-turn steps.
 - tapOn: Get Directions
 
 #Directions are automatically generated from the user's current GPS location to the next class building's interior point.
-- assertVisible: 1.1 km
-- assertVisible: Head northeast on Rue Sherbrooke O toward Path to gym
+- assertVisible: 47 m
+- assertVisible: Head northwest on Rue Guy toward Blvd. De Maisonneuve Ouest
 - assertVisible: NEXT
-- assertVisible: Turn right onto Rte 138 O
-- assertVisible: 0.4 km
-- assertVisible: Step 1 of 10
-- assertVisible: 9.1 km · 19 mins
+- assertVisible: Turn right onto Blvd. De Maisonneuve Ouest Destination will be on the left
+- assertVisible: 0.2 km
+- assertVisible: Step 1 of 3
+- assertVisible: 0.2 km · 3 mins
 - assertVisible: End navigation
 - repeat:
     while:
-      notVisible: "Step 10 of 10"
+      notVisible: "Step 2 of 3"
     commands:
       - tapOn: ›
+- tapOn: Enter building
+- assertVisible: H Indoor Map
+- assertVisible: "Route: H building entry to 937"
+- assertVisible: Take stairs to Floor 2
+- tapOn: ▶
+- assertVisible: "Route: H building entry to 937"
+- assertVisible: Arrive from Floor 1
+- assertVisible: Take stairs to Floor 8
+- tapOn: ▶
+- assertVisible: "Route: H building entry to 937"
+- assertVisible: Arrive from Floor 2
+- assertVisible: Take stairs to Floor 9
+- tapOn: ▶
+- assertVisible: "Route: H building entry to 937"
+- assertVisible: Arrive from Floor 8
+- tapOn: Close
+- assertVisible: H · Floor 9
+- assertVisible: Head to 937
 - tapOn: End navigation
 
 # Need to mock location in devConfig.ts to "You are here"
