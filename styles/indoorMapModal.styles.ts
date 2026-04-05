@@ -30,6 +30,10 @@ export const styles = StyleSheet.create({
     fontWeight: "700",
     color: BLACK,
   },
+  headerTitleContainer: {
+    flex: 1,
+    paddingRight: 12,
+  },
   headerActions: {
     flexDirection: "row",
     alignItems: "center",
@@ -69,6 +73,57 @@ export const styles = StyleSheet.create({
     fontWeight: "600",
     fontSize: 12,
   },
+  buildingPickerContainer: {
+    marginTop: 8,
+  },
+  buildingPickerButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: MUTED_LIGHT,
+    backgroundColor: WHITE,
+  },
+  buildingPickerText: {
+    flex: 1,
+    fontSize: 13,
+    fontWeight: "600",
+    color: BLACK,
+  },
+  buildingPickerChevron: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: CONCORDIA_RED,
+  },
+  buildingDropdown: {
+    marginTop: 8,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: MUTED_LIGHT,
+    backgroundColor: WHITE,
+    overflow: "hidden",
+  },
+  buildingOption: {
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderTopWidth: 1,
+    borderTopColor: "#E5E7EB",
+  },
+  buildingOptionActive: {
+    backgroundColor: "#FCE7EA",
+  },
+  buildingOptionText: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: BLACK,
+  },
+  buildingOptionTextActive: {
+    color: CONCORDIA_RED,
+  },
   emptyState: {
     flex: 1,
     justifyContent: "center",
@@ -86,6 +141,21 @@ export const styles = StyleSheet.create({
     color: MUTED,
     marginTop: 8,
     textAlign: "center",
+  },
+  viewOnlyBanner: {
+    marginHorizontal: 16,
+    marginTop: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 10,
+    backgroundColor: "#FFF7E6",
+    borderWidth: 1,
+    borderColor: "#F2C078",
+  },
+  viewOnlyBannerText: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#8A5A00",
   },
 
   // Tab Bar
@@ -253,6 +323,12 @@ export const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "700",
     color: BLACK,
+  },
+  selectedRoomHelperText: {
+    fontSize: 12,
+    lineHeight: 18,
+    color: MUTED,
+    fontWeight: "500",
   },
   directionButton: {
     flexDirection: "row",

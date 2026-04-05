@@ -631,4 +631,55 @@ describe('<IndoorMapModal />', () => {
 
     expect(getByText('No indoor route found from H-101 to H-201.')).toBeTruthy();
   });
+
+  it('shows view-only indoor browsing when route generation is disabled', () => {
+    const { getByText, queryByText, queryByTestId } = render(
+      <IndoorMapModal
+        visible={true}
+        initialBuildingCode="H"
+        allowRouteGeneration={false}
+        buildingOptions={[
+          { code: 'H', label: 'Hall Building (H)' },
+          { code: 'MB', label: 'John Molson Building (MB)' },
+        ]}
+        onClose={onClose}
+      />
+    );
+
+    expect(getByText(/Browse floors and rooms only/i)).toBeTruthy();
+    expect(queryByTestId('indoor.options.menu')).toBeNull();
+
+    fireEvent.press(getByText('H-101'));
+
+    expect(queryByText('Get Directions To')).toBeNull();
+    expect(queryByText('Get Directions From')).toBeNull();
+    expect(getByText(/View-only mode is active outside Concordia buildings/i)).toBeTruthy();
+  });
+
+  it('lets the user switch buildings from the dropdown while browsing indoors', () => {
+    mockGetBuildingIndoorMap.mockImplementation((code: string) =>
+      String(code).toUpperCase() === 'MB' ? createMapWithoutFloorOne() : createIndoorMap()
+    );
+
+    const { getByTestId, getByText } = render(
+      <IndoorMapModal
+        visible={true}
+        initialBuildingCode="H"
+        allowRouteGeneration={false}
+        buildingOptions={[
+          { code: 'H', label: 'Hall Building (H)' },
+          { code: 'MB', label: 'John Molson Building (MB)' },
+        ]}
+        onClose={onClose}
+      />
+    );
+
+    expect(getByText('Hall Building (H)')).toBeTruthy();
+
+    fireEvent.press(getByTestId('indoor-building-picker-toggle'));
+    fireEvent.press(getByTestId('indoor-building-option-MB'));
+
+    expect(getByText('John Molson Building (MB)')).toBeTruthy();
+    expect(getByText('Floor S2')).toBeTruthy();
+  });
 });
