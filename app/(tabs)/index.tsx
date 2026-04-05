@@ -21,7 +21,7 @@ import MapViewDirections from "react-native-maps-directions";
 import SearchBar from "@/components/searchBar";
 import { BuildingChoice } from "@/constants/searchBar.types";
 import NavigationSteps from "../../components/NavigationSteps";
-import { HIGHLIGHT_COLOR, STROKE_COLOR } from "@/styles/index.styles";
+import { HIGHLIGHT_COLOR, STROKE_COLOR} from "@/styles/index.styles";
 import { DEV_OVERRIDE_LOCATION } from "../../utils/devConfig";
 import { useNextClass, type ParsedNextClass } from "../../hooks/useNextClass";
 import { getRouteLineStyle } from "../../constants/routeStyles";
@@ -637,6 +637,7 @@ export default function Index() {
     return campusBuildingsData.map((building: any) => {
       const isSelected = selectedBuilding === building.id;
       const isUserInside = userBuilding?.id === building.id;
+      const interiorPoint = getInteriorPoint(building.geometry.coordinates[0]);
 
       return (
         <React.Fragment key={building.id}>
@@ -650,6 +651,13 @@ export default function Index() {
             strokeWidth={BUILDING_POLYGON_COLORS.strokeWidth}
             tappable
             onPress={() => handleBuildingSelect(building.id, building)}
+          />
+          <Marker
+            key={`tap-target-${building.id}`}
+            coordinate={interiorPoint}
+            onPress={() => handleBuildingSelect(building.id, building)}
+            opacity={0}
+            tracksViewChanges={false}
           />
         </React.Fragment>
       );
@@ -688,10 +696,22 @@ export default function Index() {
               onPress={() => handleBuildingSelect(building.id, building)}
             />
             <Marker key={`label-${building.id}`} coordinate={centroid} anchor={ANCHOR_OFFSET} tracksViewChanges={false}>
-              <View style={styles.labelContainer}>
+              <TouchableOpacity 
+                style={styles.labelContainer}
+                onPress={() => handleBuildingSelect(building.id, building)}
+                activeOpacity={0.7}
+              >
                 <Text style={styles.buildingLabel}>{code}</Text>
-              </View>
+              </TouchableOpacity>
             </Marker>
+            {/* Invisible tap target marker for all buildings - improved hit area */}
+            <Marker
+              key={`label-tap-target-${building.id}`}
+              coordinate={centroid}
+              onPress={() => handleBuildingSelect(building.id, building)}
+              opacity={0}
+              tracksViewChanges={false}
+            />
           </React.Fragment>
         );
       });

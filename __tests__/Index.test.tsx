@@ -420,6 +420,57 @@ describe('<Index />', () => {
     }, { timeout: 3000 });
   });
 
+  // --- Building tap targets and visual affordance ---
+  it('renders tap target markers for all buildings', async () => {
+    const { getAllByTestId, queryAllByTestId } = await renderWithTheme(<Index />);
+    
+    // Get all polygons (both regular and tap targets)
+    const polygons = await waitFor(() => getAllByTestId('polygon'));
+    
+    // There should be buildings rendered
+    expect(polygons.length).toBeGreaterThan(0);
+  });
+
+  it('building polygons have stroke color for visual affordance', async () => {
+    const { getAllByTestId } = await renderWithTheme(<Index />);
+    const polygons = await waitFor(() => getAllByTestId('polygon'));
+    
+    // At least some polygons should have a stroke color property
+    const hasStrokeColor = polygons.some(polygon => {
+      return polygon.props && polygon.props.strokeColor;
+    });
+    
+    expect(hasStrokeColor).toBe(true);
+  });
+
+  it('building polygons have stroke width for visibility', async () => {
+    const { getAllByTestId } = await renderWithTheme(<Index />);
+    const polygons = await waitFor(() => getAllByTestId('polygon'));
+    
+    // At least some polygons should have a strokeWidth property
+    const hasStrokeWidth = polygons.some(polygon => {
+      return polygon.props && typeof polygon.props.strokeWidth === 'number';
+    });
+    
+    expect(hasStrokeWidth).toBe(true);
+  });
+
+  it('building labels are tappable', async () => {
+    const { getByTestId, queryAllByTestId } = await renderWithTheme(<Index />);
+    
+    // Zoom in to show labels
+    fireEvent(getByTestId('map-view'), 'regionChangeComplete', {
+      latitude: 45.497, longitude: -73.579,
+      latitudeDelta: 0.005, longitudeDelta: 0.005,
+    });
+
+    await waitFor(() => {
+      // Labels should be rendered with onPress handlers
+      const markers = queryAllByTestId('marker');
+      expect(markers.length).toBeGreaterThan(0);
+    });
+  });
+
   // --- Region change: hide labels ---
   it('hides building labels on zoom out', async () => {
     const { getByTestId, queryAllByTestId } = await renderWithTheme(<Index />);
@@ -433,7 +484,9 @@ describe('<Index />', () => {
     });
 
     await waitFor(() => {
-      expect(queryAllByTestId('marker').length).toBe(0);
+      // Expect only tap target markers (one per building), no label markers
+      const markers = queryAllByTestId('marker');
+      expect(markers.length).toBeGreaterThan(0); // Tap targets are always present
     });
   });
 
@@ -444,22 +497,26 @@ describe('<Index />', () => {
       expect(getByTestId('map-view')).toBeTruthy();
     });
 
-    // Zoom out to hide
+    // Zoom out to hide labels
     fireEvent(getByTestId('map-view'), 'regionChangeComplete', {
       latitude: 45.497, longitude: -73.579,
       latitudeDelta: 0.05, longitudeDelta: 0.05,
     });
+    let markersWhenZoomedOut = 0;
     await waitFor(() => {
-      expect(queryAllByTestId('marker').length).toBe(0);
+      markersWhenZoomedOut = queryAllByTestId('marker').length;
+      expect(markersWhenZoomedOut).toBeGreaterThan(0); // Tap targets
     });
 
-    // Zoom in to show
+    // Zoom in to show labels
     fireEvent(getByTestId('map-view'), 'regionChangeComplete', {
       latitude: 45.497, longitude: -73.579,
       latitudeDelta: 0.005, longitudeDelta: 0.005,
     });
     await waitFor(() => {
-      expect(queryAllByTestId('marker').length).toBeGreaterThan(0);
+      const markersWhenZoomedIn = queryAllByTestId('marker').length;
+      // Should have more markers when zoomed in (tap targets + labels)
+      expect(markersWhenZoomedIn).toBeGreaterThan(markersWhenZoomedOut);
     });
   });
 
