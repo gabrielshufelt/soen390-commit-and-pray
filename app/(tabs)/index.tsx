@@ -568,11 +568,10 @@ export default function Index() {
 
   const handlePoiCategorySearch = useCallback(async (categoryKey: CategoryKey) => {
     const hasStartBuilding = startChoice && startChoice.id !== "current-location";
-    const searchCenter = hasStartBuilding
-      ? startChoice.coordinate
-      : effectiveLocation
-        ? { latitude: effectiveLocation.coords.latitude, longitude: effectiveLocation.coords.longitude }
-        : null;
+    const locationCoords = effectiveLocation
+      ? { latitude: effectiveLocation.coords.latitude, longitude: effectiveLocation.coords.longitude }
+      : null;
+    const searchCenter = hasStartBuilding ? startChoice.coordinate : locationCoords;
 
     if (!searchCenter) {
       Alert.alert("Location Required", "Please enable location services to search for nearby POIs.");
