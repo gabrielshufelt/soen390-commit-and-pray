@@ -437,6 +437,99 @@ export const styles = StyleSheet.create({
     fontWeight: "700",
     color: "#1E64D8",
   },
+
+  // Floor Selector (New - replaces old arrow buttons)
+  floorSelectorContainer: {
+    flexDirection: "row",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: WHITE,
+    borderTopWidth: 1,
+    borderTopColor: MUTED_LIGHT,
+    gap: 8,
+    justifyContent: "center",
+    flexWrap: "wrap",
+  },
+  floorSelectorPill: {
+    paddingHorizontal: 14,
+    paddingVertical: 9,
+    borderRadius: 20,
+    backgroundColor: WHITE,
+    borderWidth: 1.5,
+    borderColor: MUTED_LIGHT,
+    minWidth: 80,
+    alignItems: "center",
+  },
+  floorSelectorPillActive: {
+    backgroundColor: CONCORDIA_RED,
+    borderColor: CONCORDIA_RED,
+  },
+  floorSelectorText: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: MUTED,
+  },
+  floorSelectorTextActive: {
+    color: WHITE,
+  },
+
+  // Direction Prompt (Step-by-step guidance)
+  directionPromptContainer: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    backgroundColor: "#FFF9E6",
+    borderTopWidth: 1,
+    borderTopColor: MUTED_LIGHT,
+    borderBottomWidth: 1,
+    borderBottomColor: "#FFE6CC",
+  },
+  directionPromptText: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#FF8C00",
+    textAlign: "center",
+  },
+
+  // Enhanced Route Info Card Sections
+  routeHeaderRow: {
+    paddingVertical: 6,
+    borderBottomWidth: 1,
+    borderBottomColor: "#A8C5E8",
+  },
+  routeHeaderText: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#113C82",
+  },
+
+  routeBreadcrumb: {
+    marginTop: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    borderRadius: 8,
+    backgroundColor: "rgba(21, 101, 192, 0.08)",
+  },
+  breadcrumbText: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#1565C0",
+  },
+  crossFloorTransitionCard: {
+    marginTop: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    borderRadius: 8,
+    backgroundColor: "#E3F2FD",
+    borderLeftWidth: 3,
+    borderLeftColor: "#FF6F00",
+  },
+  transitionStepLabel: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: "#FF6F00",
+    marginBottom: 2,
+  },
+
   roomDotContainer: {
     position: "absolute",
     transform: [{ translateX: -8 }, { translateY: -8 }],

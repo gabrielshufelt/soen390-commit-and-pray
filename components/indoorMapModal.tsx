@@ -238,6 +238,8 @@ export default function IndoorMapModal({
       const end = routePath[i + 1];
       if (start.floor === end.floor) continue;
 
+      // Only show "departure" transitions: what action to take to leave this floor
+      // This keeps the UI clean by showing just the next actionable step, not arrival messages
       if (start.floor === currentFloor.floor) {
         const isStairTransition =
           start.type.toLowerCase().includes("stair") ||
@@ -256,13 +258,6 @@ export default function IndoorMapModal({
         transitions.push({
           id: `up-${start.id}-${end.id}`,
           message: transitionMessage,
-        });
-      }
-
-      if (end.floor === currentFloor.floor) {
-        transitions.push({
-          id: `down-${start.id}-${end.id}`,
-          message: `Arrive from Floor ${getFloorLabel(start.floor)}`,
         });
       }
     }
@@ -308,6 +303,13 @@ export default function IndoorMapModal({
     );
   };
 
+  const getDirectionPrompt = (): string | null => {
+    if (routeStartNode && routeEndNode) return null; // Route complete, no prompt needed
+    if (!routeStartNode) return "📍 Tap a room to set as your start location";
+    if (!routeEndNode) return "🎯 Now tap a room to set your destination";
+    return null;
+  };
+
   const handleRoomPress = (room: IndoorNode) => {
     if (selectedRoom?.id === room.id) {
       // Single click to unselect
@@ -315,6 +317,12 @@ export default function IndoorMapModal({
     } else {
       // Single click to select
       setSelectedRoom(room);
+      // Auto-set start/end if user is in picking mode
+      if (!routeStartNode) {
+        setRouteStartNode(room);
+      } else if (!routeEndNode) {
+        setRouteEndNode(room);
+      }
     }
   };
 
@@ -347,6 +355,18 @@ export default function IndoorMapModal({
       computeRoute(routeStartNode, routeEndNode);
     }
   }, [routeStartNode, routeEndNode, computeRoute]);
+
+  // Auto-navigate to start floor when route is completed
+  useEffect(() => {
+    if (routeStartNode && routeEndNode && indoorMap) {
+      const startFloorIndex = indoorMap.floors.findIndex(
+        (floor) => floor.floor === routeStartNode.floor
+      );
+      if (startFloorIndex >= 0) {
+        setFloorIndex(startFloorIndex);
+      }
+    }
+  }, [routeStartNode, routeEndNode, indoorMap]);
 
   useEffect(() => {
     if (!visible || !indoorMap) return;
@@ -456,16 +476,6 @@ export default function IndoorMapModal({
 
   const handleMapPressOut = () => {
     setIsPanning(false);
-  };
-
-  const onNextFloor = () => {
-    if (!indoorMap || indoorMap.floors.length <= 1) return;
-    setFloorIndex((prev) => (prev + 1) % indoorMap.floors.length);
-  };
-
-  const onPrevFloor = () => {
-    if (!indoorMap || indoorMap.floors.length <= 1) return;
-    setFloorIndex((prev) => (prev - 1 + indoorMap.floors.length) % indoorMap.floors.length);
   };
 
   const renderRoomDot = (room: IndoorNode, floor: IndoorFloorMap, isSelected: boolean) => {
@@ -595,19 +605,37 @@ export default function IndoorMapModal({
 
             {viewMode === "map" ? (
               <>
-                <View style={styles.floorControls}>
-                  <TouchableOpacity style={styles.floorArrowButton} onPress={onPrevFloor}>
-                    <Text style={styles.floorArrowText}>◀</Text>
-                  </TouchableOpacity>
-
-                  <View style={styles.floorInfoPill}>
-                    <Text style={styles.floorInfoText}>Floor {getFloorLabel(currentFloor.floor)}</Text>
-                  </View>
-
-                  <TouchableOpacity style={styles.floorArrowButton} onPress={onNextFloor}>
-                    <Text style={styles.floorArrowText}>▶</Text>
-                  </TouchableOpacity>
+                <View style={styles.floorSelectorContainer}>
+                  {indoorMap.floors.map((floor, index) => (
+                    <TouchableOpacity
+                      key={floor.floor}
+                      style={[
+                        styles.floorSelectorPill,
+                        floorIndex === index && styles.floorSelectorPillActive,
+                      ]}
+                      onPress={() => setFloorIndex(index)}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Floor ${getFloorLabel(floor.floor)}`}
+                      accessibilityState={{ selected: floorIndex === index }}
+                      testID={`floor-selector-${floor.floor}`}
+                    >
+                      <Text
+                        style={[
+                          styles.floorSelectorText,
+                          floorIndex === index && styles.floorSelectorTextActive,
+                        ]}
+                      >
+                        Floor {getFloorLabel(floor.floor)}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
                 </View>
+
+                {getDirectionPrompt() && (
+                  <View style={styles.directionPromptContainer}>
+                    <Text style={styles.directionPromptText}>{getDirectionPrompt()}</Text>
+                  </View>
+                )}
 
                 <View style={styles.zoomControlsContainer}>
                   <TouchableOpacity
@@ -722,9 +750,29 @@ export default function IndoorMapModal({
                 {(routeStartNode || routeEndNode || routeError || crossFloorTransitions.length > 0) && (
                   <View style={styles.routeInfoCard}>
                     {routeStartNode && routeEndNode ? (
-                      <Text style={styles.routeInfoText}>
-                        Route: {routeStartNode.label.trim()} to {routeEndNode.label.trim()}
-                      </Text>
+                      <>
+                        <View style={styles.routeHeaderRow}>
+                          <Text style={styles.routeHeaderText}>📍 START: {routeStartNode.label.trim()}</Text>
+                        </View>
+                        <View style={styles.routeHeaderRow}>
+                          <Text style={styles.routeHeaderText}>🎯 DESTINATION: {routeEndNode.label.trim()}</Text>
+                        </View>
+                        
+                        {crossFloorTransitions.length > 0 && (
+                          <View style={styles.routeBreadcrumb}>
+                            <Text style={styles.breadcrumbText}>
+                              Floor {getFloorLabel(routeStartNode.floor)} → {getFloorLabel(routeEndNode.floor)}
+                            </Text>
+                          </View>
+                        )}
+
+                        {crossFloorTransitions.map((transition, idx) => (
+                          <View key={transition.id} style={styles.crossFloorTransitionCard}>
+                            <Text style={styles.transitionStepLabel}>Step {idx + 1}:</Text>
+                            <Text testID="cross-floor-direction" style={styles.crossFloorText}>{transition.message}</Text>
+                          </View>
+                        ))}
+                      </>
                     ) : (
                       <Text style={styles.routeInfoText}>
                         {routeStartNode
@@ -734,12 +782,6 @@ export default function IndoorMapModal({
                             : "Pick rooms to generate a route."}
                       </Text>
                     )}
-
-                    {crossFloorTransitions.map((transition) => (
-                      <Text key={transition.id} testID="cross-floor-direction" style={styles.crossFloorText}>
-                        {transition.message}
-                      </Text>
-                    ))}
 
                     {routeError && <Text style={styles.routeErrorText}>{routeError}</Text>}
 
@@ -751,7 +793,7 @@ export default function IndoorMapModal({
                   </View>
                 )}
 
-                {selectedRoom && (
+                {selectedRoom && !(routeStartNode && routeEndNode) && (
                   <View style={styles.selectedRoomCard}>
                     <Text style={styles.selectedRoomLabel}>{selectedRoom.label}</Text>
                     {!isPresetRouteMode && (
