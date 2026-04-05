@@ -28,7 +28,7 @@ import { getRouteLineStyle } from "../../constants/routeStyles";
 import NextClassModal from "../../components/NextClassModal";
 import { getBuildingCoordinate } from "../../utils/buildingCoordinates";
 import { buildRouteRaw } from "@/utils/buildingParser";
-import IndoorMapModal from "../../components/indoorMapModal";
+import IndoorMapModal, { type IndoorBuildingOption } from "../../components/indoorMapModal";
 import { getBuildingIndoorMap, getIndoorBuildingCodes } from "@/utils/indoorMapData";
 import { useCombinedNavigation } from "../../hooks/useCombinedNavigation";
 import { AllCampusData } from "../../data/buildings";
@@ -62,6 +62,7 @@ export default function Index() {
   const effectiveLocation = location;
 
   const userBuilding = useUserBuilding(effectiveLocation);
+  const normalizedUserBuildingCode = userBuilding?.code?.toUpperCase() ?? null;
 
   const currentCampus = useMemo(() => {
     if (!effectiveLocation) return undefined;
@@ -342,48 +343,55 @@ export default function Index() {
     startDirections(loyolaStop, sgwStop);
   };
 
-   const resolveIndoorBuildingCode = (): string | null => {
-      const candidates = [
-        indoorBuildingCode,
-        selectedBuildingData?.properties?.code,
-        destChoice?.code,
-        startChoice?.code,
-        userBuilding?.code,
-      ];
+  const openIndoorMapForCode = (requestedCode?: string | null) => {
+    const preferredCode =
+      normalizedUserBuildingCode && getBuildingIndoorMap(normalizedUserBuildingCode)
+        ? normalizedUserBuildingCode
+        : requestedCode?.toUpperCase() ?? null;
 
-      for (const candidate of candidates) {
-        const normalized = typeof candidate === "string" ? candidate.toUpperCase() : null;
-        if (normalized && getBuildingIndoorMap(normalized)) {
-          return normalized;
-        }
+    if (!preferredCode) {
+      Alert.alert("Indoor map unavailable", "No indoor map data is configured yet.");
+      return;
+    }
+
+    if (!getBuildingIndoorMap(preferredCode)) return;
+
+    setIndoorBuildingCode(preferredCode);
+    setIndoorPresetRoute(null);
+    setShowIndoorMapModal(true);
+  };
+
+  const resolveIndoorBuildingCode = (): string | null => {
+    const candidates = [
+      indoorBuildingCode,
+      selectedBuildingData?.properties?.code,
+      destChoice?.code,
+      startChoice?.code,
+      userBuilding?.code,
+    ];
+
+    for (const candidate of candidates) {
+      const normalized = typeof candidate === "string" ? candidate.toUpperCase() : null;
+      if (normalized && getBuildingIndoorMap(normalized)) {
+        return normalized;
       }
+    }
 
-      return getIndoorBuildingCodes()[0] ?? null;
-    };
+    return getIndoorBuildingCodes()[0] ?? null;
+  };
 
-    const handleOpenIndoorQuickAccess = () => {
-      const fallbackCode = resolveIndoorBuildingCode();
-      if (!fallbackCode) {
-        Alert.alert("Indoor map unavailable", "No indoor map data is configured yet.");
-        return;
-      }
+  const handleOpenIndoorQuickAccess = () => {
+    openIndoorMapForCode(normalizedUserBuildingCode ?? resolveIndoorBuildingCode());
+  };
 
-      setIndoorBuildingCode(fallbackCode);
-      setIndoorPresetRoute(null);
-      setShowIndoorMapModal(true);
-    };
   const handleOpenIndoorMap = (building: BuildingChoice) => {
-      const match = /\(([A-Za-z0-9]+)\)\s*$/.exec(building.name);
-      const extractedCode = building.code ?? match?.[1];
-      const normalizedCode = extractedCode?.toUpperCase();
-      if (!normalizedCode) return;
+    const match = /\(([A-Za-z0-9]+)\)\s*$/.exec(building.name);
+    const extractedCode = building.code ?? match?.[1];
+    const normalizedCode = extractedCode?.toUpperCase();
+    if (!normalizedCode) return;
 
-      if (!getBuildingIndoorMap(normalizedCode)) return;
-
-      setIndoorBuildingCode(normalizedCode);
-      setIndoorPresetRoute(null);
-      setShowIndoorMapModal(true);
-    };
+    openIndoorMapForCode(normalizedCode);
+  };
 
 
   const handleRegionChange = useCallback((region: Region) => {
@@ -402,10 +410,7 @@ export default function Index() {
 
   const handleShowIndoorMapFromModal = (buildingCode: string) => {
     const normalized = buildingCode.toUpperCase();
-    if (!getBuildingIndoorMap(normalized)) return;
-    setIndoorBuildingCode(normalized);
-    setIndoorPresetRoute(null);
-    setShowIndoorMapModal(true);
+    openIndoorMapForCode(normalized);
   };
 
   const buildingToChoice = (b: any): BuildingChoice => ({
@@ -603,6 +608,10 @@ export default function Index() {
     return () => clearTimeout(timer);
   }, [combinedRouteActive, combinedStepIndex, fullRoute]);
 
+  const canGenerateIndoorRoute =
+    !!indoorPresetRoute ||
+    (!!normalizedUserBuildingCode && indoorBuildingCode?.toUpperCase() === normalizedUserBuildingCode);
+
   const activeSteps = combinedRouteActive ? fullRoute : directionsState.steps;
   const currentStepIndex = combinedRouteActive ? combinedStepIndex : directionsState.currentStepIndex;
   const navigationActive = directionsState.isActive || combinedRouteActive;
@@ -729,6 +738,24 @@ export default function Index() {
 
     return [...toChoices(sgwBuildingsData.features, "SGW"), ...toChoices(loyolaBuildingsData.features, "Loyola")];
   }, []);
+
+  const indoorBuildingOptions: IndoorBuildingOption[] = useMemo(() => {
+    const seen = new Set<string>();
+    return buildingChoices
+      .filter((choice) => {
+        const normalizedCode = choice.code?.toUpperCase();
+        if (!normalizedCode || !getBuildingIndoorMap(normalizedCode) || seen.has(normalizedCode)) {
+          return false;
+        }
+        seen.add(normalizedCode);
+        return true;
+      })
+      .map((choice) => ({
+        code: choice.code!.toUpperCase(),
+        label: `${choice.name} (${choice.code!.toUpperCase()})`,
+      }))
+      .sort((a, b) => a.label.localeCompare(b.label));
+  }, [buildingChoices]);
 
   // Memoised route overlays — isolated from showLabels / buildingPolygons
   // re-renders so the native Polyline is never torn down during a zoom change.
@@ -956,12 +983,15 @@ export default function Index() {
           visible={showIndoorMapModal}
           initialBuildingCode={indoorBuildingCode}
           presetRoute={indoorPresetRoute}
+          allowRouteGeneration={canGenerateIndoorRoute}
+          buildingOptions={indoorBuildingOptions}
+          lockToInitialBuilding={!!indoorPresetRoute || !!normalizedUserBuildingCode}
           onClose={() => {
             setShowIndoorMapModal(false);
             setIndoorPresetRoute(null);
           }}
           onClearRoute={handleEndDirections}
-         />
+        />
 
       {!navigationActive && !previewActive && (
         <NextClassModal
@@ -987,22 +1017,20 @@ export default function Index() {
         </TouchableOpacity>
       )}
       <TouchableOpacity
-         style={styles.indoorButton}
-         onPress={handleOpenIndoorQuickAccess}
-         activeOpacity={0.85}
+        style={styles.indoorButton}
+        onPress={handleOpenIndoorQuickAccess}
+        activeOpacity={0.85}
+        testID="indoor-quick-access-button"
+        accessibilityRole="button"
+        accessibilityLabel="Open indoor map"
+        accessibilityHint={
+          normalizedUserBuildingCode
+            ? "Open the indoor map for your current Concordia building"
+            : "Browse Concordia indoor floors and rooms"
+        }
       >
-           <Text style={styles.indoorButtonText}>Indoor</Text>
+        <Text style={styles.indoorButtonText}>Indoor</Text>
       </TouchableOpacity>
-
-      {userBuilding && (
-        <TouchableOpacity
-          style={styles.indoorButton}
-          onPress={handleOpenIndoorQuickAccess}
-          activeOpacity={0.85}
-        >
-          <Text style={styles.indoorButtonText}>Indoor</Text>
-        </TouchableOpacity>
-      )}
 
       {navigationActive && activeSteps.length > 0 && (
         <NavigationSteps

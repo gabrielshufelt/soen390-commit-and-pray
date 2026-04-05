@@ -23,6 +23,11 @@ import { IndoorPathfinder, type IndoorNode as PathfinderIndoorNode } from "@/uti
 import IndoorRouteOptionsModal from "@/components/IndoorRouteOptionsModal";
 import { styles } from "@/styles/indoorMapModal.styles";
 
+export type IndoorBuildingOption = {
+  code: string;
+  label: string;
+};
+
 type IndoorMapModalProps = {
   readonly visible: boolean;
   readonly initialBuildingCode: string | null;
@@ -34,6 +39,9 @@ type IndoorMapModalProps = {
   } | null;
   readonly onClose: () => void;
   readonly onClearRoute?: () => void;
+  readonly allowRouteGeneration?: boolean;
+  readonly buildingOptions?: ReadonlyArray<IndoorBuildingOption>;
+  readonly lockToInitialBuilding?: boolean;
 };
 
 const ROOM_NODE_TYPE = "room";
@@ -140,23 +148,47 @@ export default function IndoorMapModal({
   presetRoute,
   onClose,
   onClearRoute,
+  allowRouteGeneration = true,
+  buildingOptions = [],
+  lockToInitialBuilding = false,
 }: IndoorMapModalProps) {
   const isPresetRouteMode =
     !!presetRoute &&
     (!!(presetRoute.startNodeId && presetRoute.endNodeId) ||
       !!(presetRoute.startLabel && presetRoute.endLabel));
 
+  const normalizedBuildingOptions = useMemo(() => {
+    const seen = new Set<string>();
+    return buildingOptions
+      .map((option) => ({
+        code: option.code.toUpperCase(),
+        label: option.label.trim() || option.code.toUpperCase(),
+      }))
+      .filter((option) => {
+        if (!getBuildingIndoorMap(option.code) || seen.has(option.code)) {
+          return false;
+        }
+        seen.add(option.code);
+        return true;
+      });
+  }, [buildingOptions]);
+
+  const [selectedBuildingCode, setSelectedBuildingCode] = useState<string | null>(
+    initialBuildingCode?.toUpperCase() ?? normalizedBuildingOptions[0]?.code ?? null
+  );
+  const [showBuildingPicker, setShowBuildingPicker] = useState(false);
+
   const indoorMap = useMemo(() => {
-    if (!initialBuildingCode) return null;
-    return getBuildingIndoorMap(initialBuildingCode);
-  }, [initialBuildingCode]);
+    if (!selectedBuildingCode) return null;
+    return getBuildingIndoorMap(selectedBuildingCode);
+  }, [selectedBuildingCode]);
 
   const pathfinder = useMemo(() => {
-    if (!initialBuildingCode) return null;
-    const graphData = getBuildingIndoorGraphData(initialBuildingCode);
+    if (!selectedBuildingCode) return null;
+    const graphData = getBuildingIndoorGraphData(selectedBuildingCode);
     if (!graphData || graphData.length === 0) return null;
     return new IndoorPathfinder(graphData);
-  }, [initialBuildingCode]);
+  }, [selectedBuildingCode]);
 
   const [floorIndex, setFloorIndex] = useState(0);
   const [selectedRoom, setSelectedRoom] = useState<IndoorNode | null>(null);
@@ -178,6 +210,27 @@ export default function IndoorMapModal({
   const [panStartX, setPanStartX] = useState(0);
   const [panStartY, setPanStartY] = useState(0);
 
+  const isViewOnlyMode = !allowRouteGeneration && !isPresetRouteMode;
+  const canChooseBuilding =
+    !lockToInitialBuilding && !isPresetRouteMode && normalizedBuildingOptions.length > 1;
+  const selectedBuildingOption =
+    normalizedBuildingOptions.find((option) => option.code === selectedBuildingCode) ?? null;
+
+  let headerTitleText = "Indoor Map";
+  if (!canChooseBuilding && indoorMap) {
+    headerTitleText = `${indoorMap.buildingId} Indoor Map`;
+  }
+
+  useEffect(() => {
+    if (!visible) return;
+
+    const fallbackCode = initialBuildingCode?.toUpperCase() ?? normalizedBuildingOptions[0]?.code ?? null;
+    if (fallbackCode) {
+      setSelectedBuildingCode(fallbackCode);
+    }
+    setShowBuildingPicker(false);
+  }, [visible, initialBuildingCode, normalizedBuildingOptions]);
+
   useEffect(() => {
     if (!indoorMap) {
       setFloorIndex(0);
@@ -197,7 +250,21 @@ export default function IndoorMapModal({
     setRouteEndNode(null);
     setRoutePath([]);
     setRouteError(null);
-  }, [initialBuildingCode]);
+    setSearchQuery("");
+    setActiveFilters([]);
+    setViewMode("map");
+    setZoom(1);
+    setPanX(0);
+    setPanY(0);
+  }, [selectedBuildingCode]);
+
+  useEffect(() => {
+    if (!isViewOnlyMode) return;
+    setRouteStartNode(null);
+    setRouteEndNode(null);
+    setRoutePath([]);
+    setRouteError(null);
+  }, [isViewOnlyMode]);
 
   const currentFloor = indoorMap?.floors[floorIndex] ?? null;
 
@@ -308,6 +375,11 @@ export default function IndoorMapModal({
     );
   };
 
+  const handleBuildingSelect = (buildingCode: string) => {
+    setSelectedBuildingCode(buildingCode);
+    setShowBuildingPicker(false);
+  };
+
   const handleRoomPress = (room: IndoorNode) => {
     if (selectedRoom?.id === room.id) {
       // Single click to unselect
@@ -319,6 +391,12 @@ export default function IndoorMapModal({
   };
 
   const computeRoute = useCallback((fromNode: IndoorNode, toNode: IndoorNode) => {
+    if (!allowRouteGeneration && !isPresetRouteMode) {
+      setRoutePath([]);
+      setRouteError(null);
+      return;
+    }
+
     if (!pathfinder) {
       setRoutePath([]);
       setRouteError("Indoor routing data is unavailable for this building.");
@@ -340,7 +418,7 @@ export default function IndoorMapModal({
 
     setRoutePath(path);
     setRouteError(null);
-  }, [pathfinder, wheelchairAccessible, avoidStairs, preferElevators]);
+  }, [allowRouteGeneration, isPresetRouteMode, pathfinder, wheelchairAccessible, avoidStairs, preferElevators]);
 
   useEffect(() => {
     if (routeStartNode && routeEndNode) {
@@ -393,7 +471,7 @@ export default function IndoorMapModal({
   }, [visible, presetRoute, indoorMap]);
 
   const handleSetRouteFrom = () => {
-    if (!selectedRoom) return;
+    if (!allowRouteGeneration || !selectedRoom) return;
     setRouteStartNode(selectedRoom);
     if (routeEndNode) {
       computeRoute(selectedRoom, routeEndNode);
@@ -404,7 +482,7 @@ export default function IndoorMapModal({
   };
 
   const handleSetRouteTo = () => {
-    if (!selectedRoom) return;
+    if (!allowRouteGeneration || !selectedRoom) return;
     setRouteEndNode(selectedRoom);
     if (routeStartNode) {
       computeRoute(routeStartNode, selectedRoom);
@@ -535,30 +613,76 @@ export default function IndoorMapModal({
       <SafeAreaProvider>
         <SafeAreaView style={styles.container} edges={["top"]}>
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>
-            {indoorMap ? `${indoorMap.buildingId} Indoor Map` : "Indoor Map"}
-          </Text>
+          <View style={styles.headerTitleContainer}>
+            <Text style={styles.headerTitle}>{headerTitleText}</Text>
+
+            {canChooseBuilding && (
+              <View style={styles.buildingPickerContainer}>
+                <TouchableOpacity
+                  style={styles.buildingPickerButton}
+                  onPress={() => setShowBuildingPicker((prev) => !prev)}
+                  activeOpacity={0.8}
+                  testID="indoor-building-picker-toggle"
+                >
+                  <Text numberOfLines={1} style={styles.buildingPickerText}>
+                    {selectedBuildingOption?.label ??
+                      (selectedBuildingCode ? `${selectedBuildingCode} Indoor Map` : "Select a building")}
+                  </Text>
+                  <Text style={styles.buildingPickerChevron}>{showBuildingPicker ? "▲" : "▼"}</Text>
+                </TouchableOpacity>
+
+                {showBuildingPicker && (
+                  <View style={styles.buildingDropdown} testID="indoor-building-picker-menu">
+                    {normalizedBuildingOptions.map((option) => {
+                      const isActive = option.code === selectedBuildingCode;
+                      return (
+                        <TouchableOpacity
+                          key={option.code}
+                          style={[styles.buildingOption, isActive && styles.buildingOptionActive]}
+                          onPress={() => handleBuildingSelect(option.code)}
+                          activeOpacity={0.8}
+                          testID={`indoor-building-option-${option.code}`}
+                        >
+                          <Text
+                            style={[
+                              styles.buildingOptionText,
+                              isActive && styles.buildingOptionTextActive,
+                            ]}
+                          >
+                            {option.label}
+                          </Text>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+                )}
+              </View>
+            )}
+          </View>
+
           <View style={styles.headerActions}>
-            <TouchableOpacity
-              style={[
-                styles.menuButton,
-                wheelchairAccessible && styles.menuButtonActive,
-              ]}
-              onPress={() => setShowRouteOptions(true)}
-              accessibilityRole="button"
-              accessibilityLabel="Accessibility and route options"
-              accessibilityHint="Open accessible routing and route preference settings"
-              testID="indoor.options.menu"
-            >
-              <Text
+            {allowRouteGeneration && (
+              <TouchableOpacity
                 style={[
-                  styles.menuButtonText,
-                  wheelchairAccessible && styles.menuButtonTextActive,
+                  styles.menuButton,
+                  wheelchairAccessible && styles.menuButtonActive,
                 ]}
+                onPress={() => setShowRouteOptions(true)}
+                accessibilityRole="button"
+                accessibilityLabel="Accessibility and route options"
+                accessibilityHint="Open accessible routing and route preference settings"
+                testID="indoor.options.menu"
               >
-                ♿
-              </Text>
-            </TouchableOpacity>
+                <Text
+                  style={[
+                    styles.menuButtonText,
+                    wheelchairAccessible && styles.menuButtonTextActive,
+                  ]}
+                >
+                  ♿
+                </Text>
+              </TouchableOpacity>
+            )}
             <TouchableOpacity style={styles.closeButton} onPress={onClose}>
               <Text style={styles.closeButtonText}>Close</Text>
             </TouchableOpacity>
@@ -574,6 +698,14 @@ export default function IndoorMapModal({
           </View>
         ) : (
           <>
+            {isViewOnlyMode && (
+              <View style={styles.viewOnlyBanner}>
+                <Text style={styles.viewOnlyBannerText}>
+                  Browse floors and rooms only. Indoor routing becomes available once you are inside the selected Concordia building.
+                </Text>
+              </View>
+            )}
+
             <View style={styles.tabBar}>
               <TouchableOpacity
                 style={[styles.tab, viewMode === "map" && styles.tabActive]}
@@ -753,8 +885,8 @@ export default function IndoorMapModal({
 
                 {selectedRoom && (
                   <View style={styles.selectedRoomCard}>
-                    <Text style={styles.selectedRoomLabel}>{selectedRoom.label}</Text>
-                    {!isPresetRouteMode && (
+                    <Text style={styles.selectedRoomLabel}>{getNodeDisplayLabel(selectedRoom)}</Text>
+                    {!isPresetRouteMode && allowRouteGeneration && (
                       <>
                         <TouchableOpacity
                           style={[styles.directionButton, styles.directionButtonTo]}
@@ -771,6 +903,11 @@ export default function IndoorMapModal({
                           <Text style={styles.directionButtonFromText}>Get Directions From</Text>
                         </TouchableOpacity>
                       </>
+                    )}
+                    {!isPresetRouteMode && isViewOnlyMode && (
+                      <Text style={styles.selectedRoomHelperText}>
+                        View-only mode is active outside Concordia buildings. You can browse rooms and floors here, but routing stays disabled.
+                      </Text>
                     )}
                   </View>
                 )}
