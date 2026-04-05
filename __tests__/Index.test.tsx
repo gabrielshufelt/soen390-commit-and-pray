@@ -2148,23 +2148,15 @@ describe('<Index />', () => {
     });
 
     it('renders POI markers after successful search', async () => {
-      const { getByTestId, queryAllByTestId } = await renderWithTheme(<Index />);
+      const { queryAllByTestId } = await renderWithTheme(<Index />);
 
-      // Zoom out to hide building label markers; after zoom out only POI markers have testID="marker"
-      fireEvent(getByTestId('map-view'), 'regionChangeComplete', {
-        latitude: 45.497, longitude: -73.579,
-        latitudeDelta: 0.05, longitudeDelta: 0.05,
-      });
-
-      await waitFor(() => {
-        expect(queryAllByTestId('marker').length).toBe(0);
-      });
+      const markersBefore = queryAllByTestId('marker').length;
 
       await act(async () => {
         await mockSearchBarProperties.onPoiCategorySearch('coffee');
       });
 
-      expect(queryAllByTestId('marker').length).toBe(1);
+      expect(queryAllByTestId('marker').length).toBe(markersBefore + 1);
     });
 
     it('opens POI modal when a POI marker is pressed', async () => {
@@ -2342,23 +2334,15 @@ describe('<Index />', () => {
     });
 
     it('clears POI markers when a destination is set', async () => {
-      const { getByTestId, queryAllByTestId } = await renderWithTheme(<Index />);
+      const { queryAllByTestId } = await renderWithTheme(<Index />);
 
-      // Zoom out to hide building label markers; after zoom out only POI markers have testID="marker"
-      fireEvent(getByTestId('map-view'), 'regionChangeComplete', {
-        latitude: 45.497, longitude: -73.579,
-        latitudeDelta: 0.05, longitudeDelta: 0.05,
-      });
-
-      await waitFor(() => {
-        expect(queryAllByTestId('marker').length).toBe(0);
-      });
+      const markersBefore = queryAllByTestId('marker').length;
 
       await act(async () => {
         await mockSearchBarProperties.onPoiCategorySearch('coffee');
       });
 
-      expect(queryAllByTestId('marker').length).toBe(1);
+      expect(queryAllByTestId('marker').length).toBe(markersBefore + 1);
 
       await act(async () => {
         mockSearchBarProperties.onChangeDestination({
@@ -2369,7 +2353,7 @@ describe('<Index />', () => {
       });
 
       await waitFor(() => {
-        expect(queryAllByTestId('marker').length).toBe(0);
+        expect(queryAllByTestId('marker').length).toBe(markersBefore);
       });
     });
 
