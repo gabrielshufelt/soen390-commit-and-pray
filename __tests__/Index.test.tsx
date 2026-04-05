@@ -190,9 +190,21 @@ jest.mock('react-native-maps', () => {
 });
 
 
+const mockSearchPoisForMap = jest.fn();
+jest.mock('../utils/poiMapSearch', () => ({
+  searchPoisForMap: (...args: any[]) => mockSearchPoisForMap(...args),
+}));
+
+const mockResolvePoiDetails = jest.fn();
+jest.mock('../utils/poiFetch', () => ({
+  ...jest.requireActual('../utils/poiFetch'),
+  resolvePoiDetails: (...args: any[]) => mockResolvePoiDetails(...args),
+}));
+
 // --- Test Starting and Ending Directions ---
 let mockSearchBarProperties: any = {};
 let mockBuildingModalProperties: any = {};
+let mockPoiModalProperties: any = {};
 let mockIndoorMapModalProperties: any = {};
 let mockLocalSearchParams: Record<string, string | undefined> = {};
 
@@ -214,8 +226,27 @@ jest.mock('../components/buildingModal', () => {
   return {
     __esModule: true,
     default: (props: any) => {
-      mockBuildingModalProperties = props;
+      if (props.mode === 'poi') {
+        mockPoiModalProperties = props;
+      } else {
+        mockBuildingModalProperties = props;
+      }
       if (!props.visible) return null;
+      if (props.mode === 'poi') {
+        return (
+          <View testID="poi-modal">
+            <TouchableOpacity testID="poi-modal-close" onPress={props.onClose}>
+              <Text>Close POI</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              testID="poi-modal-directions"
+              onPress={() => props.onGetDirections?.(props.building)}
+            >
+              <Text>Get POI Directions</Text>
+            </TouchableOpacity>
+          </View>
+        );
+      }
       return (
         <View testID="building-modal">
           <TouchableOpacity testID="close-button" onPress={props.onClose}>
@@ -372,6 +403,7 @@ describe('<Index />', () => {
     jest.clearAllMocks();
     mockSearchBarProperties = {};
     mockBuildingModalProperties = {};
+    mockPoiModalProperties = {};
     mockIndoorMapModalProperties = {};
     mockLocalSearchParams = {};
     mockPolygonRenderCount = 0;
@@ -1872,6 +1904,551 @@ describe('<Index />', () => {
         expect(mockSearchBarProperties.roomOptionsByBuilding).toBeDefined();
         expect(Object.keys(mockSearchBarProperties.roomOptionsByBuilding).length).toBeGreaterThan(0);
       });
+    });
+  });
+
+  describe('POI category search', () => {
+    const mockPois = [
+      {
+        id: 'poi-1',
+        name: 'Cafe Alpha',
+        address: '123 Coffee St',
+        distance: 100,
+        isOpen: true,
+        latitude: 45.498,
+        longitude: -73.578,
+        source: 'google' as const,
+        categoryLabel: 'Coffee Shops',
+      },
+      {
+        id: 'poi-2',
+        name: 'Cafe Beta',
+        address: '456 Java Ave',
+        distance: 200,
+        isOpen: false,
+        latitude: 45.499,
+        longitude: -73.577,
+        source: 'google' as const,
+        categoryLabel: 'Coffee Shops',
+      },
+    ];
+
+    it('passes onPoiCategorySearch and onSearchBarOpen to SearchBar', async () => {
+      await renderWithTheme(<Index />);
+
+      await waitFor(() => {
+        expect(typeof mockSearchBarProperties.onPoiCategorySearch).toBe('function');
+        expect(typeof mockSearchBarProperties.onSearchBarOpen).toBe('function');
+      });
+    });
+
+    it('shows alert when location is not available', async () => {
+      mockWatchLocation.mockReturnValue(noLocationWatch);
+      const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+
+      await renderWithTheme(<Index />);
+
+      await act(async () => {
+        await mockSearchBarProperties.onPoiCategorySearch('coffee');
+      });
+
+      expect(alertSpy).toHaveBeenCalledWith(
+        'Location Required',
+        'Please enable location services to search for nearby POIs.'
+      );
+      alertSpy.mockRestore();
+    });
+
+    it('calls searchPoisForMap and sets markers on success', async () => {
+      mockSearchPoisForMap.mockResolvedValue({ pois: mockPois, error: null });
+
+      await renderWithTheme(<Index />);
+
+      await act(async () => {
+        await mockSearchBarProperties.onPoiCategorySearch('coffee');
+      });
+
+      expect(mockSearchPoisForMap).toHaveBeenCalledWith(
+        'coffee',
+        { latitude: 45.4972, longitude: -73.579 },
+        'test-api-key'
+      );
+    });
+
+    it('animates map to region on successful POI search', async () => {
+      mockSearchPoisForMap.mockResolvedValue({ pois: mockPois, error: null });
+
+      await renderWithTheme(<Index />);
+
+      await act(async () => {
+        await mockSearchBarProperties.onPoiCategorySearch('coffee');
+      });
+
+      expect(mockAnimateToRegion).toHaveBeenCalledWith(
+        expect.objectContaining({
+          latitude: 45.4972,
+          longitude: -73.579,
+          latitudeDelta: 0.012,
+          longitudeDelta: 0.012,
+        }),
+        500
+      );
+    });
+
+    it('uses start building coordinate as search center when a non-current-location start is set', async () => {
+      mockSearchPoisForMap.mockResolvedValue({ pois: mockPois, error: null });
+
+      await renderWithTheme(<Index />);
+
+      await act(async () => {
+        mockSearchBarProperties.onChangeStart({
+          id: 'VA',
+          name: 'VA Building',
+          coordinate: { latitude: 45.459, longitude: -73.638 },
+        });
+      });
+
+      await act(async () => {
+        await mockSearchBarProperties.onPoiCategorySearch('restaurant');
+      });
+
+      expect(mockSearchPoisForMap).toHaveBeenCalledWith(
+        'restaurant',
+        { latitude: 45.459, longitude: -73.638 },
+        'test-api-key'
+      );
+    });
+
+    it('shows error alert when searchPoisForMap returns an error', async () => {
+      mockSearchPoisForMap.mockResolvedValue({ pois: [], error: 'API failure' });
+      const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+
+      await renderWithTheme(<Index />);
+
+      await act(async () => {
+        await mockSearchBarProperties.onPoiCategorySearch('coffee');
+      });
+
+      expect(alertSpy).toHaveBeenCalledWith(
+        'Search Error',
+        'Could not load Coffee Shops: API failure'
+      );
+      alertSpy.mockRestore();
+    });
+
+    it('shows no results alert when searchPoisForMap returns empty array', async () => {
+      mockSearchPoisForMap.mockResolvedValue({ pois: [], error: null });
+      const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+
+      await renderWithTheme(<Index />);
+
+      await act(async () => {
+        await mockSearchBarProperties.onPoiCategorySearch('grocery');
+      });
+
+      expect(alertSpy).toHaveBeenCalledWith(
+        'No Results',
+        'No grocery stores found nearby.'
+      );
+      alertSpy.mockRestore();
+    });
+
+    it('clears POI markers when onSearchBarOpen is called', async () => {
+      mockSearchPoisForMap.mockResolvedValue({ pois: mockPois, error: null });
+
+      await renderWithTheme(<Index />);
+
+      await act(async () => {
+        await mockSearchBarProperties.onPoiCategorySearch('coffee');
+      });
+
+      await act(async () => {
+        mockSearchBarProperties.onSearchBarOpen();
+      });
+
+      // After clearing, a new search should start fresh
+      mockSearchPoisForMap.mockResolvedValue({ pois: [mockPois[0]], error: null });
+      await act(async () => {
+        await mockSearchBarProperties.onPoiCategorySearch('coffee');
+      });
+
+      expect(mockSearchPoisForMap).toHaveBeenCalledTimes(2);
+    });
+
+    it('clears POI state when handleEndDirections is called', async () => {
+      mockSearchPoisForMap.mockResolvedValue({ pois: mockPois, error: null });
+
+      await renderWithTheme(<Index />);
+
+      await waitFor(() => expect(mockSearchBarProperties.onPoiCategorySearch).toBeDefined());
+
+      await act(async () => {
+        await mockSearchBarProperties.onPoiCategorySearch('coffee');
+      });
+
+      // Activate directions so onEndRoute becomes available
+      mockDirectionsHook.mockReturnValue(activeDirections);
+      await act(async () => {});
+
+      await waitFor(() => expect(mockSearchBarProperties.onEndRoute).toBeDefined());
+
+      await act(async () => {
+        mockSearchBarProperties.onEndRoute();
+      });
+
+      expect(mockEndDirections).toHaveBeenCalled();
+    });
+  });
+
+  describe('POI marker press and modal', () => {
+    const mockGooglePoi = {
+      id: 'place-abc',
+      name: 'Great Coffee',
+      address: '789 Brew Lane',
+      distance: 150,
+      isOpen: true,
+      latitude: 45.498,
+      longitude: -73.578,
+      source: 'google' as const,
+      categoryLabel: 'Coffee Shops',
+    };
+
+    const mockStudyPoi = {
+      id: 'study-lb',
+      name: 'J. W. McConnell Library Building',
+      address: '1400 De Maisonneuve Blvd W',
+      distance: 100,
+      isOpen: true,
+      latitude: 45.497,
+      longitude: -73.579,
+      source: 'study' as const,
+      categoryLabel: 'Study Spaces',
+      pricing: 'Free',
+    };
+
+    beforeEach(() => {
+      mockSearchPoisForMap.mockResolvedValue({ pois: [mockGooglePoi], error: null });
+      mockResolvePoiDetails.mockResolvedValue({
+        details: {
+          ...mockGooglePoi,
+          phoneNumber: '514-555-0000',
+          pricing: '$$',
+          website: 'https://example.com',
+        },
+        error: null,
+      });
+    });
+
+    it('passes onPoiCategorySearch callback to SearchBar', async () => {
+      await renderWithTheme(<Index />);
+
+      await waitFor(() => {
+        expect(mockSearchBarProperties.onPoiCategorySearch).toBeDefined();
+      });
+    });
+
+    it('renders POI markers after successful search', async () => {
+      const { getByTestId, queryAllByTestId } = await renderWithTheme(<Index />);
+
+      // Zoom out to hide building label markers; after zoom out only POI markers have testID="marker"
+      fireEvent(getByTestId('map-view'), 'regionChangeComplete', {
+        latitude: 45.497, longitude: -73.579,
+        latitudeDelta: 0.05, longitudeDelta: 0.05,
+      });
+
+      await waitFor(() => {
+        expect(queryAllByTestId('marker').length).toBe(0);
+      });
+
+      await act(async () => {
+        await mockSearchBarProperties.onPoiCategorySearch('coffee');
+      });
+
+      expect(queryAllByTestId('marker').length).toBe(1);
+    });
+
+    it('opens POI modal when a POI marker is pressed', async () => {
+      const { getByTestId, getAllByTestId, queryByTestId } = await renderWithTheme(<Index />);
+
+      // Zoom out to hide building label markers
+      fireEvent(getByTestId('map-view'), 'regionChangeComplete', {
+        latitude: 45.497, longitude: -73.579,
+        latitudeDelta: 0.05, longitudeDelta: 0.05,
+      });
+
+      await act(async () => {
+        await mockSearchBarProperties.onPoiCategorySearch('coffee');
+      });
+
+      // Find and press the POI marker (bus stops = 2, POI = 1 at index 2)
+      const markers = getAllByTestId('marker');
+      const poiMarker = markers[markers.length - 1];
+      await act(async () => {
+        fireEvent.press(poiMarker);
+      });
+
+      await waitFor(() => {
+        expect(queryByTestId('poi-modal')).toBeTruthy();
+      });
+
+      expect(mockResolvePoiDetails).toHaveBeenCalledWith(
+        mockGooglePoi,
+        'test-api-key'
+      );
+    });
+
+    it('closes POI modal when close button is pressed', async () => {
+      const { getByTestId, getAllByTestId, queryByTestId } = await renderWithTheme(<Index />);
+
+      fireEvent(getByTestId('map-view'), 'regionChangeComplete', {
+        latitude: 45.497, longitude: -73.579,
+        latitudeDelta: 0.05, longitudeDelta: 0.05,
+      });
+
+      await act(async () => {
+        await mockSearchBarProperties.onPoiCategorySearch('coffee');
+      });
+
+      const markers = getAllByTestId('marker');
+      await act(async () => {
+        fireEvent.press(markers[markers.length - 1]);
+      });
+
+      await waitFor(() => {
+        expect(queryByTestId('poi-modal')).toBeTruthy();
+      });
+
+      await act(async () => {
+        fireEvent.press(getByTestId('poi-modal-close'));
+      });
+
+      await waitFor(() => {
+        expect(queryByTestId('poi-modal')).toBeNull();
+      });
+    });
+
+    it('sets destination when get directions is pressed from POI modal', async () => {
+      const { getByTestId, getAllByTestId, queryByTestId } = await renderWithTheme(<Index />);
+
+      fireEvent(getByTestId('map-view'), 'regionChangeComplete', {
+        latitude: 45.497, longitude: -73.579,
+        latitudeDelta: 0.05, longitudeDelta: 0.05,
+      });
+
+      await act(async () => {
+        await mockSearchBarProperties.onPoiCategorySearch('coffee');
+      });
+
+      const markers = getAllByTestId('marker');
+      await act(async () => {
+        fireEvent.press(markers[markers.length - 1]);
+      });
+
+      await waitFor(() => {
+        expect(queryByTestId('poi-modal')).toBeTruthy();
+      });
+
+      await act(async () => {
+        fireEvent.press(getByTestId('poi-modal-directions'));
+      });
+
+      await waitFor(() => {
+        expect(queryByTestId('poi-modal')).toBeNull();
+        expect(mockSearchBarProperties.destination).toBeTruthy();
+        expect(mockSearchBarProperties.destination.name).toBe('Great Coffee');
+      });
+    });
+
+    it('handles get directions with no coordinates gracefully', async () => {
+      const { getByTestId, getAllByTestId, queryByTestId } = await renderWithTheme(<Index />);
+
+      fireEvent(getByTestId('map-view'), 'regionChangeComplete', {
+        latitude: 45.497, longitude: -73.579,
+        latitudeDelta: 0.05, longitudeDelta: 0.05,
+      });
+
+      await act(async () => {
+        await mockSearchBarProperties.onPoiCategorySearch('coffee');
+      });
+
+      const markers = getAllByTestId('marker');
+      await act(async () => {
+        fireEvent.press(markers[markers.length - 1]);
+      });
+
+      await waitFor(() => {
+        expect(queryByTestId('poi-modal')).toBeTruthy();
+      });
+
+      // Call onGetDirections with a building that has no coordinates
+      await act(async () => {
+        mockPoiModalProperties.onGetDirections({
+          id: 'no-coords',
+          geometry: { coordinates: [] },
+          properties: { name: 'No Coords POI' },
+        });
+      });
+
+      // Should not crash, modal should close anyway
+      expect(mockSearchBarProperties.destination).toBeFalsy();
+    });
+
+    it('resolves study POI details without Google API call', async () => {
+      mockSearchPoisForMap.mockResolvedValue({ pois: [mockStudyPoi], error: null });
+      mockResolvePoiDetails.mockResolvedValue({
+        details: { ...mockStudyPoi, pricing: 'Free' },
+        error: null,
+      });
+
+      await renderWithTheme(<Index />);
+
+      await act(async () => {
+        await mockSearchBarProperties.onPoiCategorySearch('study');
+      });
+
+      expect(mockSearchPoisForMap).toHaveBeenCalledWith(
+        'study',
+        expect.any(Object),
+        'test-api-key'
+      );
+    });
+
+    it('handles resolvePoiDetails error and sets error state', async () => {
+      mockResolvePoiDetails.mockResolvedValue({
+        details: null,
+        error: 'Details not available',
+      });
+
+      const { getByTestId, getAllByTestId, queryByTestId } = await renderWithTheme(<Index />);
+
+      fireEvent(getByTestId('map-view'), 'regionChangeComplete', {
+        latitude: 45.497, longitude: -73.579,
+        latitudeDelta: 0.05, longitudeDelta: 0.05,
+      });
+
+      await act(async () => {
+        await mockSearchBarProperties.onPoiCategorySearch('coffee');
+      });
+
+      const markers = getAllByTestId('marker');
+      await act(async () => {
+        fireEvent.press(markers[markers.length - 1]);
+      });
+
+      await waitFor(() => {
+        expect(queryByTestId('poi-modal')).toBeTruthy();
+        expect(mockPoiModalProperties.building?.properties?.detailsError).toBe('Details not available');
+      });
+    });
+
+    it('clears POI markers when a destination is set', async () => {
+      const { getByTestId, queryAllByTestId } = await renderWithTheme(<Index />);
+
+      // Zoom out to hide building label markers; after zoom out only POI markers have testID="marker"
+      fireEvent(getByTestId('map-view'), 'regionChangeComplete', {
+        latitude: 45.497, longitude: -73.579,
+        latitudeDelta: 0.05, longitudeDelta: 0.05,
+      });
+
+      await waitFor(() => {
+        expect(queryAllByTestId('marker').length).toBe(0);
+      });
+
+      await act(async () => {
+        await mockSearchBarProperties.onPoiCategorySearch('coffee');
+      });
+
+      expect(queryAllByTestId('marker').length).toBe(1);
+
+      await act(async () => {
+        mockSearchBarProperties.onChangeDestination({
+          id: 'H',
+          name: 'Hall Building',
+          coordinate: { latitude: 45.497, longitude: -73.579 },
+        });
+      });
+
+      await waitFor(() => {
+        expect(queryAllByTestId('marker').length).toBe(0);
+      });
+    });
+
+    it('sets isPoiDetailsLoading for google source POIs', async () => {
+      // Delay the resolve to check loading state
+      mockResolvePoiDetails.mockImplementation(() =>
+        new Promise((resolve) =>
+          setTimeout(() => resolve({
+            details: { ...mockGooglePoi, pricing: '$$' },
+            error: null,
+          }), 100)
+        )
+      );
+
+      const { getByTestId, getAllByTestId, queryByTestId } = await renderWithTheme(<Index />);
+
+      fireEvent(getByTestId('map-view'), 'regionChangeComplete', {
+        latitude: 45.497, longitude: -73.579,
+        latitudeDelta: 0.05, longitudeDelta: 0.05,
+      });
+
+      await act(async () => {
+        await mockSearchBarProperties.onPoiCategorySearch('coffee');
+      });
+
+      const markers = getAllByTestId('marker');
+      await act(async () => {
+        fireEvent.press(markers[markers.length - 1]);
+      });
+
+      // Modal should be visible with loading state
+      await waitFor(() => {
+        expect(queryByTestId('poi-modal')).toBeTruthy();
+        expect(mockPoiModalProperties.building?.properties?.detailsLoading).toBe(true);
+      });
+
+      // Wait for details to resolve
+      await act(async () => {
+        await new Promise((r) => setTimeout(r, 150));
+      });
+
+      await waitFor(() => {
+        expect(mockPoiModalProperties.building?.properties?.detailsLoading).toBe(false);
+      });
+    });
+
+    it('builds selectedPoiAsBuildingData correctly from POI details', async () => {
+      const { getByTestId, getAllByTestId, queryByTestId } = await renderWithTheme(<Index />);
+
+      fireEvent(getByTestId('map-view'), 'regionChangeComplete', {
+        latitude: 45.497, longitude: -73.579,
+        latitudeDelta: 0.05, longitudeDelta: 0.05,
+      });
+
+      await act(async () => {
+        await mockSearchBarProperties.onPoiCategorySearch('coffee');
+      });
+
+      const markers = getAllByTestId('marker');
+      await act(async () => {
+        fireEvent.press(markers[markers.length - 1]);
+      });
+
+      await waitFor(() => {
+        expect(queryByTestId('poi-modal')).toBeTruthy();
+      });
+
+      const building = mockPoiModalProperties.building;
+      expect(building).toBeTruthy();
+      expect(building.id).toBe('place-abc');
+      expect(building.properties.name).toBe('Great Coffee');
+      expect(building.properties.address).toBe('789 Brew Lane');
+      expect(building.properties.pricing).toBe('$$');
+      expect(building.properties.phoneNumber).toBe('514-555-0000');
+      expect(building.properties.website).toBe('https://example.com');
+      expect(building.properties.categoryLabel).toBe('Coffee Shops');
+      expect(building.properties.isOpen).toBe(true);
+      expect(building.geometry.type).toBe('Point');
+      expect(building.geometry.coordinates[0][0]).toEqual([-73.578, 45.498]);
     });
   });
 });

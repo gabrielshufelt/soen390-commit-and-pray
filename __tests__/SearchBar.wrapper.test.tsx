@@ -177,4 +177,42 @@ describe('<SearchBar /> wrapper behavior', () => {
     fireEvent.press(getByTestId('expanded-campus-loyola'));
     expect(onUseShuttleChange).not.toHaveBeenCalled();
   });
+
+  it('forwards onPoiCategorySearch to ExpandedSearchBar', () => {
+    const onPoiCategorySearch = jest.fn();
+    render(<SearchBar {...makeProps({ defaultExpanded: true, onPoiCategorySearch })} />);
+
+    expect(latestExpandedProps.onPoiCategorySearch).toBe(onPoiCategorySearch);
+  });
+
+  it('calls onSearchBarOpen when collapsed bar is opened', () => {
+    const onSearchBarOpen = jest.fn();
+    const { getByTestId } = render(<SearchBar {...makeProps({ onSearchBarOpen })} />);
+
+    fireEvent.press(getByTestId('collapsed-open'));
+
+    expect(onSearchBarOpen).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not crash when onSearchBarOpen is not provided', () => {
+    const { getByTestId } = render(<SearchBar {...makeProps()} />);
+
+    expect(() => {
+      fireEvent.press(getByTestId('collapsed-open'));
+    }).not.toThrow();
+  });
+
+  it('expands search bar and calls onSearchBarOpen in sequence', () => {
+    const onSearchBarOpen = jest.fn();
+    const { getByTestId, queryByTestId } = render(
+      <SearchBar {...makeProps({ onSearchBarOpen })} />
+    );
+
+    expect(queryByTestId('expanded-root')).toBeNull();
+
+    fireEvent.press(getByTestId('collapsed-open'));
+
+    expect(onSearchBarOpen).toHaveBeenCalledTimes(1);
+    expect(getByTestId('expanded-root')).toBeTruthy();
+  });
 });
