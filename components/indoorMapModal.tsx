@@ -216,6 +216,11 @@ export default function IndoorMapModal({
   const selectedBuildingOption =
     normalizedBuildingOptions.find((option) => option.code === selectedBuildingCode) ?? null;
 
+  let headerTitleText = "Indoor Map";
+  if (!canChooseBuilding && indoorMap) {
+    headerTitleText = `${indoorMap.buildingId} Indoor Map`;
+  }
+
   useEffect(() => {
     if (!visible) return;
 
@@ -609,13 +614,7 @@ export default function IndoorMapModal({
         <SafeAreaView style={styles.container} edges={["top"]}>
         <View style={styles.header}>
           <View style={styles.headerTitleContainer}>
-            <Text style={styles.headerTitle}>
-              {canChooseBuilding
-                ? "Indoor Map"
-                : indoorMap
-                  ? `${indoorMap.buildingId} Indoor Map`
-                  : "Indoor Map"}
-            </Text>
+            <Text style={styles.headerTitle}>{headerTitleText}</Text>
 
             {canChooseBuilding && (
               <View style={styles.buildingPickerContainer}>
