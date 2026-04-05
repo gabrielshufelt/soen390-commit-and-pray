@@ -2,7 +2,8 @@ import type { MapViewDirectionsMode } from "react-native-maps-directions";
 import React, { useState } from "react";
 import CollapsedSearchBar from "./../components/collapsedSearchBar";
 import ExpandedSearchBar from "./../components/expandedSearchBar";
-import { BuildingChoice } from "@/constants/searchBar.types"
+import { BuildingChoice } from "@/constants/searchBar.types";
+import type { CategoryKey } from "@/constants/poiCategories";
 
 type Props = {
   readonly buildings: BuildingChoice[];
@@ -36,6 +37,10 @@ type Props = {
   readonly onUseShuttleChange?: (active: boolean) => void;
 
   readonly onCampusChange?: (campus: "SGW" | "Loyola") => void;
+
+  readonly onPoiCategorySearch?: (categoryKey: CategoryKey) => void;
+
+  readonly onSearchBarOpen?: () => void;
 };
 
 export default function SearchBar({
@@ -59,6 +64,8 @@ export default function SearchBar({
   useShuttle = false,
   onUseShuttleChange,
   onCampusChange,
+  onPoiCategorySearch,
+  onSearchBarOpen,
 }: Props) {
   const [expanded, setExpanded] = useState(defaultExpanded);
   const [campus, setCampus] = useState<"SGW" | "Loyola">("SGW");
@@ -70,7 +77,7 @@ export default function SearchBar({
   }
 
   if (!expanded) {
-    return <CollapsedSearchBar onOpen={() => setExpanded(true)} />;
+    return <CollapsedSearchBar onOpen={() => { onSearchBarOpen?.(); setExpanded(true); }} />;
   }
 
   return (
@@ -95,6 +102,7 @@ export default function SearchBar({
       onUseShuttleChange={onUseShuttleChange}
       campus={campus}
       onCampusSelect={handleCampusSelect}
+      onPoiCategorySearch={onPoiCategorySearch}
       onClose={() => setExpanded(false)}
     />
   );

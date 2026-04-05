@@ -22,6 +22,8 @@ import { stripCodePrefix, displayName, makeHaystack } from "@/constants/searchBa
 import { useWatchLocation } from "../hooks/useWatchLocation";
 import { useUserBuilding } from "../hooks/useUserBuilding";
 import { searchNearbyPois, POI_TYPE_MAP } from "../utils/poiSearch";
+import { matchPoiSearchCategory, POI_CATEGORIES } from "@/constants/poiCategories";
+import type { CategoryKey } from "@/constants/poiCategories";
 
 type Props = {
   readonly buildings: BuildingChoice[];
@@ -55,6 +57,8 @@ type Props = {
 
   readonly campus: "SGW" | "Loyola";
   readonly onCampusSelect: (campus: "SGW" | "Loyola") => void;
+
+  readonly onPoiCategorySearch?: (categoryKey: CategoryKey) => void;
 
   readonly onClose: () => void;
 };
@@ -129,6 +133,7 @@ export default function ExpandedSearchBar({
   onUseShuttleChange,
   campus,
   onCampusSelect,
+  onPoiCategorySearch,
   onClose,
 }: Props) {
   const [seeAllOpen, setSeeAllOpen] = useState(false);
@@ -228,6 +233,14 @@ export default function ExpandedSearchBar({
     }
     return [];
   }, [destText, destFocused, currentBuilding, location]);
+
+  const outdoorPoiMatch = useMemo((): { categoryKey: CategoryKey; title: string; icon: string } | null => {
+    if (!destFocused || routeActive) return null;
+    const matched = matchPoiSearchCategory(destText);
+    if (!matched) return null;
+    const cat = POI_CATEGORIES[matched];
+    return { categoryKey: matched, title: cat.title, icon: cat.icon };
+  }, [destText, destFocused, routeActive]);
 
   function addToHistory(b: BuildingChoice) {
     setHistory((prev) => {
@@ -533,6 +546,29 @@ export default function ExpandedSearchBar({
                     </React.Fragment>
                   ))}
                 </ScrollView>
+              </View>
+            )}
+
+            {outdoorPoiMatch && poiResults.length === 0 && (
+              <View testID="route.dest.outdoor-poi-suggestion" style={styles.suggestionsBox}>
+                <TouchableOpacity
+                  style={styles.suggestionItem}
+                  onPress={() => {
+                    onPoiCategorySearch?.(outdoorPoiMatch.categoryKey);
+                    Keyboard.dismiss();
+                    onClose();
+                  }}
+                  activeOpacity={0.85}
+                  accessibilityRole="button"
+                >
+                  <Text style={styles.suggestionTitle}>
+                    <FontAwesome name={outdoorPoiMatch.icon as any} size={14} color={MAROON} />{" "}
+                    Search {outdoorPoiMatch.title} nearby
+                  </Text>
+                  <Text style={styles.suggestionSub}>
+                    Find the closest {outdoorPoiMatch.title.toLowerCase()} on the map
+                  </Text>
+                </TouchableOpacity>
               </View>
             )}
 

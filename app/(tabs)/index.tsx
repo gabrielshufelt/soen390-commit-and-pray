@@ -32,9 +32,29 @@ import IndoorMapModal, { type IndoorBuildingOption } from "../../components/indo
 import { getBuildingIndoorMap, getIndoorBuildingCodes } from "@/utils/indoorMapData";
 import { useCombinedNavigation } from "../../hooks/useCombinedNavigation";
 import { AllCampusData } from "../../data/buildings";
+import Constants from "expo-constants";
+import type { POI } from "@/constants/poi.types";
+import type { CategoryKey } from "@/constants/poiCategories";
+import { POI_CATEGORIES } from "@/constants/poiCategories";
+import { searchPoisForMap } from "@/utils/poiMapSearch";
+import { resolvePoiDetails } from "@/utils/poiFetch";
+import type { BuildingData } from "@/components/buildingModal";
 
 const LABEL_ZOOM_THRESHOLD = 0.015;
 const ANCHOR_OFFSET = { x: 0.5, y: 0.5 };
+
+const POI_MARKER_COLORS: Record<string, string> = {
+  coffee: "#8B4513",
+  restaurant: "#D2691E",
+  grocery: "#228B22",
+  study: "#4B5563",
+};
+const POI_MARKER_EMOJI: Record<string, string> = {
+  coffee: "☕",
+  restaurant: "🍽️",
+  grocery: "🛒",
+  study: "📚",
+};
 
 export default function Index() {
   const nearbyParams = useLocalSearchParams<{
@@ -115,6 +135,15 @@ export default function Index() {
     endLabel?: string;
   } | null>(null);
 
+  const [poiMarkers, setPoiMarkers] = useState<POI[]>([]);
+  const poiSearchIdRef = useRef(0);
+  const [selectedPoi, setSelectedPoi] = useState<POI | null>(null);
+  const [selectedPoiDetails, setSelectedPoiDetails] = useState<POI | null>(null);
+  const [isPoiDetailsLoading, setIsPoiDetailsLoading] = useState(false);
+  const [poiDetailsError, setPoiDetailsError] = useState<string | null>(null);
+
+  const poiApiKey = Constants.expoConfig?.extra?.googleMapsApiKey ?? "";
+
   // Concordia Shuttle option
   const [useShuttle, setUseShuttle] = useState(false);
   // Departure campus is always the opposite of the destination building's campus
@@ -161,6 +190,12 @@ export default function Index() {
     setStartChoice(null);
     setDestChoice(null);
     setUseShuttle(false);
+    poiSearchIdRef.current++;
+    setPoiMarkers([]);
+    setSelectedPoi(null);
+    setSelectedPoiDetails(null);
+    setPoiDetailsError(null);
+    setIsPoiDetailsLoading(false);
     setPreviewRouteInfo({
       distance: null,
       duration: null,
@@ -408,6 +443,101 @@ export default function Index() {
     setSelectedBuildingData(null);
   };
 
+  const handlePoiMarkerPress = useCallback(async (poi: POI) => {
+    setSelectedPoi(poi);
+    setSelectedPoiDetails(poi);
+    setPoiDetailsError(null);
+    setIsPoiDetailsLoading(poi.source === "google");
+
+    const { details, error } = await resolvePoiDetails(poi, poiApiKey);
+    if (details) setSelectedPoiDetails(details);
+    if (error) setPoiDetailsError(error);
+    setIsPoiDetailsLoading(false);
+  }, [poiApiKey]);
+
+  const clearPoiMarkers = useCallback(() => {
+    poiSearchIdRef.current++;
+    setPoiMarkers([]);
+  }, []);
+
+  const handleClosePoiModal = useCallback(() => {
+    setSelectedPoi(null);
+    setSelectedPoiDetails(null);
+    setPoiDetailsError(null);
+    setIsPoiDetailsLoading(false);
+  }, []);
+
+  const handlePoiGetDirections = useCallback((building: BuildingData) => {
+    const coords = building.geometry?.coordinates?.[0]?.[0];
+    if (!coords) return;
+    const [longitude, latitude] = coords;
+    const name = building.properties?.name ?? "POI";
+
+    handleClosePoiModal();
+    setPoiMarkers([]);
+
+    setDestChoice({
+      id: building.id,
+      name,
+      coordinate: { latitude, longitude },
+    });
+  }, [handleClosePoiModal]);
+
+  const selectedPoiAsBuildingData = useMemo<BuildingData | null>(() => {
+    if (!selectedPoiDetails) return null;
+    return {
+      id: selectedPoiDetails.id,
+      geometry: {
+        type: "Point",
+        coordinates: [[[selectedPoiDetails.longitude, selectedPoiDetails.latitude]]],
+      },
+      properties: {
+        name: selectedPoiDetails.name,
+        address: selectedPoiDetails.address,
+        categoryLabel: selectedPoiDetails.categoryLabel,
+        photoUrl: selectedPoiDetails.photoUrl,
+        phoneNumber: selectedPoiDetails.phoneNumber,
+        pricing: selectedPoiDetails.pricing,
+        website: selectedPoiDetails.website,
+        rating: selectedPoiDetails.rating,
+        isOpen: selectedPoiDetails.isOpen,
+        detailsLoading: isPoiDetailsLoading,
+        detailsError: poiDetailsError ?? undefined,
+      },
+    };
+  }, [selectedPoiDetails, isPoiDetailsLoading, poiDetailsError]);
+
+  useEffect(() => {
+    if (destChoice && poiMarkers.length > 0) {
+      setPoiMarkers([]);
+    }
+  }, [destChoice]);
+
+  const poiMarkerElements = useMemo(() => {
+    if (poiMarkers.length === 0) return null;
+    return poiMarkers.map((poi) => {
+      const categoryKey = Object.entries(POI_CATEGORIES).find(
+        ([, cat]) => cat.title === poi.categoryLabel
+      )?.[0] ?? "coffee";
+      const color = POI_MARKER_COLORS[categoryKey] ?? "#8B0000";
+      const emoji = POI_MARKER_EMOJI[categoryKey] ?? "📍";
+
+      return (
+        <Marker
+          key={`poi-${poi.id}`}
+          coordinate={{ latitude: poi.latitude, longitude: poi.longitude }}
+          tracksViewChanges={false}
+          zIndex={900}
+          onPress={() => handlePoiMarkerPress(poi)}
+        >
+          <View style={[styles.poiMarker, { backgroundColor: color }]}>
+            <Text style={styles.poiMarkerIcon}>{emoji}</Text>
+          </View>
+        </Marker>
+      );
+    });
+  }, [poiMarkers, handlePoiMarkerPress]);
+
   const handleShowIndoorMapFromModal = (buildingCode: string) => {
     const normalized = buildingCode.toUpperCase();
     openIndoorMapForCode(normalized);
@@ -440,6 +570,48 @@ export default function Index() {
     onRouteReady,
     checkProgress,
   });
+
+  const handlePoiCategorySearch = useCallback(async (categoryKey: CategoryKey) => {
+    const hasStartBuilding = startChoice && startChoice.id !== "current-location";
+    const locationCoords = effectiveLocation
+      ? { latitude: effectiveLocation.coords.latitude, longitude: effectiveLocation.coords.longitude }
+      : null;
+    const searchCenter = hasStartBuilding ? startChoice.coordinate : locationCoords;
+
+    if (!searchCenter) {
+      Alert.alert("Location Required", "Please enable location services to search for nearby POIs.");
+      return;
+    }
+
+    const searchId = ++poiSearchIdRef.current;
+    setPoiMarkers([]);
+    setSelectedPoi(null);
+    setSelectedPoiDetails(null);
+
+    const { pois, error } = await searchPoisForMap(categoryKey, searchCenter, poiApiKey);
+
+    if (poiSearchIdRef.current !== searchId) return;
+
+    if (error) {
+      Alert.alert("Search Error", `Could not load ${POI_CATEGORIES[categoryKey].title}: ${error}`);
+      return;
+    }
+
+    if (pois.length === 0) {
+      Alert.alert("No Results", `No ${POI_CATEGORIES[categoryKey].title.toLowerCase()} found nearby.`);
+      return;
+    }
+
+    setPoiMarkers(pois);
+
+    const region = {
+      latitude: searchCenter.latitude,
+      longitude: searchCenter.longitude,
+      latitudeDelta: 0.012,
+      longitudeDelta: 0.012,
+    };
+    mapRef.current?.animateToRegion(region, 500);
+  }, [effectiveLocation, startChoice, poiApiKey, mapRef]);
 
   // Stable callbacks for MapViewDirections — prevents re-renders when
   // unrelated state (e.g. showLabels) changes, which is the root cause of
@@ -937,6 +1109,8 @@ export default function Index() {
           </View>
         </Marker>
 
+        {poiMarkerElements}
+
         {activeRouteElement}
         {previewRouteElement}
       </MapView>
@@ -963,6 +1137,8 @@ export default function Index() {
           useShuttle={useShuttle}
           onUseShuttleChange={setUseShuttle}
           onOpenBuilding={handleOpenIndoorMap}
+          onPoiCategorySearch={handlePoiCategorySearch}
+          onSearchBarOpen={clearPoiMarkers}
         />
       )}
 
@@ -1052,6 +1228,14 @@ export default function Index() {
         onDirectionsFrom={handleDirectionsFrom}
         onDirectionsTo={handleDirectionsTo}
         onShowIndoorMap={handleShowIndoorMapFromModal}
+      />
+
+      <BuildingModal
+        visible={selectedPoi !== null}
+        mode="poi"
+        building={selectedPoiAsBuildingData}
+        onClose={handleClosePoiModal}
+        onGetDirections={handlePoiGetDirections}
       />
 
       <ShuttleScheduleModal
@@ -1162,5 +1346,23 @@ const styles = StyleSheet.create({
 
   busStopIcon: {
     fontSize: 24,
+  },
+
+  poiMarker: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 2,
+    borderColor: "#FFFFFF",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+    elevation: 5,
+  },
+  poiMarkerIcon: {
+    fontSize: 18,
   },
 });

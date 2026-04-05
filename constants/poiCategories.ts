@@ -25,6 +25,34 @@ export const SEE_ALL_PAGE_SIZE = 10;
 export const CACHE_EXPIRATION_MS = 30 * 60 * 1000; // 30 minutes
 export const CACHE_KEY_PREFIX = 'nearby_pois_';
 
+export const POI_SEARCH_KEYWORDS: Record<string, CategoryKey> = {
+  'coffee': 'coffee',
+  'coffee shop': 'coffee',
+  'coffee shops': 'coffee',
+  'cafe': 'coffee',
+  'cafes': 'coffee',
+  'restaurant': 'restaurant',
+  'restaurants': 'restaurant',
+  'food': 'restaurant',
+  'dining': 'restaurant',
+  'grocery': 'grocery',
+  'grocery store': 'grocery',
+  'grocery stores': 'grocery',
+  'groceries': 'grocery',
+  'supermarket': 'grocery',
+  'study': 'study',
+  'study space': 'study',
+  'study spaces': 'study',
+  'study area': 'study',
+  'study areas': 'study',
+};
+
+export const matchPoiSearchCategory = (query: string): CategoryKey | null => {
+  const normalized = query.toLowerCase().trim();
+  if (!normalized) return null;
+  return POI_SEARCH_KEYWORDS[normalized] ?? null;
+};
+
 export const DEFAULT_RADIUS_KM = 2;
 export const MIN_RADIUS_KM = 0.5;
 export const MAX_RADIUS_KM = 10;

@@ -103,7 +103,7 @@ const buildPoiFromNearbyResult = (
   };
 };
 
-const fetchCategoryResult = async (
+export const fetchCategoryResult = async (
   categoryKey: string,
   googleType: string,
   currentCoords: Coordinates,
