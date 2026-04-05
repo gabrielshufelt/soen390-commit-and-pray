@@ -187,4 +187,31 @@ describe('<ShuttleScheduleModal />', () => {
     );
     expect(getByText('🗺️ Show Shuttle Route on Map')).toBeTruthy();
   });
+
+  // --- Exit Preview button ---
+
+  it('does NOT show the Exit Preview button when onExitPreview is not provided', () => {
+    const { queryByText } = render(
+      <ShuttleScheduleModal visible={true} onClose={onClose} />
+    );
+    expect(queryByText('Exit Preview')).toBeNull();
+  });
+
+  it('shows the Exit Preview button when onExitPreview is provided', () => {
+    const onExitPreview = jest.fn();
+    const { getByText } = render(
+      <ShuttleScheduleModal visible={true} onClose={onClose} onExitPreview={onExitPreview} />
+    );
+    expect(getByText('Exit Preview')).toBeTruthy();
+  });
+
+  it('calls onExitPreview and onClose when Exit Preview button is pressed', () => {
+    const onExitPreview = jest.fn();
+    const { getByText } = render(
+      <ShuttleScheduleModal visible={true} onClose={onClose} onExitPreview={onExitPreview} />
+    );
+    fireEvent.press(getByText('Exit Preview'));
+    expect(onExitPreview).toHaveBeenCalledTimes(1);
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
 });

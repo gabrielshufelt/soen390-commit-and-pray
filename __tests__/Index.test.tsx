@@ -1103,6 +1103,31 @@ describe('<Index />', () => {
         expect(queryByText('🚌 Shuttle Schedule')).toBeNull();
       });
     });
+
+    it('shows Exit Preview button in shuttle modal when shuttle route is being previewed and calls endDirections on press', async () => {
+      // Put the hook into shuttle-only preview state (origin set, no destination)
+      const shuttlePreviewState = {
+        ...defaultDirections,
+        state: {
+          ...defaultDirections.state,
+          origin: { latitude: 45.458, longitude: -73.639 },
+          destination: { latitude: 45.4972, longitude: -73.579 },
+          isActive: false,
+        },
+      };
+      mockDirectionsHook.mockReturnValue(shuttlePreviewState);
+
+      const { getByText, getAllByText, queryByText } = await renderWithTheme(<Index />);
+      await waitFor(() => expect(getByText('🚌')).toBeTruthy());
+
+      fireEvent.press(getByText('🚌'));
+      // Both the standalone Exit Preview button and the modal button may appear
+      await waitFor(() => expect(getAllByText('Exit Preview').length).toBeGreaterThan(0));
+      expect(queryByText('🗺️ Show Shuttle Route on Map')).toBeNull();
+
+      fireEvent.press(getAllByText('Exit Preview')[0]);
+      expect(mockEndDirections).toHaveBeenCalled();
+    });
   });
 
   // --- Same Building Alert ---
