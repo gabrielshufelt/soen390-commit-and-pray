@@ -795,20 +795,6 @@ export default function Index() {
   ]);
 
   const previewRouteElement = useMemo(() => {
-    // Shuttle-only preview: opened via shuttle schedule modal (no destChoice set)
-    if (!directionsState.isActive && !destChoice && directionsState.origin && directionsState.destination) {
-      return (
-        <MapViewDirections
-          key={`shuttle-preview-${directionsState.origin.latitude}-${directionsState.destination.latitude}`}
-          origin={directionsState.origin}
-          destination={directionsState.destination}
-          apikey={apiKey}
-          mode="DRIVING"
-          {...getRouteLineStyle('SHUTTLE')}
-          onReady={handleRoutePreviewReady}
-        />
-      );
-    }
     if (directionsState.isActive || !destChoice) return null;
     if (!startChoice && !effectiveLocation) return null;
 
@@ -870,6 +856,30 @@ export default function Index() {
     handlePreviewLeg1Ready, handlePreviewLeg2Ready, handlePreviewLeg3Ready,
   ]);
 
+  // Shuttle-only preview: opened via the shuttle schedule modal.
+  // Kept in its own useMemo so that changes to startChoice (triggered by
+  // campusKey effects) don't invalidate this element and cause MapViewDirections
+  // to re-fetch/clear the polyline.
+  const shuttlePreviewElement = useMemo(() => {
+    if (directionsState.isActive || destChoice || !directionsState.origin || !directionsState.destination) {
+      return null;
+    }
+    return (
+      <MapViewDirections
+        key={`shuttle-preview-${directionsState.origin.latitude}-${directionsState.destination.latitude}`}
+        origin={directionsState.origin}
+        destination={directionsState.destination}
+        apikey={apiKey}
+        mode="DRIVING"
+        {...getRouteLineStyle('SHUTTLE')}
+        onReady={handleRoutePreviewReady}
+      />
+    );
+  }, [
+    directionsState.isActive, directionsState.origin, directionsState.destination,
+    destChoice, apiKey, handleRoutePreviewReady,
+  ]);
+
   return (
     <View style={styles.container}>
       <MapView
@@ -929,6 +939,7 @@ export default function Index() {
 
         {activeRouteElement}
         {previewRouteElement}
+        {shuttlePreviewElement}
       </MapView>
 
       {!navigationActive && (
@@ -989,7 +1000,7 @@ export default function Index() {
         />
       )}
 
-      {!navigationActive && !shuttleOnlyPreview && (
+      {!navigationActive && (
         <CampusToggle selectedCampus={campusKey} onCampusChange={setCampusKey} />
       )}
       {!navigationActive && (
@@ -1046,7 +1057,8 @@ export default function Index() {
       <ShuttleScheduleModal
         visible={showShuttleModal}
         onClose={() => setShowShuttleModal(false)}
-        onShowRoute={previewActive ? undefined : handleShowShuttleRoute}
+        onShowRoute={shuttleOnlyPreview ? undefined : handleShowShuttleRoute}
+        onExitPreview={shuttleOnlyPreview ? handleEndDirections : undefined}
       />
     </View>
   );
