@@ -8,9 +8,10 @@ interface ShuttleScheduleModalProps {
   readonly visible: boolean;
   readonly onClose: () => void;
   readonly onShowRoute?: () => void;
+  readonly onExitPreview?: () => void;
 }
 
-export default function ShuttleScheduleModal({ visible, onClose, onShowRoute }: ShuttleScheduleModalProps) {
+export default function ShuttleScheduleModal({ visible, onClose, onShowRoute, onExitPreview }: ShuttleScheduleModalProps) {
   const { colorScheme } = useTheme();
   const isDark = colorScheme === 'dark';
   const screenHeight = Dimensions.get('window').height;
@@ -99,6 +100,17 @@ export default function ShuttleScheduleModal({ visible, onClose, onShowRoute }: 
                 }}
               >
                 <Text style={styles.routeButtonText}>🗺️ Show Shuttle Route on Map</Text>
+              </TouchableOpacity>
+            )}
+            {onExitPreview && (
+              <TouchableOpacity
+                style={[styles.routeButton, { backgroundColor: BLUE }]}
+                onPress={() => {
+                  onExitPreview();
+                  onClose();
+                }}
+              >
+                <Text style={styles.routeButtonText}>Exit Preview</Text>
               </TouchableOpacity>
             )}
           </View>

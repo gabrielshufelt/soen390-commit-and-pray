@@ -339,7 +339,7 @@ export default function Index() {
     const loyolaStop = shuttleData.busStops.loyola.coordinate;
     const sgwStop = shuttleData.busStops.sgw.coordinate;
 
-    startDirections(loyolaStop, sgwStop);
+    previewDirections(loyolaStop, sgwStop);
   };
 
    const resolveIndoorBuildingCode = (): string | null => {
@@ -607,6 +607,8 @@ export default function Index() {
   const currentStepIndex = combinedRouteActive ? combinedStepIndex : directionsState.currentStepIndex;
   const navigationActive = directionsState.isActive || combinedRouteActive;
   const previewActive = !directionsState.isActive && !!directionsState.origin;
+  // Shuttle-modal preview: origin is set but no destChoice (user did not pick a route via the search bar)
+  const shuttleOnlyPreview = previewActive && !destChoice;
   const canGoPrev = currentStepIndex > 0;
   const canGoNext = currentStepIndex < activeSteps.length - 1;
 
@@ -847,10 +849,35 @@ export default function Index() {
       />
     );
   }, [
-    directionsState.isActive, directionsState.transportMode, destChoice,
+    directionsState.isActive, directionsState.origin, directionsState.destination,
+    directionsState.transportMode, destChoice,
     startChoice, effectiveLocation, useShuttle, shuttleWaypoints,
     apiKey, effectiveMode, handleRoutePreviewReady,
     handlePreviewLeg1Ready, handlePreviewLeg2Ready, handlePreviewLeg3Ready,
+  ]);
+
+  // Shuttle-only preview: opened via the shuttle schedule modal.
+  // Kept in its own useMemo so that changes to startChoice (triggered by
+  // campusKey effects) don't invalidate this element and cause MapViewDirections
+  // to re-fetch/clear the polyline.
+  const shuttlePreviewElement = useMemo(() => {
+    if (directionsState.isActive || destChoice || !directionsState.origin || !directionsState.destination) {
+      return null;
+    }
+    return (
+      <MapViewDirections
+        key={`shuttle-preview-${directionsState.origin.latitude}-${directionsState.destination.latitude}`}
+        origin={directionsState.origin}
+        destination={directionsState.destination}
+        apikey={apiKey}
+        mode="DRIVING"
+        {...getRouteLineStyle('SHUTTLE')}
+        onReady={handleRoutePreviewReady}
+      />
+    );
+  }, [
+    directionsState.isActive, directionsState.origin, directionsState.destination,
+    destChoice, apiKey, handleRoutePreviewReady,
   ]);
 
   return (
@@ -912,6 +939,7 @@ export default function Index() {
 
         {activeRouteElement}
         {previewRouteElement}
+        {shuttlePreviewElement}
       </MapView>
 
       {!navigationActive && (
@@ -927,7 +955,7 @@ export default function Index() {
           onChangeTransportMode={setTransportMode}
           routeActive={navigationActive}
           defaultExpanded={!!searchBarNonce}
-          previewActive={!directionsState.isActive && !!directionsState.origin}
+          previewActive={!directionsState.isActive && !!directionsState.origin && !!destChoice}
           onEndRoute={handleEndDirections}
           onStartRoute={handleStartRoute}
           onPreviewRoute={handlePreviewRoute}
@@ -1029,7 +1057,8 @@ export default function Index() {
       <ShuttleScheduleModal
         visible={showShuttleModal}
         onClose={() => setShowShuttleModal(false)}
-        onShowRoute={handleShowShuttleRoute}
+        onShowRoute={shuttleOnlyPreview ? undefined : handleShowShuttleRoute}
+        onExitPreview={shuttleOnlyPreview ? handleEndDirections : undefined}
       />
     </View>
   );
