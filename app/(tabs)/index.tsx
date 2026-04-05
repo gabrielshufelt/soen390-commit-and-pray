@@ -607,6 +607,8 @@ export default function Index() {
   const currentStepIndex = combinedRouteActive ? combinedStepIndex : directionsState.currentStepIndex;
   const navigationActive = directionsState.isActive || combinedRouteActive;
   const previewActive = !directionsState.isActive && !!directionsState.origin;
+  // Shuttle-modal preview: origin is set but no destChoice (user did not pick a route via the search bar)
+  const shuttleOnlyPreview = previewActive && !destChoice;
   const canGoPrev = currentStepIndex > 0;
   const canGoNext = currentStepIndex < activeSteps.length - 1;
 
@@ -942,7 +944,7 @@ export default function Index() {
           onChangeTransportMode={setTransportMode}
           routeActive={navigationActive}
           defaultExpanded={!!searchBarNonce}
-          previewActive={!directionsState.isActive && !!directionsState.origin}
+          previewActive={!directionsState.isActive && !!directionsState.origin && !!destChoice}
           onEndRoute={handleEndDirections}
           onStartRoute={handleStartRoute}
           onPreviewRoute={handlePreviewRoute}
@@ -987,7 +989,7 @@ export default function Index() {
         />
       )}
 
-      {!navigationActive && (
+      {!navigationActive && !shuttleOnlyPreview && (
         <CampusToggle selectedCampus={campusKey} onCampusChange={setCampusKey} />
       )}
       {!navigationActive && (
@@ -1044,7 +1046,7 @@ export default function Index() {
       <ShuttleScheduleModal
         visible={showShuttleModal}
         onClose={() => setShowShuttleModal(false)}
-        onShowRoute={handleShowShuttleRoute}
+        onShowRoute={previewActive ? undefined : handleShowShuttleRoute}
       />
     </View>
   );
