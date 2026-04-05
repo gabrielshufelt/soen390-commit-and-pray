@@ -1085,7 +1085,7 @@ describe('<Index />', () => {
       });
     });
 
-    it('starts shuttle route directions and closes modal when "Show Shuttle Route on Map" is pressed', async () => {
+    it('previews shuttle route on map and closes modal when "Show Shuttle Route on Map" is pressed', async () => {
       const { getByText, queryByText } = await renderWithTheme(<Index />);
       await waitFor(() => expect(getByText('🚌')).toBeTruthy());
 
@@ -1094,10 +1094,11 @@ describe('<Index />', () => {
 
       fireEvent.press(getByText('🗺️ Show Shuttle Route on Map'));
 
-      expect(mockStartDirections).toHaveBeenCalledWith(
+      expect(mockPreviewDirections).toHaveBeenCalledWith(
         expect.objectContaining({ latitude: expect.any(Number), longitude: expect.any(Number) }),
         expect.objectContaining({ latitude: expect.any(Number), longitude: expect.any(Number) })
       );
+      expect(mockStartDirections).not.toHaveBeenCalled();
       await waitFor(() => {
         expect(queryByText('🚌 Shuttle Schedule')).toBeNull();
       });

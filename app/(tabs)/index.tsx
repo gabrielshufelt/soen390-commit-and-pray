@@ -339,7 +339,7 @@ export default function Index() {
     const loyolaStop = shuttleData.busStops.loyola.coordinate;
     const sgwStop = shuttleData.busStops.sgw.coordinate;
 
-    startDirections(loyolaStop, sgwStop);
+    previewDirections(loyolaStop, sgwStop);
   };
 
    const resolveIndoorBuildingCode = (): string | null => {
@@ -793,6 +793,20 @@ export default function Index() {
   ]);
 
   const previewRouteElement = useMemo(() => {
+    // Shuttle-only preview: opened via shuttle schedule modal (no destChoice set)
+    if (!directionsState.isActive && !destChoice && directionsState.origin && directionsState.destination) {
+      return (
+        <MapViewDirections
+          key={`shuttle-preview-${directionsState.origin.latitude}-${directionsState.destination.latitude}`}
+          origin={directionsState.origin}
+          destination={directionsState.destination}
+          apikey={apiKey}
+          mode="DRIVING"
+          {...getRouteLineStyle('SHUTTLE')}
+          onReady={handleRoutePreviewReady}
+        />
+      );
+    }
     if (directionsState.isActive || !destChoice) return null;
     if (!startChoice && !effectiveLocation) return null;
 
@@ -847,7 +861,8 @@ export default function Index() {
       />
     );
   }, [
-    directionsState.isActive, directionsState.transportMode, destChoice,
+    directionsState.isActive, directionsState.origin, directionsState.destination,
+    directionsState.transportMode, destChoice,
     startChoice, effectiveLocation, useShuttle, shuttleWaypoints,
     apiKey, effectiveMode, handleRoutePreviewReady,
     handlePreviewLeg1Ready, handlePreviewLeg2Ready, handlePreviewLeg3Ready,
