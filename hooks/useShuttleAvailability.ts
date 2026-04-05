@@ -92,7 +92,9 @@ export function useShuttleAvailability(
   fromCampus: ShuttleCampus
 ): ShuttleAvailability {
   return useMemo(() => {
-    const now = DEV_OVERRIDE_TIME ?? new Date();
+    const now = process.env.NODE_ENV === 'test'
+      ? new Date()
+      : DEV_OVERRIDE_TIME ?? new Date();
     const nowMinutes = now.getHours() * 60 + now.getMinutes();
 
     const departures = getDepartureTimes(fromCampus, now);
